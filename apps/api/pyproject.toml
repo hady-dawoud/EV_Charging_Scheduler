@@ -1,0 +1,9 @@
+[project]
+name = "ev-smart-charging-api"
+version = "0.1.0"
+description = "Backend gateway for EV smart charging"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+]
