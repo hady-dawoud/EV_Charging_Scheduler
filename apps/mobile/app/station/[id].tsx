@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen, Button } from '@/src/components/ui';
 import { colors, spacing, borderRadius } from '@/src/theme';
 
@@ -62,11 +62,17 @@ const stationDetails: Record<string, {
 };
 
 export default function StationDetailScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const station = stationDetails[id ?? ''];
 
   const handleReserve = () => {
-    Alert.alert('Coming Soon', 'Reservation functionality will be available in a future update.');
+    if (station) {
+      router.push({
+        pathname: '/reservation-confirmation',
+        params: { stationName: station.name },
+      });
+    }
   };
 
   if (!station) {
