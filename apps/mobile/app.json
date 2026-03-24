@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "evMock",
+    "slug": "evmock",
+    "version": "1.0.0",
+    "scheme": "evmock",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      "expo-router",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
