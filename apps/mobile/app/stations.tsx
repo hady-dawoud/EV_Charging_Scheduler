@@ -7,8 +7,7 @@ import { mockStations } from '@/data/stations';
 
 export default function StationsScreen() {
   const router = useRouter();
-  const { targetBattery, optimizationMode, chargerType } = useLocalSearchParams<{
-    targetBattery: string;
+  const { optimizationMode, chargerType } = useLocalSearchParams<{
     optimizationMode: string;
     chargerType: string;
   }>();
