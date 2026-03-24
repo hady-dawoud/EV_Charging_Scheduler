@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '@/src/components/ui';
 import { colors, spacing, borderRadius } from '@/src/theme';
 
@@ -49,6 +49,7 @@ const mockStations = [
 ];
 
 export default function StationsScreen() {
+  const router = useRouter();
   const { targetBattery, optimizationMode, chargerType } = useLocalSearchParams<{
     targetBattery: string;
     optimizationMode: string;
@@ -111,7 +112,11 @@ export default function StationsScreen() {
 
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
         {filteredStations.map((station) => (
-          <Pressable key={station.id} style={styles.card}>
+          <Pressable
+            key={station.id}
+            style={styles.card}
+            onPress={() => router.push(`/station/${station.id}`)}
+          >
             <View style={styles.cardHeader}>
               <Text style={styles.stationName}>{station.name}</Text>
               <View style={styles.typeBadge}>
