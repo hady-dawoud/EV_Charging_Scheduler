@@ -6,7 +6,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius } from '@/src/theme';
+import { colors, spacing, borderRadius } from '@/theme';
 
 type ButtonVariant = 'primary' | 'secondary';
 

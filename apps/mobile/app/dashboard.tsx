@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Button } from '@/src/components/ui';
-import { colors, spacing, borderRadius } from '@/src/theme';
+import { Screen, Button } from '@/components/ui';
+import { colors, spacing, borderRadius } from '@/theme';
 
 // Hardcoded mock data
 const mockBattery = {

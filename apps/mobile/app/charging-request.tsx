@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Screen, Button } from '@/src/components/ui';
-import { colors, spacing, borderRadius } from '@/src/theme';
+import { Screen, Button } from '@/components/ui';
+import { colors, spacing, borderRadius } from '@/theme';
 
 type OptimizationMode = 'cheapest' | 'fastest' | 'closest';
 type ChargerType = 'ac' | 'dc' | 'any';

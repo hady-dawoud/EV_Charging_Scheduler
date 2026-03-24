@@ -1,52 +1,9 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Screen } from '@/src/components/ui';
-import { colors, spacing, borderRadius } from '@/src/theme';
-
-// Inline mock stations
-const mockStations = [
-  {
-    id: '1',
-    name: 'EcoCharge Downtown',
-    distance: 1.2,
-    pricePerKwh: 0.25,
-    chargerType: 'DC',
-    powerKw: 150,
-    availableStalls: 2,
-    totalStalls: 4,
-  },
-  {
-    id: '2',
-    name: 'GreenPower Mall',
-    distance: 2.8,
-    pricePerKwh: 0.18,
-    chargerType: 'AC',
-    powerKw: 22,
-    availableStalls: 3,
-    totalStalls: 6,
-  },
-  {
-    id: '3',
-    name: 'FastVolt Highway',
-    distance: 4.5,
-    pricePerKwh: 0.32,
-    chargerType: 'DC',
-    powerKw: 350,
-    availableStalls: 1,
-    totalStalls: 2,
-  },
-  {
-    id: '4',
-    name: 'CityCharge Central',
-    distance: 3.1,
-    pricePerKwh: 0.22,
-    chargerType: 'DC',
-    powerKw: 50,
-    availableStalls: 4,
-    totalStalls: 8,
-  },
-];
+import { Screen } from '@/components/ui';
+import { colors, spacing, borderRadius } from '@/theme';
+import { mockStations } from '@/data/stations';
 
 export default function StationsScreen() {
   const router = useRouter();
