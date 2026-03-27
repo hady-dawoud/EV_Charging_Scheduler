@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, Button } from '@/components/ui';
 import { colors, spacing, borderRadius } from '@/theme';
@@ -14,6 +14,18 @@ const mockVehicle = {
   isConnected: true,
 };
 
+const mockReservation = {
+  stationName: 'PowerHub Downtown',
+  date: 'Today',
+  time: '4:30 PM',
+  estimatedDuration: '45 min',
+};
+
+const mockPreferences = {
+  optimizationMode: 'Cheapest',
+  chargerType: 'DC Fast',
+};
+
 export default function DashboardScreen() {
   const router = useRouter();
 
@@ -23,7 +35,11 @@ export default function DashboardScreen() {
 
   return (
     <Screen>
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.greeting}>Good evening</Text>
 
         {/* Battery Status */}
@@ -54,19 +70,58 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* Recent Reservation */}
+        <View style={styles.reservationCard}>
+          <Text style={styles.sectionTitle}>Next Charge</Text>
+          <View style={styles.divider} />
+          <View style={styles.reservationDetails}>
+            <View style={styles.reservationRow}>
+              <Text style={styles.reservationLabel}>Station</Text>
+              <Text style={styles.reservationValue}>{mockReservation.stationName}</Text>
+            </View>
+            <View style={styles.reservationRow}>
+              <Text style={styles.reservationLabel}>Time</Text>
+              <Text style={styles.reservationValue}>
+                {mockReservation.date}, {mockReservation.time}
+              </Text>
+            </View>
+            <View style={styles.reservationRow}>
+              <Text style={styles.reservationLabel}>Duration</Text>
+              <Text style={styles.reservationValue}>{mockReservation.estimatedDuration}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Last Preferences */}
+        <View style={styles.preferencesCard}>
+          <Text style={styles.sectionTitle}>Last Preferences</Text>
+          <View style={styles.divider} />
+          <View style={styles.preferencesRow}>
+            <View style={styles.preferenceBadge}>
+              <Text style={styles.preferenceBadgeText}>{mockPreferences.optimizationMode}</Text>
+            </View>
+            <View style={styles.preferenceBadge}>
+              <Text style={styles.preferenceBadgeText}>{mockPreferences.chargerType}</Text>
+            </View>
+          </View>
+        </View>
+
         {/* CTA */}
         <View style={styles.ctaContainer}>
           <Button title="Find Chargers" onPress={handleFindChargers} />
         </View>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     paddingTop: spacing['2xl'],
+    paddingBottom: spacing['3xl'],
   },
   greeting: {
     fontSize: 24,
@@ -147,8 +202,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
+  reservationCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  preferencesCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing['2xl'],
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  reservationDetails: {
+    gap: spacing.sm,
+  },
+  reservationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reservationLabel: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  reservationValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  preferencesRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  preferenceBadge: {
+    backgroundColor: colors.surfaceLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  preferenceBadgeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.primary,
+  },
   ctaContainer: {
-    marginTop: 'auto',
-    paddingBottom: spacing['2xl'],
+    marginTop: spacing['2xl'],
   },
 });
