@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
   };
 
   const handleContinueAsGuest = () => {
-    router.push('/dashboard');
+    router.push('/home');
   };
 
   return (
