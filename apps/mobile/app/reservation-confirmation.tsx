@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     textAlign: 'right',
     flex: 1,
+    flexShrink: 1,
     marginLeft: spacing.md,
   },
   priceValue: {

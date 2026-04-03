@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingTop: spacing['2xl'],
+    paddingBottom: spacing['2xl'],
   },
   title: {
     fontSize: 28,

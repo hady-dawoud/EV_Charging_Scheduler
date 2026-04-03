@@ -214,6 +214,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   segmentActive: {
     backgroundColor: colors.surfaceLight,

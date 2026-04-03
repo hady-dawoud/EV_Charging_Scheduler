@@ -191,10 +191,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
