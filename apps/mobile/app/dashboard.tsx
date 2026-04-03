@@ -57,7 +57,7 @@ export default function DashboardScreen() {
         {/* Vehicle Status */}
         <View style={styles.vehicleCard}>
           <Text style={styles.vehicleName}>{mockVehicle.name}</Text>
-          <View style={styles.statusRow}>
+          <View style={styles.statusPill}>
             <View
               style={[
                 styles.statusDot,
@@ -124,25 +124,32 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3xl'],
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: spacing['2xl'],
   },
   batteryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing['2xl'],
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
+    shadowColor: colors.glowGreen,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 4,
   },
   batteryCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 4,
-    borderColor: colors.primary,
+    borderWidth: 5,
+    borderColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing['2xl'],
@@ -150,7 +157,7 @@ const styles = StyleSheet.create({
   batteryPercentage: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.accent,
   },
   batteryLabel: {
     fontSize: 12,
@@ -171,8 +178,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   vehicleCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing['2xl'],
   },
@@ -186,6 +195,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
   statusDot: {
     width: 8,
     height: 8,
@@ -194,35 +213,47 @@ const styles = StyleSheet.create({
   },
   statusConnected: {
     backgroundColor: colors.success,
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statusDisconnected: {
     backgroundColor: colors.error,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textSecondary,
   },
   reservationCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
   preferencesCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing['2xl'],
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: spacing.md,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.glassBorder,
     marginBottom: spacing.md,
   },
   reservationDetails: {
@@ -247,7 +278,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   preferenceBadge: {
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
@@ -255,7 +288,7 @@ const styles = StyleSheet.create({
   preferenceBadgeText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.primary,
+    color: colors.accent,
   },
   ctaContainer: {
     marginTop: spacing['2xl'],

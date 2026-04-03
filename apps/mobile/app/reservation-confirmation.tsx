@@ -69,6 +69,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
+    shadowColor: colors.glowGreen,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 4,
   },
   checkMark: {
     fontSize: 40,
@@ -86,8 +91,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.xl,
   },
   detailRow: {
@@ -110,11 +117,11 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.accent,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.glassBorder,
   },
   ctaContainer: {
     marginTop: 'auto',

@@ -132,8 +132,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -150,15 +152,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   typeBadge: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.accent,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
   },
   typeBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.background,
+    color: colors.accent,
   },
   cardDetails: {
     gap: spacing.sm,

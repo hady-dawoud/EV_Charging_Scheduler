@@ -38,13 +38,13 @@ export function Button({
         styles.base,
         isPrimary ? styles.primary : styles.secondary,
         isDisabled && styles.disabled,
-        pressed && !isDisabled && styles.pressed,
+        pressed && !isDisabled && (isPrimary ? styles.primaryPressed : styles.secondaryPressed),
         style,
       ]}
     >
       {loading ? (
         <ActivityIndicator
-          color={isPrimary ? colors.background : colors.primary}
+          color={isPrimary ? colors.background : colors.textPrimary}
           size="small"
         />
       ) : (
@@ -66,34 +66,44 @@ const styles = StyleSheet.create({
   base: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing['2xl'],
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
   } as ViewStyle,
   primary: {
     backgroundColor: colors.primary,
+    shadowColor: colors.glowCyan,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 4,
   } as ViewStyle,
   secondary: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
   } as ViewStyle,
   disabled: {
     opacity: 0.5,
   } as ViewStyle,
-  pressed: {
+  primaryPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  } as ViewStyle,
+  secondaryPressed: {
     opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   } as ViewStyle,
   text: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   } as TextStyle,
   textPrimary: {
     color: colors.background,
   } as TextStyle,
   textSecondary: {
-    color: colors.primary,
+    color: colors.textPrimary,
   } as TextStyle,
   textDisabled: {
     opacity: 0.7,

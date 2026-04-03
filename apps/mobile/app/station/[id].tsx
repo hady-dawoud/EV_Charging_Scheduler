@@ -106,21 +106,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing['2xl'],
   },
   typeBadge: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.accent,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
   },
   typeBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.background,
+    color: colors.accent,
   },
   powerBadge: {
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
   },
   powerBadgeText: {
     fontSize: 14,
@@ -131,14 +135,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
     marginBottom: spacing.sm,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
   },
   address: {
@@ -167,7 +175,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.accent,
   },
   available: {
     color: colors.success,
