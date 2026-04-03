@@ -29,7 +29,7 @@ export default function ChargingRequestScreen() {
 
   const handleFindStations = () => {
     router.push({
-      pathname: '/stations',
+      pathname: '/charging-options',
       params: {
         targetBattery: targetBattery.toString(),
         optimizationMode,

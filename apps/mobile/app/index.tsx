@@ -7,7 +7,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   const handleSignIn = () => {
-    Alert.alert('Coming Soon', 'Sign in will be available in a future update.');
+    router.push('/sign-in');
   };
 
   const handleCreateAccount = () => {

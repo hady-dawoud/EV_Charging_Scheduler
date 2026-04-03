@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui';
 import { colors, spacing, borderRadius } from '@/theme';
 import { mockStations } from '@/data/stations';
 
-export default function StationsScreen() {
+export default function ChargingOptionsScreen() {
   const router = useRouter();
   const { optimizationMode, chargerType } = useLocalSearchParams<{
     optimizationMode: string;
@@ -62,7 +62,7 @@ export default function StationsScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Nearby Stations</Text>
+        <Text style={styles.title}>Charging Options</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
 
