@@ -1,16 +1,21 @@
 {
   "expo": {
     "name": "evMock",
-    "slug": "evmock",
+    "slug": "evmock-mobile",
     "version": "1.0.0",
-    "scheme": "evmock",
+    "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "plugins": [
-      "expo-router",
-      "expo-asset"
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "splash": {
+      "backgroundColor": "#0A0B0D"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0B0D"
+      }
+    },
+    "web": {}
   }
 }
