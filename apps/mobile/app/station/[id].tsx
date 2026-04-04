@@ -42,6 +42,24 @@ export default function StationDetailScreen() {
           </View>
         </View>
 
+        {/* Map Placeholder */}
+        <View style={styles.mapContainer}>
+          <View style={styles.gridOverlay}>
+            <View style={[styles.gridLineH, { top: '25%' }]} />
+            <View style={[styles.gridLineH, { top: '50%' }]} />
+            <View style={[styles.gridLineH, { top: '75%' }]} />
+            <View style={[styles.gridLineV, { left: '25%' }]} />
+            <View style={[styles.gridLineV, { left: '50%' }]} />
+            <View style={[styles.gridLineV, { left: '75%' }]} />
+          </View>
+          <View style={styles.markerContainer}>
+            <View style={styles.pulseRing} />
+            <View style={styles.markerPin}>
+              <Text style={styles.markerIcon}>⚡</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Location</Text>
           <View style={styles.card}>
@@ -104,7 +122,7 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing.lg,
   },
   typeBadge: {
     backgroundColor: colors.glass,
@@ -192,5 +210,70 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing['4xl'],
+  },
+  mapContainer: {
+    height: 140,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.xl,
+    marginBottom: spacing['2xl'],
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gridOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  gridLineH: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: colors.glassBorder,
+  },
+  gridLineV: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: colors.glassBorder,
+  },
+  markerContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -24 }, { translateY: -24 }],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.glowGreen,
+    opacity: 0.3,
+  },
+  markerPin: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.glowGreen,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  markerIcon: {
+    fontSize: 16,
   },
 });
