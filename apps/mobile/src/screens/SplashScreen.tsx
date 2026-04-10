@@ -63,7 +63,7 @@ export default function SplashScreen({ navigation }: any) {
         <View style={[styles.iconBox, webStyles.neonGlow]}>
           <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
         </View>
-        <Text style={styles.title}>evMock</Text>
+        <Text style={styles.title}>EV APP</Text>
         <Text style={styles.subtitle}>
           Smart EV Charging, Optimized for Cost, Time, and Grid Load
         </Text>
