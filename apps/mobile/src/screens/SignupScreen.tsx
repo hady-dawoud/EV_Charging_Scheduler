@@ -33,7 +33,7 @@ export default function SignupScreen({ navigation }: any) {
 
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join evMock for smart charging</Text>
+          <Text style={styles.subtitle}>Join us for smart charging</Text>
         </View>
 
         <View style={styles.form}>
