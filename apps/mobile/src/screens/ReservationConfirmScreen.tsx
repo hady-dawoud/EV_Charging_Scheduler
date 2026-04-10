@@ -67,7 +67,7 @@ export default function ReservationConfirmScreen({ navigation }: any) {
             onPress={() => navigation.navigate('Home')}
             activeOpacity={0.85}
           >
-            <Text style={styles.homeBtnText}>Back to Dashboard</Text>
+            <Text style={styles.homeBtnText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
