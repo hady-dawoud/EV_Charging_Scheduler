@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   statVal: { color: theme.colors.text, fontSize: 16, fontWeight: 'bold' },
   reserveBtn: {
     ...theme.neonGlowSmall,
-    height: 64, backgroundColor: theme.colors.primary, borderRadius: 32,
+    height: 56, backgroundColor: theme.colors.primary, borderRadius: theme.radii.lg,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm,
   },
   reserveBtnText: { color: '#000', fontSize: 18, fontWeight: 'bold' },
