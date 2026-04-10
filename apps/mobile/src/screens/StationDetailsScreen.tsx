@@ -78,11 +78,11 @@ export default function StationDetailsScreen({ navigation }: any) {
         </View>
 
         <TouchableOpacity
-          style={[styles.reserveBtn, webStyles.blueGlow]}
+          style={[styles.reserveBtn, webStyles.neonGlowSmall]}
           onPress={() => navigation.navigate('ReservationConfirm')}
           activeOpacity={0.85}
         >
-          <Navigation color="#fff" size={20} />
+          <Navigation color="#000" size={20} />
           <Text style={styles.reserveBtnText}>Reserve & Navigate</Text>
         </TouchableOpacity>
       </View>
@@ -157,9 +157,9 @@ const styles = StyleSheet.create({
   statSub: { color: theme.colors.textMuted, fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
   statVal: { color: theme.colors.text, fontSize: 16, fontWeight: 'bold' },
   reserveBtn: {
-    ...theme.blueGlow,
-    height: 64, backgroundColor: theme.colors.blue, borderRadius: 32,
+    ...theme.neonGlowSmall,
+    height: 64, backgroundColor: theme.colors.primary, borderRadius: 32,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm,
   },
-  reserveBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  reserveBtnText: { color: '#000', fontSize: 18, fontWeight: 'bold' },
 });

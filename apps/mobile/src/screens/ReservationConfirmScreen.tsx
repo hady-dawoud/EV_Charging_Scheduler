@@ -55,11 +55,11 @@ export default function ReservationConfirmScreen({ navigation }: any) {
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.navBtn, webStyles.blueGlow]}
+            style={[styles.navBtn, webStyles.neonGlowSmall]}
             onPress={() => navigation.navigate('Sessions')}
             activeOpacity={0.85}
           >
-            <MapPin color="#fff" size={20} />
+            <MapPin color="#000" size={20} />
             <Text style={styles.navBtnText}>Start Navigation</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -117,13 +117,13 @@ const styles = StyleSheet.create({
   detailValue: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold' },
   actions: { gap: theme.spacing.md },
   navBtn: {
-    ...theme.blueGlow,
-    height: 56, backgroundColor: theme.colors.blue,
+    ...theme.neonGlowSmall,
+    height: 56, backgroundColor: theme.colors.primary,
     borderRadius: theme.radii.lg, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
-  navBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  navBtnText: { color: '#000', fontSize: 18, fontWeight: 'bold' },
   homeBtn: {
     height: 56, backgroundColor: theme.colors.surfaceLight,
     borderRadius: theme.radii.lg, alignItems: 'center', justifyContent: 'center',
