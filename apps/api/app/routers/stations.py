@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.schemas import StationsResponse
+from app.schemas.stations import StationsResponse
 from app.services.stations_service import list_stations
 
 router = APIRouter(tags=["stations"])

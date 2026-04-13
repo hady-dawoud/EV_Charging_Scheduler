@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 
 
 class Station(BaseModel):
@@ -11,4 +10,4 @@ class Station(BaseModel):
 
 
 class StationsResponse(BaseModel):
-    stations: List[Station]
+    stations: list[Station]
