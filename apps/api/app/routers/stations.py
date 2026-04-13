@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
+from app.schemas.errors import ErrorResponse
 from app.schemas.stations import (
     Station,
     StationCreate,
@@ -20,7 +21,10 @@ router = APIRouter(
 )
 
 station_not_found_response = {
-    404: {"description": "Station not found"}
+    404: {
+        "model": ErrorResponse,
+        "description": "Station not found",
+    }
 }
 
 

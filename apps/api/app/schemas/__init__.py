@@ -1,1 +1,2 @@
-from app.schemas.stations import Station, StationsResponse
+from app.schemas.errors import ErrorResponse
+from app.schemas.stations import Station, StationCreate, StationUpdate, StationsResponse
