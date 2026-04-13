@@ -7,8 +7,16 @@ router = APIRouter(tags=["stations"])
 
 
 @router.get("/stations", response_model=StationsResponse)
-def get_stations(location: str | None = Query(default=None)):
-    return {"stations": list_stations(location=location)}
+def get_stations(
+    location: str | None = Query(default=None),
+    available_only: bool = Query(default=False),
+):
+    return {
+        "stations": list_stations(
+            location=location,
+            available_only=available_only,
+        )
+    }
 
 
 @router.get("/stations/{station_id}", response_model=Station)

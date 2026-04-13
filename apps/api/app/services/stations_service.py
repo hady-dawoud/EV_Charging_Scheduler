@@ -1,7 +1,10 @@
 from app.mock_data import stations
 
 
-def list_stations(location: str | None = None):
+def list_stations(
+    location: str | None = None,
+    available_only: bool = False,
+):
     results = stations
 
     if location:
@@ -9,6 +12,13 @@ def list_stations(location: str | None = None):
             station
             for station in results
             if station["location"].lower() == location.lower()
+        ]
+
+    if available_only:
+        results = [
+            station
+            for station in results
+            if station["available_ports"] > 0
         ]
 
     return results

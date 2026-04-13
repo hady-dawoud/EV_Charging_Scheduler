@@ -10,7 +10,7 @@ stations = [
         "id": 2,
         "name": "Station B",
         "location": "Nasr City",
-        "available_ports": 1,
+        "available_ports": 0,
         "price_per_kwh": 7.0,
     },
 ]
