@@ -1,5 +1,5 @@
 from app.mock_data import stations
-from app.schemas.stations import Station
+from app.schemas.stations import Station, StationCreate
 
 
 def list_stations(
@@ -30,3 +30,18 @@ def get_station_by_id(station_id: int) -> Station | None:
         if station["id"] == station_id:
             return Station(**station)
     return None
+
+
+def create_station(station_in: StationCreate) -> Station:
+    next_id = max((station["id"] for station in stations), default=0) + 1
+
+    new_station = Station(
+        id=next_id,
+        name=station_in.name,
+        location=station_in.location,
+        available_ports=station_in.available_ports,
+        price_per_kwh=station_in.price_per_kwh,
+    )
+
+    stations.append(new_station.model_dump())
+    return new_station
