@@ -31,13 +31,13 @@ router = APIRouter(
 def get_stations(
     location: str | None = Query(default=None),
     available_only: bool = Query(default=False),
-):
-    return {
-        "stations": list_stations(
+) -> StationsResponse:
+    return StationsResponse(
+        stations=list_stations(
             location=location,
             available_only=available_only,
         )
-    }
+    )
 
 
 @router.get(
@@ -48,7 +48,7 @@ def get_stations(
     response_description="The requested station.",
     responses=not_found_response("Station"),
 )
-def get_station(station_id: int):
+def get_station(station_id: int) -> Station:
     station = get_station_by_id(station_id)
 
     if station is None:
@@ -65,7 +65,7 @@ def get_station(station_id: int):
     description="Create a new station in the in-memory mock store.",
     response_description="The newly created station.",
 )
-def add_station(station_in: StationCreate):
+def add_station(station_in: StationCreate) -> Station:
     return create_station(station_in)
 
 
@@ -77,7 +77,7 @@ def add_station(station_in: StationCreate):
     response_description="The updated station.",
     responses=not_found_response("Station"),
 )
-def edit_station(station_id: int, station_in: StationUpdate):
+def edit_station(station_id: int, station_in: StationUpdate) -> Station:
     station = update_station(station_id, station_in)
 
     if station is None:
@@ -94,7 +94,7 @@ def edit_station(station_id: int, station_in: StationUpdate):
     response_description="Station deleted successfully.",
     responses=not_found_response("Station"),
 )
-def remove_station(station_id: int):
+def remove_station(station_id: int) -> Response:
     deleted = delete_station(station_id)
 
     if not deleted:
