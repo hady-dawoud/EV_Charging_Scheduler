@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
-from app.schemas.errors import ErrorResponse
+from app.api_responses import not_found_response
 from app.schemas.stations import (
     Station,
     StationCreate,
@@ -19,13 +19,6 @@ router = APIRouter(
     prefix="/stations",
     tags=["stations"],
 )
-
-station_not_found_response = {
-    404: {
-        "model": ErrorResponse,
-        "description": "Station not found",
-    }
-}
 
 
 @router.get(
@@ -53,7 +46,7 @@ def get_stations(
     summary="Get station by ID",
     description="Return a single station using its numeric identifier.",
     response_description="The requested station.",
-    responses=station_not_found_response,
+    responses=not_found_response("Station"),
 )
 def get_station(station_id: int):
     station = get_station_by_id(station_id)
@@ -82,7 +75,7 @@ def add_station(station_in: StationCreate):
     summary="Update station",
     description="Replace an existing station by ID.",
     response_description="The updated station.",
-    responses=station_not_found_response,
+    responses=not_found_response("Station"),
 )
 def edit_station(station_id: int, station_in: StationUpdate):
     station = update_station(station_id, station_in)
@@ -99,7 +92,7 @@ def edit_station(station_id: int, station_in: StationUpdate):
     summary="Delete station",
     description="Delete a station by ID.",
     response_description="Station deleted successfully.",
-    responses=station_not_found_response,
+    responses=not_found_response("Station"),
 )
 def remove_station(station_id: int):
     deleted = delete_station(station_id)
