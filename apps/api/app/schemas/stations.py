@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Station(BaseModel):
@@ -10,10 +10,12 @@ class Station(BaseModel):
 
 
 class StationCreate(BaseModel):
-    name: str
-    location: str
-    available_ports: int
-    price_per_kwh: float
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=2, max_length=100)
+    location: str = Field(..., min_length=2, max_length=100)
+    available_ports: int = Field(..., ge=0)
+    price_per_kwh: float = Field(..., ge=0)
 
 
 class StationsResponse(BaseModel):
