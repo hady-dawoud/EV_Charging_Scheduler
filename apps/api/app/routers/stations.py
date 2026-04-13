@@ -14,10 +14,13 @@ from app.services.stations_service import (
     update_station,
 )
 
-router = APIRouter(tags=["stations"])
+router = APIRouter(
+    prefix="/stations",
+    tags=["stations"],
+)
 
 
-@router.get("/stations", response_model=StationsResponse)
+@router.get("", response_model=StationsResponse)
 def get_stations(
     location: str | None = Query(default=None),
     available_only: bool = Query(default=False),
@@ -30,7 +33,7 @@ def get_stations(
     }
 
 
-@router.get("/stations/{station_id}", response_model=Station)
+@router.get("/{station_id}", response_model=Station)
 def get_station(station_id: int):
     station = get_station_by_id(station_id)
 
@@ -40,12 +43,12 @@ def get_station(station_id: int):
     return station
 
 
-@router.post("/stations", response_model=Station, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Station, status_code=status.HTTP_201_CREATED)
 def add_station(station_in: StationCreate):
     return create_station(station_in)
 
 
-@router.put("/stations/{station_id}", response_model=Station)
+@router.put("/{station_id}", response_model=Station)
 def edit_station(station_id: int, station_in: StationUpdate):
     station = update_station(station_id, station_in)
 
@@ -55,7 +58,7 @@ def edit_station(station_id: int, station_in: StationUpdate):
     return station
 
 
-@router.delete("/stations/{station_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{station_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_station(station_id: int):
     deleted = delete_station(station_id)
 
