@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.mock_data import stations
+from app.routers.stations import router as stations_router
+
 
 app = FastAPI(title="EV Smart Charging API")
 
@@ -14,6 +15,4 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/stations")
-def get_stations():
-    return {"stations": stations}
+app.include_router(stations_router)
