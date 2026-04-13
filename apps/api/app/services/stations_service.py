@@ -1,5 +1,5 @@
 from app.mock_data import stations
-from app.schemas.stations import Station, StationCreate
+from app.schemas.stations import Station, StationCreate, StationUpdate
 
 
 def list_stations(
@@ -45,3 +45,19 @@ def create_station(station_in: StationCreate) -> Station:
 
     stations.append(new_station.model_dump())
     return new_station
+
+
+def update_station(station_id: int, station_in: StationUpdate) -> Station | None:
+    for index, station in enumerate(stations):
+        if station["id"] == station_id:
+            updated_station = Station(
+                id=station_id,
+                name=station_in.name,
+                location=station_in.location,
+                available_ports=station_in.available_ports,
+                price_per_kwh=station_in.price_per_kwh,
+            )
+            stations[index] = updated_station.model_dump()
+            return updated_station
+
+    return None

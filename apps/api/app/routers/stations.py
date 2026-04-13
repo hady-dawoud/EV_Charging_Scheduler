@@ -1,10 +1,16 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
-from app.schemas.stations import Station, StationCreate, StationsResponse
+from app.schemas.stations import (
+    Station,
+    StationCreate,
+    StationUpdate,
+    StationsResponse,
+)
 from app.services.stations_service import (
     create_station,
     get_station_by_id,
     list_stations,
+    update_station,
 )
 
 router = APIRouter(tags=["stations"])
@@ -36,3 +42,13 @@ def get_station(station_id: int):
 @router.post("/stations", response_model=Station, status_code=status.HTTP_201_CREATED)
 def add_station(station_in: StationCreate):
     return create_station(station_in)
+
+
+@router.put("/stations/{station_id}", response_model=Station)
+def edit_station(station_id: int, station_in: StationUpdate):
+    station = update_station(station_id, station_in)
+
+    if station is None:
+        raise HTTPException(status_code=404, detail="Station not found")
+
+    return station
