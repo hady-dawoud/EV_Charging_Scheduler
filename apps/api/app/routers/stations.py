@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.schemas.stations import (
     Station,
@@ -8,6 +8,7 @@ from app.schemas.stations import (
 )
 from app.services.stations_service import (
     create_station,
+    delete_station,
     get_station_by_id,
     list_stations,
     update_station,
@@ -52,3 +53,13 @@ def edit_station(station_id: int, station_in: StationUpdate):
         raise HTTPException(status_code=404, detail="Station not found")
 
     return station
+
+
+@router.delete("/stations/{station_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_station(station_id: int):
+    deleted = delete_station(station_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Station not found")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

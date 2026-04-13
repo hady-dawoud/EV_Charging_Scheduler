@@ -61,3 +61,12 @@ def update_station(station_id: int, station_in: StationUpdate) -> Station | None
             return updated_station
 
     return None
+
+
+def delete_station(station_id: int) -> bool:
+    for index, station in enumerate(stations):
+        if station["id"] == station_id:
+            del stations[index]
+            return True
+
+    return False
