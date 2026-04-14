@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_11ea923a4c96bdae1de7f76ec0c64941 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.Default.css"/>
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_11ea923a4c96bdae1de7f76ec0c64941" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_11ea923a4c96bdae1de7f76ec0c64941 = L.map(
+                "map_11ea923a4c96bdae1de7f76ec0c64941",
+                {
+                    center: [56.47067661428571, -2.9665991571428574],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 12,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+
+            
+
+        
+    
+            var tile_layer_1ab4977e6c987377874866fc5cdf2ec2 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_1ab4977e6c987377874866fc5cdf2ec2.addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+        
+    
+            var tile_layer_17a5ef869b600065a2d74728fa8cec37 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_17a5ef869b600065a2d74728fa8cec37.addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+        
+    
+            var marker_7b539a75eb71004df85cb2a35f618406 = L.marker(
+                [56.47067661428571, -2.9665991571428574],
+                {
+}
+            ).addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+        
+    
+            var div_icon_0552ac31b83ab6ebba103848703f9967 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size:14px;font-weight:700;color:#102a43\u0027\u003eDundee Stations\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_7b539a75eb71004df85cb2a35f618406.setIcon(div_icon_0552ac31b83ab6ebba103848703f9967);
+            
+    
+            var marker_cluster_2b826d1d21ddad6205f08f377207754f = L.markerClusterGroup(
+                {
+}
+            );
+        
+    
+            var circle_marker_101c5c5c18067317cb106a5f57308268 = L.circleMarker(
+                [56.469369, -2.968713],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_93be867d1dec232b413a7d9414483ca6 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_9fd0658330a3aa35bd34580c3150c001 = $(`<div id="html_9fd0658330a3aa35bd34580c3150c001" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Alexander Street - Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>alexander_street_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 2AE</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2620</td></tr></table></div>`)[0];
+                popup_93be867d1dec232b413a7d9414483ca6.setContent(html_9fd0658330a3aa35bd34580c3150c001);
+            
+        
+
+        circle_marker_101c5c5c18067317cb106a5f57308268.bindPopup(popup_93be867d1dec232b413a7d9414483ca6)
+        ;
+
+        
+    
+    
+            circle_marker_101c5c5c18067317cb106a5f57308268.bindTooltip(
+                `<div>
+                     Alexander Street - Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_f9640a62ff60a4217f23fb3e45f979e2 = L.circleMarker(
+                [56.4808461, -2.9100671],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_48d1432363086cb92a6b909ec3f0a722 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_2d73f4cb04fb9c4b0f2b053b63769626 = $(`<div id="html_2d73f4cb04fb9c4b0f2b053b63769626" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Balmerino Road</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>balmerino_road</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 8RN</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>69</td></tr></table></div>`)[0];
+                popup_48d1432363086cb92a6b909ec3f0a722.setContent(html_2d73f4cb04fb9c4b0f2b053b63769626);
+            
+        
+
+        circle_marker_f9640a62ff60a4217f23fb3e45f979e2.bindPopup(popup_48d1432363086cb92a6b909ec3f0a722)
+        ;
+
+        
+    
+    
+            circle_marker_f9640a62ff60a4217f23fb3e45f979e2.bindTooltip(
+                `<div>
+                     Balmerino Road (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_27547a4c199addbe91aeed77105bc94e = L.circleMarker(
+                [56.4763808, -2.9783902],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_2321d84a4afbc6fb158b8f7131faf9f3 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_d3adacf9e9b9f3a51c1b85f50090d43f = $(`<div id="html_d3adacf9e9b9f3a51c1b85f50090d43f" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Caird Avenue</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>caird_avenue</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>nan</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>375</td></tr></table></div>`)[0];
+                popup_2321d84a4afbc6fb158b8f7131faf9f3.setContent(html_d3adacf9e9b9f3a51c1b85f50090d43f);
+            
+        
+
+        circle_marker_27547a4c199addbe91aeed77105bc94e.bindPopup(popup_2321d84a4afbc6fb158b8f7131faf9f3)
+        ;
+
+        
+    
+    
+            circle_marker_27547a4c199addbe91aeed77105bc94e.bindTooltip(
+                `<div>
+                     Caird Avenue (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_bf2e1b51a813fecdd21a4bf4197000de = L.circleMarker(
+                [56.4810593, -3.0377513],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_a5f091de20b8cf46bba5063cec6c2a36 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_3c68e284ab81501cd62bdaf313053adc = $(`<div id="html_3c68e284ab81501cd62bdaf313053adc" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Camperdown Country Park</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>camperdown_country_park</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 4TF</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>44</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2030</td></tr></table></div>`)[0];
+                popup_a5f091de20b8cf46bba5063cec6c2a36.setContent(html_3c68e284ab81501cd62bdaf313053adc);
+            
+        
+
+        circle_marker_bf2e1b51a813fecdd21a4bf4197000de.bindPopup(popup_a5f091de20b8cf46bba5063cec6c2a36)
+        ;
+
+        
+    
+    
+            circle_marker_bf2e1b51a813fecdd21a4bf4197000de.bindTooltip(
+                `<div>
+                     Camperdown Country Park (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_d88ec39c096bfcb142203e25152b3bb5 = L.circleMarker(
+                [56.478799, -2.985238],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_848f686ec94423e1d96007ef8c9b5437 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_a4aacf3603db3e84f77e4329d8062d09 = $(`<div id="html_a4aacf3603db3e84f77e4329d8062d09" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Clepington Road - 4th Hub</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>clepington_road_4th_hub</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD3 8PL</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>6</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>rapid;ultra_rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>400</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>50449</td></tr></table></div>`)[0];
+                popup_848f686ec94423e1d96007ef8c9b5437.setContent(html_a4aacf3603db3e84f77e4329d8062d09);
+            
+        
+
+        circle_marker_d88ec39c096bfcb142203e25152b3bb5.bindPopup(popup_848f686ec94423e1d96007ef8c9b5437)
+        ;
+
+        
+    
+    
+            circle_marker_d88ec39c096bfcb142203e25152b3bb5.bindTooltip(
+                `<div>
+                     Clepington Road - 4th Hub (6 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_e9bdff1c9d182d7c87607da138a870a2 = L.circleMarker(
+                [56.4757059, -2.9785033],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_11bdab974b146e126e342278a192ccb2 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_9316476a45b0f9596daacacac7274910 = $(`<div id="html_9316476a45b0f9596daacacac7274910" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Coldside Nursery</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>coldside_nursery</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD3 8AR</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>17</td></tr></table></div>`)[0];
+                popup_11bdab974b146e126e342278a192ccb2.setContent(html_9316476a45b0f9596daacacac7274910);
+            
+        
+
+        circle_marker_e9bdff1c9d182d7c87607da138a870a2.bindPopup(popup_11bdab974b146e126e342278a192ccb2)
+        ;
+
+        
+    
+    
+            circle_marker_e9bdff1c9d182d7c87607da138a870a2.bindTooltip(
+                `<div>
+                     Coldside Nursery (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_1d2f56e0c6c10fec6dda4e02bed094f5 = L.circleMarker(
+                [56.473731, -3.035025],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_67b8957c918cde5b0c0fa08e3b77b2d5 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_8835de35c2aefb36b726fdddad735bec = $(`<div id="html_8835de35c2aefb36b726fdddad735bec" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Craigowen Road</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>craigowen_road</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 4NL</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1474</td></tr></table></div>`)[0];
+                popup_67b8957c918cde5b0c0fa08e3b77b2d5.setContent(html_8835de35c2aefb36b726fdddad735bec);
+            
+        
+
+        circle_marker_1d2f56e0c6c10fec6dda4e02bed094f5.bindPopup(popup_67b8957c918cde5b0c0fa08e3b77b2d5)
+        ;
+
+        
+    
+    
+            circle_marker_1d2f56e0c6c10fec6dda4e02bed094f5.bindTooltip(
+                `<div>
+                     Craigowen Road (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_9117698d434d2959f445e26d55d91bf5 = L.circleMarker(
+                [56.472647, -2.898492],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_4f7a7accbbb36eda3040e50bdf1220e4 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_51c5e1a3873a042aa49399b4760b826e = $(`<div id="html_51c5e1a3873a042aa49399b4760b826e" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dawson Park, Broughty Ferry</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dawson_park_broughty_ferry</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD5 1PG</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1323</td></tr></table></div>`)[0];
+                popup_4f7a7accbbb36eda3040e50bdf1220e4.setContent(html_51c5e1a3873a042aa49399b4760b826e);
+            
+        
+
+        circle_marker_9117698d434d2959f445e26d55d91bf5.bindPopup(popup_4f7a7accbbb36eda3040e50bdf1220e4)
+        ;
+
+        
+    
+    
+            circle_marker_9117698d434d2959f445e26d55d91bf5.bindTooltip(
+                `<div>
+                     Dawson Park, Broughty Ferry (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_95dc600510060c2b3ea20869c4417b64 = L.circleMarker(
+                [56.472804, -2.959175],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_f64d9b41d54d27335f3ae2f1a3590b1b = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_9b7c9f19816a21bc73fbab8e6a9f953d = $(`<div id="html_9b7c9f19816a21bc73fbab8e6a9f953d" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Derby Street</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>derby_street</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 6TQ</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1031</td></tr></table></div>`)[0];
+                popup_f64d9b41d54d27335f3ae2f1a3590b1b.setContent(html_9b7c9f19816a21bc73fbab8e6a9f953d);
+            
+        
+
+        circle_marker_95dc600510060c2b3ea20869c4417b64.bindPopup(popup_f64d9b41d54d27335f3ae2f1a3590b1b)
+        ;
+
+        
+    
+    
+            circle_marker_95dc600510060c2b3ea20869c4417b64.bindTooltip(
+                `<div>
+                     Derby Street (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_5eb7fda71528d0e406d3c7bb21b465e2 = L.circleMarker(
+                [56.4684347, -3.0478484],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_c30d74e09c91464ea9337ec5f19bfbe7 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_afa4291922a7ec8acb7eaac37f40b898 = $(`<div id="html_afa4291922a7ec8acb7eaac37f40b898" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Deveron Terrace</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>deveron_terrace</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 4AJ</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>361</td></tr></table></div>`)[0];
+                popup_c30d74e09c91464ea9337ec5f19bfbe7.setContent(html_afa4291922a7ec8acb7eaac37f40b898);
+            
+        
+
+        circle_marker_5eb7fda71528d0e406d3c7bb21b465e2.bindPopup(popup_c30d74e09c91464ea9337ec5f19bfbe7)
+        ;
+
+        
+    
+    
+            circle_marker_5eb7fda71528d0e406d3c7bb21b465e2.bindTooltip(
+                `<div>
+                     Deveron Terrace (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_e2c2138f97c68db5093406c979b4e436 = L.circleMarker(
+                [56.4603122, -2.9665487],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_1e92edcef23e823adc1ae0699e5a8763 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_47b8e263b3e72a24e7669b724a8610e8 = $(`<div id="html_47b8e263b3e72a24e7669b724a8610e8" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dock Street, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dock_street_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 3DP</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>3521</td></tr></table></div>`)[0];
+                popup_1e92edcef23e823adc1ae0699e5a8763.setContent(html_47b8e263b3e72a24e7669b724a8610e8);
+            
+        
+
+        circle_marker_e2c2138f97c68db5093406c979b4e436.bindPopup(popup_1e92edcef23e823adc1ae0699e5a8763)
+        ;
+
+        
+    
+    
+            circle_marker_e2c2138f97c68db5093406c979b4e436.bindTooltip(
+                `<div>
+                     Dock Street, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_9ad80bb7e2edaf619baa80eec5521ebb = L.circleMarker(
+                [56.4793848, -2.9050982],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_3817899b020245d70816f1693bc80d9d = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_c3564a6d56e8e08ba2f05eba5716d72c = $(`<div id="html_c3564a6d56e8e08ba2f05eba5716d72c" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Douglas Community Library</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>douglas_community_library</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 8SD</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>746</td></tr></table></div>`)[0];
+                popup_3817899b020245d70816f1693bc80d9d.setContent(html_c3564a6d56e8e08ba2f05eba5716d72c);
+            
+        
+
+        circle_marker_9ad80bb7e2edaf619baa80eec5521ebb.bindPopup(popup_3817899b020245d70816f1693bc80d9d)
+        ;
+
+        
+    
+    
+            circle_marker_9ad80bb7e2edaf619baa80eec5521ebb.bindTooltip(
+                `<div>
+                     Douglas Community Library (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_7a9cdaa03782bd7e678385ea1f2b5a26 = L.circleMarker(
+                [56.4606745, -2.9755925],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_4047f5625a8fa3a6812afc4e8b4843d8 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_24086d15d4f8d695c5d3be7b9eb0ba87 = $(`<div id="html_24086d15d4f8d695c5d3be7b9eb0ba87" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dundee House Depot, North Lindsay Street, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dundee_house_depot_north_lindsay_street_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 1QA</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>514</td></tr></table></div>`)[0];
+                popup_4047f5625a8fa3a6812afc4e8b4843d8.setContent(html_24086d15d4f8d695c5d3be7b9eb0ba87);
+            
+        
+
+        circle_marker_7a9cdaa03782bd7e678385ea1f2b5a26.bindPopup(popup_4047f5625a8fa3a6812afc4e8b4843d8)
+        ;
+
+        
+    
+    
+            circle_marker_7a9cdaa03782bd7e678385ea1f2b5a26.bindTooltip(
+                `<div>
+                     Dundee House Depot, North Lindsay Street, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_1b5c5d4bf9f9d2d905da0337f8778173 = L.circleMarker(
+                [56.4816435, -3.0248131],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_62ce13d57021a570d98be281f6d00d30 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_7ac1e32b8f74ccc6409b455421d83b46 = $(`<div id="html_7ac1e32b8f74ccc6409b455421d83b46" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dundee Ice Arena, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dundee_ice_arena_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 3QN</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>100</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>9294</td></tr></table></div>`)[0];
+                popup_62ce13d57021a570d98be281f6d00d30.setContent(html_7ac1e32b8f74ccc6409b455421d83b46);
+            
+        
+
+        circle_marker_1b5c5d4bf9f9d2d905da0337f8778173.bindPopup(popup_62ce13d57021a570d98be281f6d00d30)
+        ;
+
+        
+    
+    
+            circle_marker_1b5c5d4bf9f9d2d905da0337f8778173.bindTooltip(
+                `<div>
+                     Dundee Ice Arena, Dundee (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_b03adc397be6632d676e289596483e9d = L.circleMarker(
+                [56.4576613, -2.969612],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_7801e23fc1fab018b268e2c1948153ee = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_e545534f6f94eaf7fddcf3f842e2d3c2 = $(`<div id="html_e545534f6f94eaf7fddcf3f842e2d3c2" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dundee Railway Station</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dundee_railway_station</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 4BY</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>634</td></tr></table></div>`)[0];
+                popup_7801e23fc1fab018b268e2c1948153ee.setContent(html_e545534f6f94eaf7fddcf3f842e2d3c2);
+            
+        
+
+        circle_marker_b03adc397be6632d676e289596483e9d.bindPopup(popup_7801e23fc1fab018b268e2c1948153ee)
+        ;
+
+        
+    
+    
+            circle_marker_b03adc397be6632d676e289596483e9d.bindTooltip(
+                `<div>
+                     Dundee Railway Station (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_65fd5cc9733d0c7461743e35a077c965 = L.circleMarker(
+                [56.4576613, -2.969612],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_a9e33ab06e0d7515d232cf1b2d26e582 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_12c448f5788a472eab93291a20f40ab0 = $(`<div id="html_12c448f5788a472eab93291a20f40ab0" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Dundee Taybridge Rail Station, South Union Street, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>dundee_taybridge_rail_station_south_union_street_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>nan</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2036</td></tr></table></div>`)[0];
+                popup_a9e33ab06e0d7515d232cf1b2d26e582.setContent(html_12c448f5788a472eab93291a20f40ab0);
+            
+        
+
+        circle_marker_65fd5cc9733d0c7461743e35a077c965.bindPopup(popup_a9e33ab06e0d7515d232cf1b2d26e582)
+        ;
+
+        
+    
+    
+            circle_marker_65fd5cc9733d0c7461743e35a077c965.bindTooltip(
+                `<div>
+                     Dundee Taybridge Rail Station, South Union Street, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_808a473a1784c7621d0f28f9dd936fc0 = L.circleMarker(
+                [56.4698114, -2.8797259],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_dd3efbc32789a8d732cdfbd10a365dd9 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_83a98b89f71f404c6d1cd96e17ae3e73 = $(`<div id="html_83a98b89f71f404c6d1cd96e17ae3e73" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Eastern Primary School</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>eastern_primary_school</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD5 3AE</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>44</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1310</td></tr></table></div>`)[0];
+                popup_dd3efbc32789a8d732cdfbd10a365dd9.setContent(html_83a98b89f71f404c6d1cd96e17ae3e73);
+            
+        
+
+        circle_marker_808a473a1784c7621d0f28f9dd936fc0.bindPopup(popup_dd3efbc32789a8d732cdfbd10a365dd9)
+        ;
+
+        
+    
+    
+            circle_marker_808a473a1784c7621d0f28f9dd936fc0.bindTooltip(
+                `<div>
+                     Eastern Primary School (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_c5a2dc8d2b9d37f3bf26ea1490d10ae8 = L.circleMarker(
+                [56.461363, -2.9662611],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_0fa9cd0542a035095aa9572e4843b1eb = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_d33e176132294bcabbc922c75d395925 = $(`<div id="html_d33e176132294bcabbc922c75d395925" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Gellatly Street Car Park, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>gellatly_street_car_park_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 3DY</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>13</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>286</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>8688</td></tr></table></div>`)[0];
+                popup_0fa9cd0542a035095aa9572e4843b1eb.setContent(html_d33e176132294bcabbc922c75d395925);
+            
+        
+
+        circle_marker_c5a2dc8d2b9d37f3bf26ea1490d10ae8.bindPopup(popup_0fa9cd0542a035095aa9572e4843b1eb)
+        ;
+
+        
+    
+    
+            circle_marker_c5a2dc8d2b9d37f3bf26ea1490d10ae8.bindTooltip(
+                `<div>
+                     Gellatly Street Car Park, Dundee (13 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_5d6d097efab92d27e13416e2d47b7470 = L.circleMarker(
+                [56.457522, -2.969515],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_b69afd37457667fd0ea05416d78ab84e = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_41a5cb92ddfe602a7cdcb5b9542b4375 = $(`<div id="html_41a5cb92ddfe602a7cdcb5b9542b4375" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Greenmarket 150kW Bus Charger</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>greenmarket_150kw_bus_charger</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 4BX</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ultra_rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>300</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>8512</td></tr></table></div>`)[0];
+                popup_b69afd37457667fd0ea05416d78ab84e.setContent(html_41a5cb92ddfe602a7cdcb5b9542b4375);
+            
+        
+
+        circle_marker_5d6d097efab92d27e13416e2d47b7470.bindPopup(popup_b69afd37457667fd0ea05416d78ab84e)
+        ;
+
+        
+    
+    
+            circle_marker_5d6d097efab92d27e13416e2d47b7470.bindTooltip(
+                `<div>
+                     Greenmarket 150kW Bus Charger (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_8dd569136e830105002ddf1e32d02a17 = L.circleMarker(
+                [56.4565851, -2.9734373],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_5e515367a3f7be5b3461252dfeee18dc = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_698189727a8c0c4f90527848510d5351 = $(`<div id="html_698189727a8c0c4f90527848510d5351" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Greenmarket Multi Storey Car Park, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>greenmarket_multi_storey_car_park_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 4BX</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>5</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac;rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>138</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>5851</td></tr></table></div>`)[0];
+                popup_5e515367a3f7be5b3461252dfeee18dc.setContent(html_698189727a8c0c4f90527848510d5351);
+            
+        
+
+        circle_marker_8dd569136e830105002ddf1e32d02a17.bindPopup(popup_5e515367a3f7be5b3461252dfeee18dc)
+        ;
+
+        
+    
+    
+            circle_marker_8dd569136e830105002ddf1e32d02a17.bindTooltip(
+                `<div>
+                     Greenmarket Multi Storey Car Park, Dundee (5 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_22afacf5736dbd11d03d530e96348ec9 = L.circleMarker(
+                [56.483461, -2.934227],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_e22892d7ba159037ae448d20a9d51a5f = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_0e91cffeeffe7b3ebffe5f46d57f96ab = $(`<div id="html_0e91cffeeffe7b3ebffe5f46d57f96ab" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Housing Office East, Midmill Road, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>housing_office_east_midmill_road_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 8ES</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1443</td></tr></table></div>`)[0];
+                popup_e22892d7ba159037ae448d20a9d51a5f.setContent(html_0e91cffeeffe7b3ebffe5f46d57f96ab);
+            
+        
+
+        circle_marker_22afacf5736dbd11d03d530e96348ec9.bindPopup(popup_e22892d7ba159037ae448d20a9d51a5f)
+        ;
+
+        
+    
+    
+            circle_marker_22afacf5736dbd11d03d530e96348ec9.bindTooltip(
+                `<div>
+                     Housing Office East, Midmill Road, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_c389babffcd4b746f55563a2693a3377 = L.circleMarker(
+                [56.4717313, -3.0099183],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_b7e0ebc7b2802e593c90738e5c0b84ea = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_c9c1b256206821c73bbacde8dbca7c27 = $(`<div id="html_c9c1b256206821c73bbacde8dbca7c27" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Lochee Charging Hub, Aimer Square, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>lochee_charging_hub_aimer_square_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 3BH</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>12</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac;rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>488</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>95077</td></tr></table></div>`)[0];
+                popup_b7e0ebc7b2802e593c90738e5c0b84ea.setContent(html_c9c1b256206821c73bbacde8dbca7c27);
+            
+        
+
+        circle_marker_c389babffcd4b746f55563a2693a3377.bindPopup(popup_b7e0ebc7b2802e593c90738e5c0b84ea)
+        ;
+
+        
+    
+    
+            circle_marker_c389babffcd4b746f55563a2693a3377.bindTooltip(
+                `<div>
+                     Lochee Charging Hub, Aimer Square, Dundee (12 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_8508151341853667cf36a0946a35a95a = L.circleMarker(
+                [56.4679439, -3.0394642],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_3de0e63e5c76a3d42c87987e47352fb0 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_c5424a9cfb94cc01d887689288be401e = $(`<div id="html_c5424a9cfb94cc01d887689288be401e" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Menzieshill Community Centre</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>menzieshill_community_centre</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD2 4BH</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>635</td></tr></table></div>`)[0];
+                popup_3de0e63e5c76a3d42c87987e47352fb0.setContent(html_c5424a9cfb94cc01d887689288be401e);
+            
+        
+
+        circle_marker_8508151341853667cf36a0946a35a95a.bindPopup(popup_3de0e63e5c76a3d42c87987e47352fb0)
+        ;
+
+        
+    
+    
+            circle_marker_8508151341853667cf36a0946a35a95a.bindTooltip(
+                `<div>
+                     Menzieshill Community Centre (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_ab0c60ec9b453f8d51b2614757162591 = L.circleMarker(
+                [56.4849476, -2.8954416],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_136248e2e4dfc8de5da7e972c1368672 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_9c98c92c0b42801ea09b19f13ddd3340 = $(`<div id="html_9c98c92c0b42801ea09b19f13ddd3340" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Michelin Scotland Innovation Park</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>michelin_scotland_innovation_park</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 8UQ</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>3265</td></tr></table></div>`)[0];
+                popup_136248e2e4dfc8de5da7e972c1368672.setContent(html_9c98c92c0b42801ea09b19f13ddd3340);
+            
+        
+
+        circle_marker_ab0c60ec9b453f8d51b2614757162591.bindPopup(popup_136248e2e4dfc8de5da7e972c1368672)
+        ;
+
+        
+    
+    
+            circle_marker_ab0c60ec9b453f8d51b2614757162591.bindTooltip(
+                `<div>
+                     Michelin Scotland Innovation Park (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_e21380e04d6b79196812ccf26d13f3fb = L.circleMarker(
+                [56.49305, -2.958646],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_ae8ca5e55a4f949f1dc95d62312c13a0 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_9ef3fe552a4391f95a6c948eaa77b5c4 = $(`<div id="html_9ef3fe552a4391f95a6c948eaa77b5c4" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Mill O Mains Primary School</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>mill_o_mains_primary_school</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 9RD</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>219</td></tr></table></div>`)[0];
+                popup_ae8ca5e55a4f949f1dc95d62312c13a0.setContent(html_9ef3fe552a4391f95a6c948eaa77b5c4);
+            
+        
+
+        circle_marker_e21380e04d6b79196812ccf26d13f3fb.bindPopup(popup_ae8ca5e55a4f949f1dc95d62312c13a0)
+        ;
+
+        
+    
+    
+            circle_marker_e21380e04d6b79196812ccf26d13f3fb.bindTooltip(
+                `<div>
+                     Mill O Mains Primary School (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_1a6f9ef0534dc576be41a48dc44bbd62 = L.circleMarker(
+                [56.457336, -2.978272],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_fb8f46c056748bed6450cfbd5d8917d6 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_7403ef03a84d6984fcdf2b2b1163a3c3 = $(`<div id="html_7403ef03a84d6984fcdf2b2b1163a3c3" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Nethergate, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>nethergate_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 4HN</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2257</td></tr></table></div>`)[0];
+                popup_fb8f46c056748bed6450cfbd5d8917d6.setContent(html_7403ef03a84d6984fcdf2b2b1163a3c3);
+            
+        
+
+        circle_marker_1a6f9ef0534dc576be41a48dc44bbd62.bindPopup(popup_fb8f46c056748bed6450cfbd5d8917d6)
+        ;
+
+        
+    
+    
+            circle_marker_1a6f9ef0534dc576be41a48dc44bbd62.bindTooltip(
+                `<div>
+                     Nethergate, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_5bc20eb8db906e59ce142d9ab4d8ce05 = L.circleMarker(
+                [56.4640377, -2.9632878],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_f22616c2d113fcd3a41f10403b18dc10 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_be825d924f5b2399145004aeec55dae9 = $(`<div id="html_be825d924f5b2399145004aeec55dae9" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Olympia Hub</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>olympia_hub</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 3HE</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>1186</td></tr></table></div>`)[0];
+                popup_f22616c2d113fcd3a41f10403b18dc10.setContent(html_be825d924f5b2399145004aeec55dae9);
+            
+        
+
+        circle_marker_5bc20eb8db906e59ce142d9ab4d8ce05.bindPopup(popup_f22616c2d113fcd3a41f10403b18dc10)
+        ;
+
+        
+    
+    
+            circle_marker_5bc20eb8db906e59ce142d9ab4d8ce05.bindTooltip(
+                `<div>
+                     Olympia Hub (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_98c97e5b73e2eb66ecb836cd9c787f0c = L.circleMarker(
+                [56.463861, -2.963022],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_8c05e18fd206ae2f92da056067489efb = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_eb1a621e805f79a6f973ae12e9fd5895 = $(`<div id="html_eb1a621e805f79a6f973ae12e9fd5895" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Olympia Multi-Storey Car Park, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>olympia_multi_storey_car_park_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 3JU</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>4</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>88</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2888</td></tr></table></div>`)[0];
+                popup_8c05e18fd206ae2f92da056067489efb.setContent(html_eb1a621e805f79a6f973ae12e9fd5895);
+            
+        
+
+        circle_marker_98c97e5b73e2eb66ecb836cd9c787f0c.bindPopup(popup_8c05e18fd206ae2f92da056067489efb)
+        ;
+
+        
+    
+    
+            circle_marker_98c97e5b73e2eb66ecb836cd9c787f0c.bindTooltip(
+                `<div>
+                     Olympia Multi-Storey Car Park, Dundee (4 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_3f9488f50b05aad0798e8c11102074e4 = L.circleMarker(
+                [56.467139, -3.039],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_8feff1dd6d63f77ce745e54b105c661f = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_5c50d311077d3bfeddabd86383790022 = $(`<div id="html_5c50d311077d3bfeddabd86383790022" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Orleans Place, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>orleans_place_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>nan</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2278</td></tr></table></div>`)[0];
+                popup_8feff1dd6d63f77ce745e54b105c661f.setContent(html_5c50d311077d3bfeddabd86383790022);
+            
+        
+
+        circle_marker_3f9488f50b05aad0798e8c11102074e4.bindPopup(popup_8feff1dd6d63f77ce745e54b105c661f)
+        ;
+
+        
+    
+    
+            circle_marker_3f9488f50b05aad0798e8c11102074e4.bindTooltip(
+                `<div>
+                     Orleans Place, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_3584d7df3f9deddf845acba5c51a50d6 = L.circleMarker(
+                [56.4659398, -2.962377],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_bd7b41d6a60a344dabacdd4be30188bc = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_dbb7e2108820d5b8fd2b762fbf7efbd0 = $(`<div id="html_dbb7e2108820d5b8fd2b762fbf7efbd0" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Princes Street Charging Hub, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>princes_street_charging_hub_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 6BY</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>9</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac;rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>394</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>100602</td></tr></table></div>`)[0];
+                popup_bd7b41d6a60a344dabacdd4be30188bc.setContent(html_dbb7e2108820d5b8fd2b762fbf7efbd0);
+            
+        
+
+        circle_marker_3584d7df3f9deddf845acba5c51a50d6.bindPopup(popup_bd7b41d6a60a344dabacdd4be30188bc)
+        ;
+
+        
+    
+    
+            circle_marker_3584d7df3f9deddf845acba5c51a50d6.bindTooltip(
+                `<div>
+                     Princes Street Charging Hub, Dundee (9 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_bf7218eec47a8ae2bbbd27b8143c9385 = L.circleMarker(
+                [56.4678511, -2.8724124],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_4d37ff9f33bb9d034cf1e244cef4e6fe = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_071a4b03bd3f22a1c0b27d6e8e6860f9 = $(`<div id="html_071a4b03bd3f22a1c0b27d6e8e6860f9" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Queen Street Charging Hub, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>queen_street_charging_hub_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD5 2HD</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>10</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac;rapid</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>388</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>68702</td></tr></table></div>`)[0];
+                popup_4d37ff9f33bb9d034cf1e244cef4e6fe.setContent(html_071a4b03bd3f22a1c0b27d6e8e6860f9);
+            
+        
+
+        circle_marker_bf7218eec47a8ae2bbbd27b8143c9385.bindPopup(popup_4d37ff9f33bb9d034cf1e244cef4e6fe)
+        ;
+
+        
+    
+    
+            circle_marker_bf7218eec47a8ae2bbbd27b8143c9385.bindTooltip(
+                `<div>
+                     Queen Street Charging Hub, Dundee (10 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_91487a2a273860f35108982087b3d88f = L.circleMarker(
+                [56.4820818, -2.9559291],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_d83546cac04518c069cdc1598589b7ad = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_1f470a0f4196ed32074f97d3c99370cb = $(`<div id="html_1f470a0f4196ed32074f97d3c99370cb" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>RPC Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>rpc_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 9BX</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>44</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>943</td></tr></table></div>`)[0];
+                popup_d83546cac04518c069cdc1598589b7ad.setContent(html_1f470a0f4196ed32074f97d3c99370cb);
+            
+        
+
+        circle_marker_91487a2a273860f35108982087b3d88f.bindPopup(popup_d83546cac04518c069cdc1598589b7ad)
+        ;
+
+        
+    
+    
+            circle_marker_91487a2a273860f35108982087b3d88f.bindTooltip(
+                `<div>
+                     RPC Dundee (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_95ac9d3da3287cb110a76da10ba98bf5 = L.circleMarker(
+                [56.458878, -2.9769227],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_56ecf6724ccc6935bf141121a93cd602 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_e59b12a2309b3c81d576a6dc10f95d20 = $(`<div id="html_e59b12a2309b3c81d576a6dc10f95d20" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>South Tay Street (Car Club / Public)</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>south_tay_street_car_club_public</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 1PF</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>4367</td></tr></table></div>`)[0];
+                popup_56ecf6724ccc6935bf141121a93cd602.setContent(html_e59b12a2309b3c81d576a6dc10f95d20);
+            
+        
+
+        circle_marker_95ac9d3da3287cb110a76da10ba98bf5.bindPopup(popup_56ecf6724ccc6935bf141121a93cd602)
+        ;
+
+        
+    
+    
+            circle_marker_95ac9d3da3287cb110a76da10ba98bf5.bindTooltip(
+                `<div>
+                     South Tay Street (Car Club / Public) (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_dc5ee3593cc0c8968f88ac03a3df7e8b = L.circleMarker(
+                [56.4631551, -2.9662628],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_fd99b563587b09670bd1e730dfe263f5 = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_cdbde191376e3301a746c2a0bbacd8e6 = $(`<div id="html_cdbde191376e3301a746c2a0bbacd8e6" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Trades Lane, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>trades_lane_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD1 2ER</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>1</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>22</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>299</td></tr></table></div>`)[0];
+                popup_fd99b563587b09670bd1e730dfe263f5.setContent(html_cdbde191376e3301a746c2a0bbacd8e6);
+            
+        
+
+        circle_marker_dc5ee3593cc0c8968f88ac03a3df7e8b.bindPopup(popup_fd99b563587b09670bd1e730dfe263f5)
+        ;
+
+        
+    
+    
+            circle_marker_dc5ee3593cc0c8968f88ac03a3df7e8b.bindTooltip(
+                `<div>
+                     Trades Lane, Dundee (1 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_7301c97d330cca7c73734261d5bffdd7 = L.circleMarker(
+                [56.4898723, -2.9163685],
+                {"bubblingMouseEvents": true, "color": "#102a43", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#0f766e", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 1}
+            ).addTo(marker_cluster_2b826d1d21ddad6205f08f377207754f);
+        
+    
+        var popup_7ee7c318ebe263a2b574454958d1116a = L.popup({
+  "maxWidth": 360,
+});
+
+        
+            
+                var html_2a05858562c9e443f9ef4a3faf1e98fb = $(`<div id="html_2a05858562c9e443f9ef4a3faf1e98fb" style="width: 100.0%; height: 100.0%;"><table><tr><th style='text-align:left;padding-right:8px;'>Station Name</th><td>Whitfield Centre, Lothian Crescent, Dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Station ID</th><td>whitfield_centre_lothian_crescent_dundee</td></tr><tr><th style='text-align:left;padding-right:8px;'>Postcode</th><td>DD4 0HU</td></tr><tr><th style='text-align:left;padding-right:8px;'>Charge Points</th><td>2</td></tr><tr><th style='text-align:left;padding-right:8px;'>Connector Mix</th><td>ac</td></tr><tr><th style='text-align:left;padding-right:8px;'>Proxy Max Power (kW)</th><td>44</td></tr><tr><th style='text-align:left;padding-right:8px;'>Sessions Total</th><td>2827</td></tr></table></div>`)[0];
+                popup_7ee7c318ebe263a2b574454958d1116a.setContent(html_2a05858562c9e443f9ef4a3faf1e98fb);
+            
+        
+
+        circle_marker_7301c97d330cca7c73734261d5bffdd7.bindPopup(popup_7ee7c318ebe263a2b574454958d1116a)
+        ;
+
+        
+    
+    
+            circle_marker_7301c97d330cca7c73734261d5bffdd7.bindTooltip(
+                `<div>
+                     Whitfield Centre, Lothian Crescent, Dundee (2 CPs)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            marker_cluster_2b826d1d21ddad6205f08f377207754f.addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+        
+    
+            var layer_control_8e5d2f5d0bd4b65c8552ee3079e0a4e7_layers = {
+                base_layers : {
+                    "OpenStreetMap" : tile_layer_17a5ef869b600065a2d74728fa8cec37,
+                },
+                overlays :  {
+                    "Dundee Stations" : marker_cluster_2b826d1d21ddad6205f08f377207754f,
+                },
+            };
+            let layer_control_8e5d2f5d0bd4b65c8552ee3079e0a4e7 = L.control.layers(
+                layer_control_8e5d2f5d0bd4b65c8552ee3079e0a4e7_layers.base_layers,
+                layer_control_8e5d2f5d0bd4b65c8552ee3079e0a4e7_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": false,
+  "autoZIndex": true,
+}
+            ).addTo(map_11ea923a4c96bdae1de7f76ec0c64941);
+
+        
+</script>
+</html>

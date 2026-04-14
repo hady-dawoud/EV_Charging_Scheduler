@@ -1,0 +1,40 @@
+section,rank,item,value,station_id,station_name,notes
+overview,,total_rows_clean,387843,,,
+overview,,total_rows_model_ready,377070,,,
+overview,,rows_removed,10773,,,Rows may satisfy multiple exclusion conditions below.
+qc_flags,,flag_missing_energy,3064,,,
+qc_flags,,flag_missing_departure,9,,,
+qc_flags,,flag_nonpositive_duration,8087,,,
+qc_flags,,flag_nonpositive_energy,1202,,,
+qc_flags,,flag_extreme_duration_gt_24h,0,,,
+qc_flags,,flag_extreme_duration_gt_48h,0,,,
+qc_flags,,flag_implied_power_above_connector_limit,643,,,
+qc_flags,,flag_cp_id_multi_station,5975,,,
+model_filter,,excluded_missing_arrival_ts,0,,,Counts are not mutually exclusive.
+model_filter,,excluded_missing_or_nonpositive_session_minutes,8096,,,Counts are not mutually exclusive.
+model_filter,,excluded_missing_or_nonpositive_energy,4266,,,Counts are not mutually exclusive.
+model_filter,,excluded_implied_power_above_connector_limit,643,,,Counts are not mutually exclusive.
+top_stations_by_sessions,1,sessions_total,100602,princes_street_charging_hub_dundee,"Princes Street Charging Hub, Dundee",
+top_stations_by_sessions,2,sessions_total,95077,lochee_charging_hub_aimer_square_dundee,"Lochee Charging Hub, Aimer Square, Dundee",
+top_stations_by_sessions,3,sessions_total,68702,queen_street_charging_hub_dundee,"Queen Street Charging Hub, Dundee",
+top_stations_by_sessions,4,sessions_total,50449,clepington_road_4th_hub,Clepington Road - 4th Hub,
+top_stations_by_sessions,5,sessions_total,9294,dundee_ice_arena_dundee,"Dundee Ice Arena, Dundee",
+top_stations_by_sessions,6,sessions_total,8688,gellatly_street_car_park_dundee,"Gellatly Street Car Park, Dundee",
+top_stations_by_sessions,7,sessions_total,8512,greenmarket_150kw_bus_charger,Greenmarket 150kW Bus Charger,
+top_stations_by_sessions,8,sessions_total,5851,greenmarket_multi_storey_car_park_dundee,"Greenmarket Multi Storey Car Park, Dundee",
+top_stations_by_sessions,9,sessions_total,4367,south_tay_street_car_club_public,South Tay Street (Car Club / Public),
+top_stations_by_sessions,10,sessions_total,3521,dock_street_dundee,"Dock Street, Dundee",
+top_stations_by_cp_count_total,1,cp_count_total,13,gellatly_street_car_park_dundee,"Gellatly Street Car Park, Dundee",
+top_stations_by_cp_count_total,2,cp_count_total,12,lochee_charging_hub_aimer_square_dundee,"Lochee Charging Hub, Aimer Square, Dundee",
+top_stations_by_cp_count_total,3,cp_count_total,10,queen_street_charging_hub_dundee,"Queen Street Charging Hub, Dundee",
+top_stations_by_cp_count_total,4,cp_count_total,9,princes_street_charging_hub_dundee,"Princes Street Charging Hub, Dundee",
+top_stations_by_cp_count_total,5,cp_count_total,6,clepington_road_4th_hub,Clepington Road - 4th Hub,
+top_stations_by_cp_count_total,6,cp_count_total,5,greenmarket_multi_storey_car_park_dundee,"Greenmarket Multi Storey Car Park, Dundee",
+top_stations_by_cp_count_total,7,cp_count_total,4,olympia_multi_storey_car_park_dundee,"Olympia Multi-Storey Car Park, Dundee",
+top_stations_by_cp_count_total,8,cp_count_total,2,dundee_ice_arena_dundee,"Dundee Ice Arena, Dundee",
+top_stations_by_cp_count_total,9,cp_count_total,2,greenmarket_150kw_bus_charger,Greenmarket 150kW Bus Charger,
+top_stations_by_cp_count_total,10,cp_count_total,2,whitfield_centre_lothian_crescent_dundee,"Whitfield Centre, Lothian Crescent, Dundee",
+suspicious_notes,1,cp_id_multi_station_conflicts,3 conflicting cp_id values detected.,,,"52399, 60662, APT50348"
+suspicious_notes,2,extreme_duration_gt_48h,0 rows exceed 48 hours.,,,Long parking behavior may merit a later business rule review.
+suspicious_notes,3,missing_departure_rows,9 rows have missing departure timestamps.,,,These rows are excluded from the model-ready view only when duration is also missing or invalid.
+suspicious_notes,4,map_rendering_method,fallback_scatter,,,"geopandas/contextily were unavailable, so plots use a deterministic lon/lat scatter fallback."

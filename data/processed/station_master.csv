@@ -1,0 +1,36 @@
+station_id,station_name,postcode_mode,cp_count_total,connector_mix_total,station_max_power_kw_proxy,first_seen_year,last_seen_year,sessions_total,energy_total_kwh,latitude,longitude,location_source,notes
+alexander_street_dundee,Alexander Street - Dundee,DD1 2AE,1,ac,22,2021,2025,2620,46481.75,56.469369,-2.968713,postcodes_io_centroid,Using dataset postcode centroid; station name and street lookup do not align cleanly.
+balmerino_road,Balmerino Road,DD4 8RN,1,ac,22,2023,2025,69,893.101,56.4808461,-2.9100671,osm_road_match,Matched to Balmerino Road in Dundee using the station road name and postcode context.
+caird_avenue,Caird Avenue,,1,ac,22,2022,2024,375,5742.15,56.4763808,-2.9783902,osm_road_match,No postcode in the dataset; using the first deterministic Caird Avenue road match in Dundee.
+camperdown_country_park,Camperdown Country Park,DD2 4TF,2,ac,44,2021,2025,2030,15798.132,56.4810593,-3.0377513,osm_named_feature,Matched to the named Camperdown Country Park feature rather than a charger-specific marker.
+clepington_road_4th_hub,Clepington Road - 4th Hub,DD3 8PL,6,rapid;ultra_rapid,400,2023,2025,50449,1228064.598,56.478799,-2.985238,postcodes_io_centroid,Using the resolved Dundee postcode centroid for the Clepington Road hub.
+coldside_nursery,Coldside Nursery,DD3 8AR,1,ac,22,2024,2025,17,217.9,56.4757059,-2.9785033,osm_named_feature,
+craigowen_road,Craigowen Road,DD2 4NL,1,ac,22,2021,2025,1474,19384.374,56.473731,-3.035025,postcodes_io_centroid,Using the resolved Dundee postcode centroid for Craigowen Road.
+dawson_park_broughty_ferry,"Dawson Park, Broughty Ferry",DD5 1PG,1,ac,22,2021,2025,1323,15137.412,56.472647,-2.898492,postcodes_io_centroid,"Using the dataset postcode centroid for Dawson Park, Broughty Ferry."
+derby_street,Derby Street,DD4 6TQ,1,ac,22,2022,2025,1031,29587.944,56.472804,-2.959175,postcodes_io_centroid,Street-name search was ambiguous; using the dataset postcode centroid instead.
+deveron_terrace,Deveron Terrace,DD2 4AJ,1,ac,22,2024,2025,361,6466.786,56.4684347,-3.0478484,osm_road_match,Matched to the named Deveron Terrace road in Dundee.
+dock_street_dundee,"Dock Street, Dundee",DD1 3DP,1,ac,22,2021,2025,3521,45629.747,56.4603122,-2.9665487,osm_road_match,
+douglas_community_library,Douglas Community Library,DD4 8SD,1,ac,22,2021,2025,746,9094.271,56.4793848,-2.9050982,osm_named_feature,
+dundee_house_depot_north_lindsay_street_dundee,"Dundee House Depot, North Lindsay Street, Dundee",DD1 1QA,1,ac,22,2021,2025,514,5027.891,56.4606745,-2.9755925,osm_road_match,Matched to North Lindsay Street because the exact depot was not exposed as a named map feature.
+dundee_ice_arena_dundee,"Dundee Ice Arena, Dundee",DD2 3QN,2,rapid,100,2021,2025,9294,179301.145,56.4816435,-3.0248131,osm_named_feature,
+dundee_railway_station,Dundee Railway Station,DD1 4BY,1,ac,22,2024,2025,634,7648.941,56.4576613,-2.969612,osm_named_feature,
+dundee_taybridge_rail_station_south_union_street_dundee,"Dundee Taybridge Rail Station, South Union Street, Dundee",,1,ac,22,2021,2024,2036,20241.136,56.4576613,-2.969612,manual_shared_site,Mapped to the Dundee Railway Station site because the dataset station name points to the same South Union Street rail venue.
+eastern_primary_school,Eastern Primary School,DD5 3AE,2,ac,44,2022,2025,1310,21714.894,56.4698114,-2.8797259,osm_named_feature,
+gellatly_street_car_park_dundee,"Gellatly Street Car Park, Dundee",DD1 3DY,13,ac,286,2021,2025,8688,150866.191,56.461363,-2.9662611,osm_named_feature,
+greenmarket_150kw_bus_charger,Greenmarket 150kW Bus Charger,DD1 4BX,2,ultra_rapid,300,2022,2025,8512,1330616.645,56.457522,-2.969515,postcodes_io_centroid,Using the Greenmarket postcode centroid; this station should be reviewed against any future charger-specific site map.
+greenmarket_multi_storey_car_park_dundee,"Greenmarket Multi Storey Car Park, Dundee",DD1 4BX,5,ac;rapid,138,2021,2025,5851,99079.549,56.4565851,-2.9734373,osm_named_feature,
+housing_office_east_midmill_road_dundee,"Housing Office East, Midmill Road, Dundee",DD4 8ES,1,ac,22,2021,2025,1443,23734.366,56.483461,-2.934227,postcodes_io_centroid,Using the resolved Midmill Road postcode centroid.
+lochee_charging_hub_aimer_square_dundee,"Lochee Charging Hub, Aimer Square, Dundee",DD2 3BH,12,ac;rapid,488,2021,2025,95077,1503700.391,56.4717313,-3.0099183,osm_square_match,
+menzieshill_community_centre,Menzieshill Community Centre,DD2 4BH,1,ac,22,2024,2025,635,9411.51,56.4679439,-3.0394642,osm_named_feature,
+michelin_scotland_innovation_park,Michelin Scotland Innovation Park,DD4 8UQ,1,ac,22,2021,2025,3265,81247.365,56.4849476,-2.8954416,osm_named_feature,
+mill_o_mains_primary_school,Mill O Mains Primary School,DD4 9RD,1,ac,22,2022,2025,219,2488.161,56.49305,-2.958646,postcodes_io_centroid,Using the resolved school postcode centroid.
+nethergate_dundee,"Nethergate, Dundee",DD1 4HN,1,ac,22,2021,2025,2257,27974.691,56.457336,-2.978272,postcodes_io_centroid,Using the dataset postcode centroid for Nethergate.
+olympia_hub,Olympia Hub,DD1 3HE,1,ac,22,2021,2025,1186,18333.134,56.4640377,-2.9632878,osm_named_feature,
+olympia_multi_storey_car_park_dundee,"Olympia Multi-Storey Car Park, Dundee",DD1 3JU,4,ac,88,2021,2025,2888,47546.642,56.463861,-2.963022,postcodes_io_centroid,Using the Olympia postcode centroid; this row should be reviewed if a car-park polygon or charger-specific marker becomes available.
+orleans_place_dundee,"Orleans Place, Dundee",,1,ac,22,2021,2024,2278,37855.559,56.467139,-3.039,manual_street_postcode_match,Dataset postcode was missing; using the Orleans Place Dundee street/postcode match captured during manual lookup.
+princes_street_charging_hub_dundee,"Princes Street Charging Hub, Dundee",DD4 6BY,9,ac;rapid,394,2021,2025,100602,1814928.667,56.4659398,-2.962377,osm_road_match,
+queen_street_charging_hub_dundee,"Queen Street Charging Hub, Dundee",DD5 2HD,10,ac;rapid,388,2021,2025,68702,1289046.264,56.4678511,-2.8724124,osm_road_match,
+rpc_dundee,RPC Dundee,DD4 9BX,2,ac,44,2022,2025,943,8222.066,56.4820818,-2.9559291,osm_named_feature,
+south_tay_street_car_club_public,South Tay Street (Car Club / Public),DD1 1PF,1,ac,22,2021,2025,4367,62095.125,56.458878,-2.9769227,osm_road_match,
+trades_lane_dundee,"Trades Lane, Dundee",DD1 2ER,1,ac,22,2023,2025,299,4208.884,56.4631551,-2.9662628,osm_road_match,
+whitfield_centre_lothian_crescent_dundee,"Whitfield Centre, Lothian Crescent, Dundee",DD4 0HU,2,ac,44,2021,2025,2827,24288.432,56.4898723,-2.9163685,osm_named_feature,
