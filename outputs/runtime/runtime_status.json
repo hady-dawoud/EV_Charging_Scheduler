@@ -1,0 +1,18 @@
+{
+  "loop_running": false,
+  "loop_interval_seconds": 1.0,
+  "runtime_mode": "hybrid",
+  "active_policy": "overload_aware",
+  "demand_multiplier": 1.35,
+  "warm_start_minutes": 240,
+  "replay_year": 2024,
+  "replay_day": "2024-06-10",
+  "operational_start_ts": "2024-06-10T15:00:00",
+  "simulated_timestamp": "2024-06-10T19:30:00",
+  "latest_external_request_id": "external_65dd34b9d7ce",
+  "active_request_count": 2,
+  "queued_request_count": 0,
+  "active_session_count": 11,
+  "completed_requests_total": 245,
+  "missed_requests_total": 14
+}

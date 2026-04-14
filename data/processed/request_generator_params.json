@@ -1,0 +1,211 @@
+{
+  "version": "dundee_v1_replay_priors",
+  "timebase_minutes": 15,
+  "source_years": [
+    2023,
+    2024
+  ],
+  "request_counts_by_year": {
+    "2023": 117701,
+    "2024": 90320
+  },
+  "arrival_distributions": {
+    "hour_share": {
+      "0": 0.018594,
+      "1": 0.021724,
+      "2": 0.014239,
+      "3": 0.011427,
+      "4": 0.011874,
+      "5": 0.011931,
+      "6": 0.014268,
+      "7": 0.029088,
+      "8": 0.043313,
+      "9": 0.059552,
+      "10": 0.064104,
+      "11": 0.070844,
+      "12": 0.072632,
+      "13": 0.073858,
+      "14": 0.072002,
+      "15": 0.066618,
+      "16": 0.060254,
+      "17": 0.054672,
+      "18": 0.049505,
+      "19": 0.049461,
+      "20": 0.046683,
+      "21": 0.036467,
+      "22": 0.024772,
+      "23": 0.022118
+    },
+    "weekday_type_share": {
+      "weekday": 0.712144,
+      "weekend": 0.287856
+    },
+    "month_share": {
+      "1": 0.09674,
+      "2": 0.089577,
+      "3": 0.093279,
+      "4": 0.079473,
+      "5": 0.078247,
+      "6": 0.07394,
+      "7": 0.074132,
+      "8": 0.077127,
+      "9": 0.080429,
+      "10": 0.072531,
+      "11": 0.090606,
+      "12": 0.093918
+    }
+  },
+  "requested_energy_kwh_summary": {
+    "count": 208021,
+    "mean": 22.738,
+    "median": 16.704,
+    "std": 30.125,
+    "min": 0.001,
+    "p10": 5.134,
+    "p25": 9.867,
+    "p75": 26.226,
+    "p90": 38.823,
+    "p95": 48.133,
+    "max": 329.584
+  },
+  "requested_duration_minutes_summary": {
+    "count": 208021,
+    "mean": 51.525,
+    "median": 30.0,
+    "std": 85.073,
+    "min": 15.0,
+    "p10": 15.0,
+    "p25": 15.0,
+    "p75": 45.0,
+    "p90": 90.0,
+    "p95": 120.0,
+    "max": 1035.0
+  },
+  "aligned_window_minutes_summary": {
+    "count": 208021,
+    "mean": 92.747,
+    "median": 60.0,
+    "std": 165.618,
+    "min": 15.0,
+    "p10": 30.0,
+    "p25": 45.0,
+    "p75": 75.0,
+    "p90": 135.0,
+    "p95": 225.0,
+    "max": 1455.0
+  },
+  "slack_minutes_summary": {
+    "count": 208021,
+    "mean": 41.222,
+    "median": 15.0,
+    "std": 101.101,
+    "min": 0.0,
+    "p10": 0.0,
+    "p25": 15.0,
+    "p75": 30.0,
+    "p90": 60.0,
+    "p95": 120.0,
+    "max": 1425.0
+  },
+  "zone_level_demand_share": {
+    "request_share": {
+      "zone_central_waterfront": 0.344071,
+      "zone_east_corridor": 0.183933,
+      "zone_north_inner": 0.196048,
+      "zone_west_lochee": 0.275948
+    },
+    "energy_share": {
+      "zone_central_waterfront": 0.444884,
+      "zone_east_corridor": 0.161414,
+      "zone_north_inner": 0.195657,
+      "zone_west_lochee": 0.198045
+    }
+  },
+  "user_preference_mode": {
+    "assignment_method": "stable SHA-256 hash bucket by session_id and connector_type",
+    "connector_type_distributions": {
+      "ac": {
+        "closest": 0.5,
+        "cheapest": 0.35,
+        "fastest": 0.15
+      },
+      "rapid": {
+        "closest": 0.25,
+        "cheapest": 0.15,
+        "fastest": 0.6
+      },
+      "ultra_rapid": {
+        "closest": 0.15,
+        "cheapest": 0.1,
+        "fastest": 0.75
+      },
+      "default": {
+        "closest": 0.4,
+        "cheapest": 0.3,
+        "fastest": 0.3
+      }
+    },
+    "realized_share": {
+      "cheapest": 0.177429,
+      "closest": 0.283515,
+      "fastest": 0.539056
+    },
+    "realized_share_by_connector_type": {
+      "ac": {
+        "cheapest": 0.352356,
+        "closest": 0.501089,
+        "fastest": 0.146555
+      },
+      "rapid": {
+        "cheapest": 0.149408,
+        "closest": 0.251169,
+        "fastest": 0.599423
+      },
+      "ultra_rapid": {
+        "cheapest": 0.102042,
+        "closest": 0.157401,
+        "fastest": 0.740557
+      }
+    }
+  },
+  "charger_type_preference_mapping": {
+    "mapping": {
+      "ac": "AC",
+      "rapid": "Rapid",
+      "ultra_rapid": "UltraRapid"
+    },
+    "fallback": "Any"
+  },
+  "dropped_session_counts": [
+    {
+      "request_year": 2023,
+      "drop_reason": "excluded_by_model_ready_qc",
+      "count": 1349
+    },
+    {
+      "request_year": 2023,
+      "drop_reason": "technical_duration_exceeds_window",
+      "count": 15
+    },
+    {
+      "request_year": 2024,
+      "drop_reason": "excluded_by_model_ready_qc",
+      "count": 4324
+    },
+    {
+      "request_year": 2024,
+      "drop_reason": "technical_duration_exceeds_window",
+      "count": 17
+    }
+  ],
+  "assumptions": {
+    "requested_duration_minutes": "Derived from requested energy at the observed connector limit, rounded to 15-minute slots, then expanded within the observed dwell window based on the deterministic user preference mode.",
+    "latest_finish_ts": "Observed approximate departure timestamp from the Dundee model-ready session.",
+    "latest_finish_slot": "Observed latest finish rounded up to the 15-minute simulator time base."
+  },
+  "exogenous_inputs": {
+    "background_load": "Transformer-level deterministic load profile scaled by synthetic transformer capacity, time-of-day block, weekday/weekend, zone multiplier, and a mild seasonal multiplier.",
+    "price_table": "System-wide deterministic TOU tariff in GBP/kWh on the same 15-minute time base.",
+    "pv_profile": "Optional normalized daylight-shaped PV capacity factor profile on the same 15-minute time base."
+  }
+}

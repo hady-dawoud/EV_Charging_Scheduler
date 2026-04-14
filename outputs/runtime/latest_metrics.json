@@ -1,0 +1,39 @@
+{
+  "simulated_timestamp": "2024-06-10T19:30:00",
+  "active_policy": "overload_aware",
+  "active_request_count": 2,
+  "queued_request_count": 0,
+  "active_session_count": 11,
+  "completed_requests_total": 245,
+  "missed_requests_total": 14,
+  "overload_event_count": 0,
+  "queue_length_total": 0,
+  "requests_seen_total": 272,
+  "queue_length_by_zone": {},
+  "requests_by_zone": {
+    "zone_west_lochee": 5,
+    "zone_north_inner": 2,
+    "zone_central_waterfront": 5,
+    "zone_east_corridor": 1
+  },
+  "transformer_loading_kw": {
+    "tx_central_market": 387.019,
+    "tx_central_waterfront": 539.782,
+    "tx_east_broughty": 59.94,
+    "tx_east_queen_street": 199.309,
+    "tx_north_clepington": 215.87,
+    "tx_north_midcraigie": 56.884,
+    "tx_west_camperdown": 58.718,
+    "tx_west_lochee": 399.68
+  },
+  "transformer_headroom_kw": {
+    "tx_central_market": 62.981,
+    "tx_central_waterfront": 210.218,
+    "tx_east_broughty": 90.06,
+    "tx_east_queen_street": 200.691,
+    "tx_north_clepington": 184.13,
+    "tx_north_midcraigie": 93.116,
+    "tx_west_camperdown": 91.282,
+    "tx_west_lochee": 100.32
+  }
+}
