@@ -1,0 +1,108 @@
+{
+  "request_id": "external_df2f0e43d757",
+  "client_request_id": "demo-mobile-001",
+  "simulated_timestamp": "2024-06-10T01:00:00",
+  "zone_id": "zone_central_waterfront",
+  "top_recommendation": {
+    "station_id": "greenmarket_150kw_bus_charger",
+    "station_name": "Greenmarket 150kW Bus Charger",
+    "zone_id": "zone_central_waterfront",
+    "transformer_id": "tx_central_market",
+    "score": 0.7479,
+    "distance_km": 0.502,
+    "estimated_wait_minutes": 0,
+    "estimated_duration_minutes": 15,
+    "estimated_cost_gbp": 4.86,
+    "transformer_headroom_kw": 369.644,
+    "current_queue": 0,
+    "utilization": 0.0,
+    "charger_compatible": true,
+    "reason_tags": [
+      "nearby",
+      "low_wait",
+      "high_headroom",
+      "low_cost"
+    ],
+    "metadata": {
+      "connector_mix_total": "ultra_rapid"
+    }
+  },
+  "alternatives": [
+    {
+      "station_id": "princes_street_charging_hub_dundee",
+      "station_name": "Princes Street Charging Hub, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7306,
+      "distance_km": 0.677,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 45,
+      "estimated_cost_gbp": 4.86,
+      "transformer_headroom_kw": 576.263,
+      "current_queue": 0,
+      "utilization": 0.1111,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac;rapid"
+      }
+    },
+    {
+      "station_id": "greenmarket_multi_storey_car_park_dundee",
+      "station_name": "Greenmarket Multi Storey Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_market",
+      "score": 0.6679,
+      "distance_km": 0.625,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.86,
+      "transformer_headroom_kw": 369.644,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac;rapid"
+      }
+    },
+    {
+      "station_id": "lochee_charging_hub_aimer_square_dundee",
+      "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
+      "zone_id": "zone_west_lochee",
+      "transformer_id": "tx_west_lochee",
+      "score": 0.6661,
+      "distance_km": 2.666,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 45,
+      "estimated_cost_gbp": 4.86,
+      "transformer_headroom_kw": 419.446,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "low_wait",
+        "high_headroom",
+        "low_cost",
+        "charger_match"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac;rapid"
+      }
+    }
+  ],
+  "congestion_note": null,
+  "debug_reasoning_summary": "Ranked 7 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.748 with distance 0.50 km, wait 0 min, and headroom 369.6 kW.",
+  "source_type": "external_live",
+  "metadata": {}
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "client_request_id": "demo-mobile-001",
+    "request_timestamp": "2024-06-10T17:30:00",
+    "current_latitude": 56.462,
+    "current_longitude": -2.9707,
+    "target_soc": 80.0,
+    "current_soc": 35.0,
+    "battery_kwh": 60.0,
+    "requested_energy_kwh": 27.0,
+    "preference_mode": "fastest",
+    "charger_type": "dc",
+    "latest_finish_ts": "2024-06-10T20:00:00",
+    "source_type": "external_live",
+    "request_id": null,
+    "zone_id": null,
+    "metadata": {}
+  },
+  {
+    "client_request_id": "demo-mobile-001",
+    "request_timestamp": "2024-06-10T17:30:00",
+    "current_latitude": 56.462,
+    "current_longitude": -2.9707,
+    "target_soc": 80.0,
+    "current_soc": 35.0,
+    "battery_kwh": 60.0,
+    "requested_energy_kwh": 27.0,
+    "preference_mode": "fastest",
+    "charger_type": "dc",
+    "latest_finish_ts": "2024-06-10T20:00:00",
+    "source_type": "external_live",
+    "request_id": null,
+    "zone_id": null,
+    "metadata": {}
+  }
+]

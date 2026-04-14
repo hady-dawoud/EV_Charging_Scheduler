@@ -1,4 +1,4 @@
-"""Input/output helpers for future EV datasets and derived tables."""
+﻿"""Lightweight IO helpers for standalone EV-core datasets."""
 
 from __future__ import annotations
 
@@ -7,19 +7,15 @@ from pathlib import Path
 import pandas as pd
 
 
-def resolve_path(path: str | Path) -> Path:
-    """Return a normalized path object for future data-loading helpers."""
+def read_csv(path: str | Path, **kwargs) -> pd.DataFrame:
+    """Read a CSV dataset into a DataFrame."""
 
-    return Path(path).expanduser().resolve()
-
-
-def read_table(path: str | Path) -> pd.DataFrame:
-    """Read a tabular dataset once source-specific formats are defined."""
-
-    raise NotImplementedError("TODO: implement source-aware table readers.")
+    return pd.read_csv(Path(path), **kwargs)
 
 
-def write_table(frame: pd.DataFrame, path: str | Path) -> None:
-    """Persist a tabular dataset using the agreed project storage format."""
+def write_csv(frame: pd.DataFrame, path: str | Path, **kwargs) -> None:
+    """Write a DataFrame to CSV with parent creation."""
 
-    raise NotImplementedError("TODO: implement project-standard table writers.")
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(target, index=False, **kwargs)
