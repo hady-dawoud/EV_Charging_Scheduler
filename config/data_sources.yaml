@@ -1,0 +1,16 @@
+# Placeholder raw and derived data source registry for EV-core development.
+
+raw_sources:
+  dundee:
+    path: "data/raw/dundee"
+    status: "placeholder"
+  acn:
+    path: "data/raw/acn"
+    status: "placeholder"
+  external:
+    path: "data/raw/external"
+    status: "placeholder"
+
+derived_targets:
+  interim: "data/interim"
+  processed: "data/processed"

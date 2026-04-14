@@ -1,0 +1,15 @@
+# Standalone environment scaffolding configuration.
+# The current mocked API/mobile flow does not consume this file yet.
+
+time_base:
+  resolution_minutes: 15
+  timezone: "UTC"
+
+environment:
+  episode_horizon_steps: 96
+  request_driven: true
+  notes: "Placeholder defaults for future multi-agent simulation work."
+
+assets:
+  station_master: "data/processed/station_master.parquet"
+  transformer_station_map: "data/processed/transformer_station_map.parquet"

@@ -1,0 +1,14 @@
+# Placeholder defaults for future simulation and evaluation runs.
+
+time_base:
+  resolution_minutes: 15
+
+simulation:
+  seed: 42
+  horizon_steps: 96
+  reward_profile: "placeholder"
+  baseline_policy: "greedy_earliest_departure"
+
+forecasting:
+  provider: "dummy"
+  optional_pv_enabled: false

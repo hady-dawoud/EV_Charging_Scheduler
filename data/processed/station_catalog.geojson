@@ -1,0 +1,635 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.968713,
+          56.469369
+        ]
+      },
+      "properties": {
+        "station_id": "alexander_street_dundee",
+        "station_name": "Alexander Street - Dundee",
+        "postcode_mode": "DD1 2AE",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9100671,
+          56.4808461
+        ]
+      },
+      "properties": {
+        "station_id": "balmerino_road",
+        "station_name": "Balmerino Road",
+        "postcode_mode": "DD4 8RN",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9783902,
+          56.4763808
+        ]
+      },
+      "properties": {
+        "station_id": "caird_avenue",
+        "station_name": "Caird Avenue",
+        "postcode_mode": null,
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0377513,
+          56.4810593
+        ]
+      },
+      "properties": {
+        "station_id": "camperdown_country_park",
+        "station_name": "Camperdown Country Park",
+        "postcode_mode": "DD2 4TF",
+        "cp_count_total": 2,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 44
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.985238,
+          56.478799
+        ]
+      },
+      "properties": {
+        "station_id": "clepington_road_4th_hub",
+        "station_name": "Clepington Road - 4th Hub",
+        "postcode_mode": "DD3 8PL",
+        "cp_count_total": 6,
+        "connector_mix_total": "rapid;ultra_rapid",
+        "station_max_power_kw_proxy": 400
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9785033,
+          56.4757059
+        ]
+      },
+      "properties": {
+        "station_id": "coldside_nursery",
+        "station_name": "Coldside Nursery",
+        "postcode_mode": "DD3 8AR",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.035025,
+          56.473731
+        ]
+      },
+      "properties": {
+        "station_id": "craigowen_road",
+        "station_name": "Craigowen Road",
+        "postcode_mode": "DD2 4NL",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.898492,
+          56.472647
+        ]
+      },
+      "properties": {
+        "station_id": "dawson_park_broughty_ferry",
+        "station_name": "Dawson Park, Broughty Ferry",
+        "postcode_mode": "DD5 1PG",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.959175,
+          56.472804
+        ]
+      },
+      "properties": {
+        "station_id": "derby_street",
+        "station_name": "Derby Street",
+        "postcode_mode": "DD4 6TQ",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0478484,
+          56.4684347
+        ]
+      },
+      "properties": {
+        "station_id": "deveron_terrace",
+        "station_name": "Deveron Terrace",
+        "postcode_mode": "DD2 4AJ",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9665487,
+          56.4603122
+        ]
+      },
+      "properties": {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "postcode_mode": "DD1 3DP",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9050982,
+          56.4793848
+        ]
+      },
+      "properties": {
+        "station_id": "douglas_community_library",
+        "station_name": "Douglas Community Library",
+        "postcode_mode": "DD4 8SD",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9755925,
+          56.4606745
+        ]
+      },
+      "properties": {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "postcode_mode": "DD1 1QA",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0248131,
+          56.4816435
+        ]
+      },
+      "properties": {
+        "station_id": "dundee_ice_arena_dundee",
+        "station_name": "Dundee Ice Arena, Dundee",
+        "postcode_mode": "DD2 3QN",
+        "cp_count_total": 2,
+        "connector_mix_total": "rapid",
+        "station_max_power_kw_proxy": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.969612,
+          56.4576613
+        ]
+      },
+      "properties": {
+        "station_id": "dundee_railway_station",
+        "station_name": "Dundee Railway Station",
+        "postcode_mode": "DD1 4BY",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.969612,
+          56.4576613
+        ]
+      },
+      "properties": {
+        "station_id": "dundee_taybridge_rail_station_south_union_street_dundee",
+        "station_name": "Dundee Taybridge Rail Station, South Union Street, Dundee",
+        "postcode_mode": null,
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.8797259,
+          56.4698114
+        ]
+      },
+      "properties": {
+        "station_id": "eastern_primary_school",
+        "station_name": "Eastern Primary School",
+        "postcode_mode": "DD5 3AE",
+        "cp_count_total": 2,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 44
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9662611,
+          56.461363
+        ]
+      },
+      "properties": {
+        "station_id": "gellatly_street_car_park_dundee",
+        "station_name": "Gellatly Street Car Park, Dundee",
+        "postcode_mode": "DD1 3DY",
+        "cp_count_total": 13,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 286
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.969515,
+          56.457522
+        ]
+      },
+      "properties": {
+        "station_id": "greenmarket_150kw_bus_charger",
+        "station_name": "Greenmarket 150kW Bus Charger",
+        "postcode_mode": "DD1 4BX",
+        "cp_count_total": 2,
+        "connector_mix_total": "ultra_rapid",
+        "station_max_power_kw_proxy": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9734373,
+          56.4565851
+        ]
+      },
+      "properties": {
+        "station_id": "greenmarket_multi_storey_car_park_dundee",
+        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
+        "postcode_mode": "DD1 4BX",
+        "cp_count_total": 5,
+        "connector_mix_total": "ac;rapid",
+        "station_max_power_kw_proxy": 138
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.934227,
+          56.483461
+        ]
+      },
+      "properties": {
+        "station_id": "housing_office_east_midmill_road_dundee",
+        "station_name": "Housing Office East, Midmill Road, Dundee",
+        "postcode_mode": "DD4 8ES",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0099183,
+          56.4717313
+        ]
+      },
+      "properties": {
+        "station_id": "lochee_charging_hub_aimer_square_dundee",
+        "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
+        "postcode_mode": "DD2 3BH",
+        "cp_count_total": 12,
+        "connector_mix_total": "ac;rapid",
+        "station_max_power_kw_proxy": 488
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0394642,
+          56.4679439
+        ]
+      },
+      "properties": {
+        "station_id": "menzieshill_community_centre",
+        "station_name": "Menzieshill Community Centre",
+        "postcode_mode": "DD2 4BH",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.8954416,
+          56.4849476
+        ]
+      },
+      "properties": {
+        "station_id": "michelin_scotland_innovation_park",
+        "station_name": "Michelin Scotland Innovation Park",
+        "postcode_mode": "DD4 8UQ",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.958646,
+          56.49305
+        ]
+      },
+      "properties": {
+        "station_id": "mill_o_mains_primary_school",
+        "station_name": "Mill O Mains Primary School",
+        "postcode_mode": "DD4 9RD",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.978272,
+          56.457336
+        ]
+      },
+      "properties": {
+        "station_id": "nethergate_dundee",
+        "station_name": "Nethergate, Dundee",
+        "postcode_mode": "DD1 4HN",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9632878,
+          56.4640377
+        ]
+      },
+      "properties": {
+        "station_id": "olympia_hub",
+        "station_name": "Olympia Hub",
+        "postcode_mode": "DD1 3HE",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.963022,
+          56.463861
+        ]
+      },
+      "properties": {
+        "station_id": "olympia_multi_storey_car_park_dundee",
+        "station_name": "Olympia Multi-Storey Car Park, Dundee",
+        "postcode_mode": "DD1 3JU",
+        "cp_count_total": 4,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 88
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.039,
+          56.467139
+        ]
+      },
+      "properties": {
+        "station_id": "orleans_place_dundee",
+        "station_name": "Orleans Place, Dundee",
+        "postcode_mode": null,
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.962377,
+          56.4659398
+        ]
+      },
+      "properties": {
+        "station_id": "princes_street_charging_hub_dundee",
+        "station_name": "Princes Street Charging Hub, Dundee",
+        "postcode_mode": "DD4 6BY",
+        "cp_count_total": 9,
+        "connector_mix_total": "ac;rapid",
+        "station_max_power_kw_proxy": 394
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.8724124,
+          56.4678511
+        ]
+      },
+      "properties": {
+        "station_id": "queen_street_charging_hub_dundee",
+        "station_name": "Queen Street Charging Hub, Dundee",
+        "postcode_mode": "DD5 2HD",
+        "cp_count_total": 10,
+        "connector_mix_total": "ac;rapid",
+        "station_max_power_kw_proxy": 388
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9559291,
+          56.4820818
+        ]
+      },
+      "properties": {
+        "station_id": "rpc_dundee",
+        "station_name": "RPC Dundee",
+        "postcode_mode": "DD4 9BX",
+        "cp_count_total": 2,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 44
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9769227,
+          56.458878
+        ]
+      },
+      "properties": {
+        "station_id": "south_tay_street_car_club_public",
+        "station_name": "South Tay Street (Car Club / Public)",
+        "postcode_mode": "DD1 1PF",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9662628,
+          56.4631551
+        ]
+      },
+      "properties": {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "postcode_mode": "DD1 2ER",
+        "cp_count_total": 1,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.9163685,
+          56.4898723
+        ]
+      },
+      "properties": {
+        "station_id": "whitfield_centre_lothian_crescent_dundee",
+        "station_name": "Whitfield Centre, Lothian Crescent, Dundee",
+        "postcode_mode": "DD4 0HU",
+        "cp_count_total": 2,
+        "connector_mix_total": "ac",
+        "station_max_power_kw_proxy": 44
+      }
+    }
+  ]
+}
