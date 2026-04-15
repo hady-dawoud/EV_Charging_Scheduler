@@ -8,15 +8,32 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme, webStyles } from '../theme';
+import {
+  RecommendationChargerType,
+  RecommendationPreferenceMode,
+  RootStackParamList,
+} from '../types';
 
-type OptMode = 'cheapest' | 'fastest' | 'closest';
-type ChargerType = 'any' | 'ac' | 'dc';
+type Props = NativeStackScreenProps<RootStackParamList, 'ChargingRequest'>;
 
-export default function ChargingRequestScreen({ navigation }: any) {
+export default function ChargingRequestScreen({ navigation }: Props) {
   const [targetSoC, setTargetSoC] = useState(80);
-  const [optMode, setOptMode] = useState<OptMode>('cheapest');
-  const [chargerType, setChargerType] = useState<ChargerType>('any');
+  const [optMode, setOptMode] =
+    useState<RecommendationPreferenceMode>('cheapest');
+  const [chargerType, setChargerType] =
+    useState<RecommendationChargerType>('any');
+
+  const handleFindRecommendations = () => {
+    navigation.navigate('LoadingRecommendations', {
+      request: {
+        targetSoc: targetSoC,
+        preferenceMode: optMode,
+        chargerType,
+      },
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -28,16 +45,14 @@ export default function ChargingRequestScreen({ navigation }: any) {
           <Text style={styles.pageTitle}>Charging Request</Text>
         </View>
 
-        {/* Location */}
         <View style={[styles.card, webStyles.glass]}>
           <Text style={styles.cardLabel}>CURRENT LOCATION</Text>
           <View style={styles.locationRow}>
             <MapPin color={theme.colors.primary} size={20} />
-            <Text style={styles.locationText}>Maadi, Cairo</Text>
+            <Text style={styles.locationText}>Central Dundee (Demo Runtime)</Text>
           </View>
         </View>
 
-        {/* Target Charge */}
         <View style={[styles.card, webStyles.glass]}>
           <Text style={styles.cardLabel}>TARGET CHARGE</Text>
           <View style={styles.targetControls}>
@@ -57,11 +72,10 @@ export default function ChargingRequestScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Optimization Mode */}
         <View style={[styles.card, webStyles.glass]}>
           <Text style={styles.cardLabel}>OPTIMIZATION MODE</Text>
           <View style={styles.segmented}>
-            {(['cheapest', 'fastest', 'closest'] as OptMode[]).map((mode) => (
+            {(['cheapest', 'fastest', 'closest'] as RecommendationPreferenceMode[]).map((mode) => (
               <TouchableOpacity
                 key={mode}
                 style={[styles.segment, optMode === mode && styles.segmentActive]}
@@ -75,11 +89,10 @@ export default function ChargingRequestScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Charger Type */}
         <View style={[styles.card, webStyles.glass]}>
           <Text style={styles.cardLabel}>CHARGER TYPE</Text>
           <View style={styles.typeGrid}>
-            {(['any', 'ac', 'dc'] as ChargerType[]).map((type) => (
+            {(['any', 'ac', 'dc'] as RecommendationChargerType[]).map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[styles.typeBtn, chargerType === type && styles.typeBtnActive]}
@@ -99,7 +112,7 @@ export default function ChargingRequestScreen({ navigation }: any) {
 
         <TouchableOpacity
           style={[styles.primaryBtn, webStyles.neonGlow]}
-          onPress={() => navigation.navigate('LoadingRecommendations')}
+          onPress={handleFindRecommendations}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
