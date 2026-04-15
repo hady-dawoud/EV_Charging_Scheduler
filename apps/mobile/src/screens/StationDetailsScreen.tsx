@@ -110,7 +110,7 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
 
         <TouchableOpacity
           style={[styles.reserveBtn, webStyles.neonGlowSmall]}
-          onPress={() => navigation.navigate('ReservationConfirm')}
+          onPress={() => navigation.navigate('ReservationConfirm', { station })}
           activeOpacity={0.85}
         >
           <Navigation color="#000" size={20} />

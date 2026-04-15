@@ -101,6 +101,13 @@ export type UiStationRecommendation = {
   reasonTags: string[];
 };
 
+export type ReservationRecord = {
+  id: string;
+  station: UiStationRecommendation;
+  reservedAtIso: string;
+  status: 'reserved' | 'past';
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
@@ -110,5 +117,5 @@ export type RootStackParamList = {
   LoadingRecommendations: { request: MobileRecommendationRequest };
   Results: { result: ApiRecommendationsResponse };
   StationDetails: { station?: UiStationRecommendation } | undefined;
-  ReservationConfirm: undefined;
+  ReservationConfirm: { station: UiStationRecommendation };
 };
