@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
+
+from streamlit_autorefresh import st_autorefresh
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -57,18 +58,7 @@ def render_dataframe(frame: pd.DataFrame) -> None:
         st.dataframe(frame)
 
 
-def enable_auto_refresh(interval_seconds: int) -> None:
-    """Reload the dashboard page on a lightweight timer."""
 
-    components.html(
-        (
-            "<script>"
-            f"setTimeout(function() {{ window.parent.location.reload(); }}, {max(interval_seconds, 1) * 1000});"
-            "</script>"
-        ),
-        height=0,
-        width=0,
-    )
 
 
 def build_recent_arrival_chart(events) -> pd.DataFrame:
@@ -100,8 +90,13 @@ def build_recent_arrival_chart(events) -> pd.DataFrame:
 
 def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
     st.sidebar.header("Demo Controls")
-    refresh_seconds = st.sidebar.selectbox("Auto-refresh", [1, 2], index=0)
-    enable_auto_refresh(int(refresh_seconds))
+    refresh_option = st.sidebar.selectbox("Auto-refresh", ["Off", 2, 5, 10], index=2)
+
+    if refresh_option != "Off":
+        st_autorefresh(
+            interval=int(refresh_option) * 1000,
+            key="sim_dashboard_autorefresh",
+        )
 
     preset = st.sidebar.selectbox("Preset", ["Custom", "Busy Afternoon Demo"])
     use_preset = preset == "Busy Afternoon Demo"

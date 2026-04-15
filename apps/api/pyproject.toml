@@ -10,4 +10,5 @@ dependencies = [
   "pandas>=2.0,<3.0",
   "pyarrow>=23.0.1",
   "streamlit>=1.56.0",
+  "streamlit-autorefresh>=1.0.1",
 ]
