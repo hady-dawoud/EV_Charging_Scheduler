@@ -108,17 +108,6 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <View style={styles.metaBlock}>
-          <Text style={styles.metaLabel}>CONNECTOR</Text>
-          <Text style={styles.metaValue}>{station.chargerLabel}</Text>
-
-          <Text style={styles.metaLabel}>TRANSFORMER</Text>
-          <Text style={styles.metaValue}>{station.transformerId}</Text>
-
-          <Text style={styles.metaLabel}>REASON TAGS</Text>
-          <Text style={styles.metaValue}>{station.reasonTags.join(', ') || 'n/a'}</Text>
-        </View>
-
         <TouchableOpacity
           style={[styles.reserveBtn, webStyles.neonGlowSmall]}
           onPress={() => navigation.navigate('ReservationConfirm')}
@@ -229,27 +218,6 @@ const styles = StyleSheet.create({
   },
   statSub: { color: theme.colors.textMuted, fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
   statVal: { color: theme.colors.text, fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-  metaBlock: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: theme.radii.xl,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  metaLabel: {
-    color: theme.colors.textMuted,
-    fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  metaValue: {
-    color: theme.colors.text,
-    fontSize: 13,
-    lineHeight: 20,
-  },
   reserveBtn: {
     ...theme.neonGlowSmall,
     height: 56,

@@ -14,8 +14,11 @@ import { theme, webStyles } from '../theme';
 const isWeb = Platform.OS === 'web';
 
 export default function SessionsScreen() {
-  const upcoming = mockSessions.filter((s) => s.status === 'upcoming');
-  const past = mockSessions.filter((s) => s.status === 'completed');
+  const latestReservation =
+    mockSessions.find((session) => session.status === 'upcoming') ?? null;
+
+  const previousPastSession =
+    mockSessions.find((session) => session.status === 'completed') ?? null;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -25,61 +28,67 @@ export default function SessionsScreen() {
           <Text style={styles.pageTitle}>My Sessions</Text>
         </View>
 
-        {/* Upcoming */}
-        {upcoming.length > 0 && (
+        {latestReservation && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>UPCOMING RESERVATION</Text>
-            {upcoming.map((s) => (
-              <View key={s.id} style={[styles.upcomingCard, webStyles.glass]}>
-                <View style={[styles.cardGlow, isWeb ? { filter: 'blur(40px)' } as any : {}]} />
-                <View style={styles.upcomingHeader}>
-                  <View>
-                    <Text style={styles.upcomingName}>{s.stationName}</Text>
-                    <Text style={styles.upcomingDate}>{s.date}</Text>
-                  </View>
-                  <View style={styles.reservedBadge}>
-                    <Text style={styles.reservedText}>Reserved</Text>
-                  </View>
+            <View style={[styles.upcomingCard, webStyles.glass]}>
+              <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
+              <View style={styles.upcomingHeader}>
+                <View>
+                  <Text style={styles.upcomingName}>{latestReservation.stationName}</Text>
+                  <Text style={styles.upcomingDate}>{latestReservation.date}</Text>
                 </View>
-                <View style={styles.metaRow}>
-                  <View style={styles.metaItem}>
-                    <Zap color={theme.colors.textMuted} size={15} />
-                    <Text style={styles.metaText}>Est. {s.energyAdded}</Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Clock color={theme.colors.textMuted} size={15} />
-                    <Text style={styles.metaText}>{s.duration}</Text>
-                  </View>
+                <View style={styles.reservedBadge}>
+                  <Text style={styles.reservedText}>Reserved</Text>
                 </View>
               </View>
-            ))}
+
+              <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                  <Zap color={theme.colors.textMuted} size={15} />
+                  <Text style={styles.metaText}>Est. {latestReservation.energyAdded}</Text>
+                </View>
+
+                <View style={styles.metaItem}>
+                  <Clock color={theme.colors.textMuted} size={15} />
+                  <Text style={styles.metaText}>{latestReservation.duration}</Text>
+                </View>
+              </View>
+            </View>
           </View>
         )}
 
-        {/* Past */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>PAST SESSIONS</Text>
-          {past.map((s) => (
-            <View key={s.id} style={styles.pastCard}>
+
+          {previousPastSession ? (
+            <View style={styles.pastCard}>
               <View style={styles.pastHeader}>
-                <Text style={styles.pastName}>{s.stationName}</Text>
-                <Text style={styles.pastCost}>{s.cost}</Text>
+                <Text style={styles.pastName}>{previousPastSession.stationName}</Text>
+                <Text style={styles.pastCost}>{previousPastSession.cost}</Text>
               </View>
+
               <View style={styles.pastMeta}>
-                <Text style={styles.pastDate}>{s.date}</Text>
+                <Text style={styles.pastDate}>{previousPastSession.date}</Text>
+
                 <View style={styles.metaRow}>
                   <View style={styles.metaItem}>
                     <Zap color={theme.colors.textMuted} size={12} />
-                    <Text style={styles.pastMetaText}>{s.energyAdded}</Text>
+                    <Text style={styles.pastMetaText}>{previousPastSession.energyAdded}</Text>
                   </View>
+
                   <View style={styles.metaItem}>
                     <Clock color={theme.colors.textMuted} size={12} />
-                    <Text style={styles.pastMetaText}>{s.duration}</Text>
+                    <Text style={styles.pastMetaText}>{previousPastSession.duration}</Text>
                   </View>
                 </View>
               </View>
             </View>
-          ))}
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No past sessions yet.</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -93,8 +102,11 @@ const styles = StyleSheet.create({
   pageTitle: { color: theme.colors.text, fontSize: 24, fontWeight: 'bold' },
   section: { marginBottom: theme.spacing.xl },
   sectionLabel: {
-    color: theme.colors.textMuted, fontSize: 10, fontWeight: 'bold',
-    letterSpacing: 2, marginBottom: theme.spacing.md,
+    color: theme.colors.textMuted,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginBottom: theme.spacing.md,
   },
   upcomingCard: {
     ...theme.glass,
@@ -104,13 +116,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardGlow: {
-    position: 'absolute', width: 128, height: 128,
-    borderRadius: 64, backgroundColor: 'rgba(0,255,0,0.08)',
-    top: -32, right: -32,
+    position: 'absolute',
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    backgroundColor: 'rgba(0,255,0,0.08)',
+    top: -32,
+    right: -32,
   },
   upcomingHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'flex-start', marginBottom: theme.spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.md,
   },
   upcomingName: { color: theme.colors.text, fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
   upcomingDate: { color: theme.colors.primary, fontSize: 12, fontWeight: '500' },
@@ -138,4 +156,15 @@ const styles = StyleSheet.create({
   pastMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   pastDate: { color: theme.colors.textMuted, fontSize: 11 },
   pastMetaText: { color: theme.colors.textMuted, fontSize: 11 },
+  emptyCard: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: theme.radii.xl,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#222426',
+  },
+  emptyText: {
+    color: theme.colors.textMuted,
+    fontSize: 13,
+  },
 });
