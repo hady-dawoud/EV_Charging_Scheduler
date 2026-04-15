@@ -1,5 +1,5 @@
 {
-  "loop_running": false,
+  "loop_running": true,
   "loop_interval_seconds": 1.0,
   "runtime_mode": "hybrid",
   "active_policy": "overload_aware",
@@ -8,11 +8,11 @@
   "replay_year": 2024,
   "replay_day": "2024-06-10",
   "operational_start_ts": "2024-06-10T15:00:00",
-  "simulated_timestamp": "2024-06-10T19:30:00",
-  "latest_external_request_id": "external_65dd34b9d7ce",
-  "active_request_count": 2,
+  "simulated_timestamp": "2024-06-18T14:45:00",
+  "latest_external_request_id": "string",
+  "active_request_count": 1,
   "queued_request_count": 0,
   "active_session_count": 11,
-  "completed_requests_total": 245,
-  "missed_requests_total": 14
-}
+  "completed_requests_total": 2359,
+  "missed_requests_total": 206
+}

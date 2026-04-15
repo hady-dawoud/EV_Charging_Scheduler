@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from services.sim_runtime.bootstrap_paths import bootstrap_repo_paths
+
+bootstrap_repo_paths()
+
 import threading
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
