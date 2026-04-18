@@ -1,0 +1,103 @@
+section,dimension,metric,value,notes
+request_counts_by_year,2023,request_count,117701.0,Final replay requests after simulator-input filtering.
+request_counts_by_year,2024,request_count,90320.0,Final replay requests after simulator-input filtering.
+requests_by_zone,zone_central_waterfront|Central Waterfront & City Core,request_count,71574.0,Combined 2023-2024 replay request count.
+requests_by_zone,zone_west_lochee|West Lochee & Camperdown,request_count,57403.0,Combined 2023-2024 replay request count.
+requests_by_zone,zone_north_inner|North Inner Residential,request_count,40782.0,Combined 2023-2024 replay request count.
+requests_by_zone,zone_east_corridor|East Corridor & Broughty,request_count,38262.0,Combined 2023-2024 replay request count.
+requests_by_station,"princes_street_charging_hub_dundee|Princes Street Charging Hub, Dundee",request_count,50817.0,Combined 2023-2024 replay request count.
+requests_by_station,"lochee_charging_hub_aimer_square_dundee|Lochee Charging Hub, Aimer Square, Dundee",request_count,49129.0,Combined 2023-2024 replay request count.
+requests_by_station,clepington_road_4th_hub|Clepington Road - 4th Hub,request_count,36994.0,Combined 2023-2024 replay request count.
+requests_by_station,"queen_street_charging_hub_dundee|Queen Street Charging Hub, Dundee",request_count,33859.0,Combined 2023-2024 replay request count.
+requests_by_station,greenmarket_150kw_bus_charger|Greenmarket 150kW Bus Charger,request_count,5688.0,Combined 2023-2024 replay request count.
+requests_by_station,"dundee_ice_arena_dundee|Dundee Ice Arena, Dundee",request_count,5258.0,Combined 2023-2024 replay request count.
+requests_by_station,"gellatly_street_car_park_dundee|Gellatly Street Car Park, Dundee",request_count,4199.0,Combined 2023-2024 replay request count.
+requests_by_station,"greenmarket_multi_storey_car_park_dundee|Greenmarket Multi Storey Car Park, Dundee",request_count,2538.0,Combined 2023-2024 replay request count.
+requests_by_station,south_tay_street_car_club_public|South Tay Street (Car Club / Public),request_count,2434.0,Combined 2023-2024 replay request count.
+requests_by_station,michelin_scotland_innovation_park|Michelin Scotland Innovation Park,request_count,1582.0,Combined 2023-2024 replay request count.
+requests_by_station,"dock_street_dundee|Dock Street, Dundee",request_count,1498.0,Combined 2023-2024 replay request count.
+requests_by_station,"orleans_place_dundee|Orleans Place, Dundee",request_count,1259.0,Combined 2023-2024 replay request count.
+requests_by_station,alexander_street_dundee|Alexander Street - Dundee,request_count,1233.0,Combined 2023-2024 replay request count.
+requests_by_station,"whitfield_centre_lothian_crescent_dundee|Whitfield Centre, Lothian Crescent, Dundee",request_count,1204.0,Combined 2023-2024 replay request count.
+requests_by_station,"dundee_taybridge_rail_station_south_union_street_dundee|Dundee Taybridge Rail Station, South Union Street, Dundee",request_count,1140.0,Combined 2023-2024 replay request count.
+requests_by_station,"nethergate_dundee|Nethergate, Dundee",request_count,1028.0,Combined 2023-2024 replay request count.
+requests_by_station,"olympia_multi_storey_car_park_dundee|Olympia Multi-Storey Car Park, Dundee",request_count,990.0,Combined 2023-2024 replay request count.
+requests_by_station,"housing_office_east_midmill_road_dundee|Housing Office East, Midmill Road, Dundee",request_count,875.0,Combined 2023-2024 replay request count.
+requests_by_station,camperdown_country_park|Camperdown Country Park,request_count,840.0,Combined 2023-2024 replay request count.
+requests_by_station,olympia_hub|Olympia Hub,request_count,722.0,Combined 2023-2024 replay request count.
+requests_by_station,eastern_primary_school|Eastern Primary School,request_count,677.0,Combined 2023-2024 replay request count.
+requests_by_station,craigowen_road|Craigowen Road,request_count,648.0,Combined 2023-2024 replay request count.
+requests_by_station,rpc_dundee|RPC Dundee,request_count,639.0,Combined 2023-2024 replay request count.
+requests_by_station,"dawson_park_broughty_ferry|Dawson Park, Broughty Ferry",request_count,605.0,Combined 2023-2024 replay request count.
+requests_by_station,derby_street|Derby Street,request_count,564.0,Combined 2023-2024 replay request count.
+requests_by_station,"dundee_house_depot_north_lindsay_street_dundee|Dundee House Depot, North Lindsay Street, Dundee",request_count,322.0,Combined 2023-2024 replay request count.
+requests_by_station,caird_avenue|Caird Avenue,request_count,316.0,Combined 2023-2024 replay request count.
+requests_by_station,douglas_community_library|Douglas Community Library,request_count,271.0,Combined 2023-2024 replay request count.
+requests_by_station,deveron_terrace|Deveron Terrace,request_count,158.0,Combined 2023-2024 replay request count.
+requests_by_station,mill_o_mains_primary_school|Mill O Mains Primary School,request_count,158.0,Combined 2023-2024 replay request count.
+requests_by_station,dundee_railway_station|Dundee Railway Station,request_count,148.0,Combined 2023-2024 replay request count.
+requests_by_station,menzieshill_community_centre|Menzieshill Community Centre,request_count,111.0,Combined 2023-2024 replay request count.
+requests_by_station,balmerino_road|Balmerino Road,request_count,64.0,Combined 2023-2024 replay request count.
+requests_by_station,"trades_lane_dundee|Trades Lane, Dundee",request_count,50.0,Combined 2023-2024 replay request count.
+requests_by_station,coldside_nursery|Coldside Nursery,request_count,3.0,Combined 2023-2024 replay request count.
+arrival_histogram_summary,hour_00,share,0.018594,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_01,share,0.021724,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_02,share,0.014239,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_03,share,0.011427,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_04,share,0.011874,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_05,share,0.011931,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_06,share,0.014268,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_07,share,0.029088,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_08,share,0.043313,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_09,share,0.059552,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_10,share,0.064104,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_11,share,0.070844,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_12,share,0.072632,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_13,share,0.073858,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_14,share,0.072002,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_15,share,0.066618,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_16,share,0.060254,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_17,share,0.054672,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_18,share,0.049505,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_19,share,0.049461,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_20,share,0.046683,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_21,share,0.036467,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_22,share,0.024772,Combined 2023-2024 arrival-hour share.
+arrival_histogram_summary,hour_23,share,0.022118,Combined 2023-2024 arrival-hour share.
+requested_energy_kwh_summary,overall,count,208021.0,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,mean,22.738,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,median,16.704,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,std,30.125,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,min,0.001,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,p10,5.134,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,p25,9.867,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,p75,26.226,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,p90,38.823,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,p95,48.133,Combined 2023-2024 replay summary statistic.
+requested_energy_kwh_summary,overall,max,329.584,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,count,208021.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,mean,51.525,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,median,30.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,std,85.073,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,min,15.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,p10,15.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,p25,15.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,p75,45.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,p90,90.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,p95,120.0,Combined 2023-2024 replay summary statistic.
+requested_duration_minutes_summary,overall,max,1035.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,count,208021.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,mean,41.222,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,median,15.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,std,101.101,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,min,0.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,p10,0.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,p25,15.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,p75,30.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,p90,60.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,p95,120.0,Combined 2023-2024 replay summary statistic.
+slack_minutes_summary,overall,max,1425.0,Combined 2023-2024 replay summary statistic.
+dropped_sessions,2023|excluded_by_model_ready_qc,count,1349.0,Dropped relative to the clean Dundee sessions for the same year.
+dropped_sessions,2023|technical_duration_exceeds_window,count,15.0,Dropped relative to the clean Dundee sessions for the same year.
+dropped_sessions,2024|excluded_by_model_ready_qc,count,4324.0,Dropped relative to the clean Dundee sessions for the same year.
+dropped_sessions,2024|technical_duration_exceeds_window,count,17.0,Dropped relative to the clean Dundee sessions for the same year.

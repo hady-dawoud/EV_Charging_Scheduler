@@ -7,13 +7,137 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Navigation, Zap, Clock } from 'lucide-react-native';
-import { mockStations } from '../data/mockData';
+import { ChevronLeft } from 'lucide-react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme, webStyles } from '../theme';
+import {
+  ApiRecommendationOption,
+  RootStackParamList,
+  UiStationRecommendation,
+} from '../types';
 
-export default function ResultsScreen({ navigation }: any) {
-  const top = mockStations.find((s) => s.isCheapest);
-  const alternatives = mockStations.filter((s) => !s.isCheapest);
+type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
+
+const asNumber = (value: unknown, fallback = 0) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+const asString = (value: unknown, fallback = '') =>
+  typeof value === 'string' ? value : fallback;
+
+const asStringArray = (value: unknown) =>
+  Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+
+const getConnectionType = (chargerLabel: string) => {
+  const normalized = chargerLabel.toLowerCase();
+  if (normalized.includes('ac')) return 'AC';
+  return 'DC';
+};
+
+const getSpeedLabel = (chargerLabel: string) => {
+  const normalized = chargerLabel.toLowerCase();
+
+  if (normalized.includes('ultra')) return 'Ultra Rapid';
+  if (normalized.includes('rapid')) return 'Rapid';
+  if (normalized.includes('ac')) return 'Standard';
+  return 'Standard';
+};
+
+const mapOptionToUiStation = (
+  option: ApiRecommendationOption
+): UiStationRecommendation => ({
+  id: asString(option.station_id, 'unknown_station'),
+  name: asString(option.station_name, 'Unknown station'),
+  zoneId: asString(option.zone_id, 'unknown_zone'),
+  transformerId: asString(option.transformer_id, 'unknown_transformer'),
+  distanceKm: asNumber(option.distance_km),
+  estimatedWaitMinutes: asNumber(option.estimated_wait_minutes),
+  estimatedDurationMinutes: asNumber(option.estimated_duration_minutes),
+  estimatedCostGbp: asNumber(option.estimated_cost_gbp),
+  headroomKw: asNumber(option.transformer_headroom_kw),
+  queueLength: asNumber(option.current_queue),
+  utilization: asNumber(option.utilization),
+  score: asNumber(option.score),
+  chargerLabel: asString(option.metadata?.connector_mix_total, 'rapid'),
+  reasonTags: asStringArray(option.reason_tags),
+});
+
+const formatMinutes = (minutes: number) => `${Math.round(asNumber(minutes))} min`;
+const formatCurrency = (gbp: number) => `£${asNumber(gbp).toFixed(2)}`;
+
+function StationOptionCard({
+  station,
+  highlighted = false,
+  onPress,
+}: {
+  station: UiStationRecommendation;
+  highlighted?: boolean;
+  onPress: () => void;
+}) {
+  const connectionType = getConnectionType(station.chargerLabel);
+  const speedLabel = getSpeedLabel(station.chargerLabel);
+
+  return (
+    <TouchableOpacity
+      style={[highlighted ? styles.topCard : styles.optionCard, highlighted && webStyles.neonGlow]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.optionHeader}>
+        <Text style={styles.stationName}>{station.name}</Text>
+        <Text style={styles.price}>{formatCurrency(station.estimatedCostGbp)}</Text>
+      </View>
+
+      <View style={styles.optionGrid}>
+        <View style={styles.infoPill}>
+          <Text style={styles.infoLabel}>CONNECTION</Text>
+          <Text style={styles.infoValue}>{connectionType}</Text>
+        </View>
+
+        <View style={styles.infoPill}>
+          <Text style={styles.infoLabel}>CHARGE TIME</Text>
+          <Text style={styles.infoValue}>{formatMinutes(station.estimatedDurationMinutes)}</Text>
+        </View>
+
+        <View style={styles.infoPill}>
+          <Text style={styles.infoLabel}>SPEED</Text>
+          <Text style={styles.infoValue}>{speedLabel}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+export default function ResultsScreen({ navigation, route }: Props) {
+  const bundle = route.params?.result ?? null;
+
+  const top =
+    bundle?.top_recommendation != null
+      ? mapOptionToUiStation(bundle.top_recommendation)
+      : null;
+
+  const alternatives = Array.isArray(bundle?.alternatives)
+    ? bundle.alternatives.map(mapOptionToUiStation)
+    : [];
+
+  if (!bundle) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.topRow}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+              <ChevronLeft color={theme.colors.text} size={28} />
+            </TouchableOpacity>
+            <Text style={styles.pageTitle}>Charging Options</Text>
+          </View>
+
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No recommendation returned</Text>
+            <Text style={styles.emptyText}>Try again.</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -25,81 +149,40 @@ export default function ResultsScreen({ navigation }: any) {
           <Text style={styles.pageTitle}>Charging Options</Text>
         </View>
 
-        {/* Top Recommendation */}
-        {top && (
+        {top ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>TOP RECOMMENDATION</Text>
-            <TouchableOpacity
-              style={[styles.topCard, webStyles.neonGlow]}
-              onPress={() => navigation.navigate('StationDetails')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.topCardHeader}>
-                <View style={{ flex: 1 }}>
-                  <View style={styles.badgeRow}>
-                    <Zap color={theme.colors.primary} fill={theme.colors.primary} size={12} />
-                    <Text style={styles.badgeText}>CHEAPEST OPTION</Text>
-                  </View>
-                  <Text style={styles.stationName}>{top.name}</Text>
-                  <Text style={styles.stationSub}>{top.provider} · {top.distance} away</Text>
-                </View>
-                <Text style={styles.price}>EGP {top.totalPrice}</Text>
-              </View>
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Clock color={theme.colors.textMuted} size={20} />
-                  <View>
-                    <Text style={styles.statValue}>{top.totalTime}</Text>
-                    <Text style={styles.statSub}>TOTAL TIME</Text>
-                  </View>
-                </View>
-                <View style={styles.statBox}>
-                  <Zap color={theme.colors.textMuted} size={20} />
-                  <View>
-                    <Text style={styles.statValue}>{top.power}</Text>
-                    <Text style={styles.statSub}>SPEED</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
+            <StationOptionCard
+              station={top}
+              highlighted
+              onPress={() => navigation.navigate('StationDetails', { station: top })}
+            />
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>TOP RECOMMENDATION</Text>
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No top recommendation was returned.</Text>
+            </View>
           </View>
         )}
 
-        {/* Alternatives */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>ALTERNATIVES</Text>
-          {alternatives.map((s) => (
-            <TouchableOpacity
-              key={s.id}
-              style={styles.altCard}
-              onPress={() => navigation.navigate('StationDetails')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.altHeader}>
-                <View>
-                  {s.isFastest && <Text style={styles.fastestLabel}>FASTEST OPTION</Text>}
-                  <Text style={styles.altName}>{s.name}</Text>
-                </View>
-                <Text style={styles.altPrice}>EGP {s.totalPrice}</Text>
-              </View>
-              <View style={styles.altMeta}>
-                <View style={styles.metaItem}>
-                  <Clock color={theme.colors.textMuted} size={13} />
-                  <Text style={styles.metaText}>{s.totalTime}</Text>
-                </View>
-                <View style={styles.dot} />
-                <View style={styles.metaItem}>
-                  <Navigation color={theme.colors.textMuted} fill={theme.colors.textMuted} size={13} />
-                  <Text style={styles.metaText}>{s.distance}</Text>
-                </View>
-                <View style={styles.dot} />
-                <View style={styles.metaItem}>
-                  <Zap color={theme.colors.primary} fill={theme.colors.primary} size={13} />
-                  <Text style={styles.metaText}>{s.power}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+
+          {alternatives.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No alternatives were returned for this request.</Text>
+            </View>
+          ) : (
+            alternatives.map((station) => (
+              <StationOptionCard
+                key={station.id}
+                station={station}
+                onPress={() => navigation.navigate('StationDetails', { station })}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -114,31 +197,20 @@ const styles = StyleSheet.create({
   pageTitle: { color: theme.colors.text, fontSize: 20, fontWeight: 'bold' },
   section: { marginBottom: theme.spacing.xl },
   sectionLabel: {
-    color: theme.colors.textMuted, fontSize: 10, fontWeight: 'bold',
-    letterSpacing: 2, marginBottom: theme.spacing.md,
+    color: theme.colors.textMuted,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginBottom: theme.spacing.md,
   },
   topCard: {
-    ...theme.neonGlow,
     backgroundColor: '#121416',
     borderRadius: theme.radii.xxl,
     borderWidth: 2,
     borderColor: theme.colors.primary,
     padding: theme.spacing.lg,
   },
-  topCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.lg },
-  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-  badgeText: { color: theme.colors.primary, fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
-  stationName: { color: theme.colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 2 },
-  stationSub: { color: theme.colors.textMuted, fontSize: 12 },
-  price: { color: theme.colors.text, fontSize: 24, fontWeight: 'bold' },
-  statsRow: { flexDirection: 'row', gap: theme.spacing.md },
-  statBox: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: theme.radii.xl,
-    padding: theme.spacing.md, flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
-  },
-  statValue: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold' },
-  statSub: { color: theme.colors.textMuted, fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
-  altCard: {
+  optionCard: {
     backgroundColor: theme.colors.surfaceLight,
     borderRadius: theme.radii.xl,
     padding: theme.spacing.lg,
@@ -146,12 +218,68 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#222426',
   },
-  altHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: theme.spacing.sm },
-  fastestLabel: { color: theme.colors.primary, fontSize: 9, fontWeight: 'bold', letterSpacing: 1, marginBottom: 2 },
-  altName: { color: theme.colors.text, fontSize: 15, fontWeight: 'bold' },
-  altPrice: { color: '#d1d5db', fontSize: 14, fontWeight: 'bold' },
-  altMeta: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { color: theme.colors.textMuted, fontSize: 12, fontWeight: '500' },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#374151' },
+  optionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  stationName: {
+    flex: 1,
+    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 24,
+  },
+  price: {
+    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  optionGrid: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  infoPill: {
+    flex: 1,
+    minWidth: 90,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: theme.radii.xl,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoLabel: {
+    color: theme.colors.textMuted,
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  infoValue: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  emptyCard: {
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: theme.radii.xl,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: '#222426',
+  },
+  emptyTitle: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.sm,
+  },
+  emptyText: {
+    color: theme.colors.textMuted,
+    fontSize: 13,
+  },
 });

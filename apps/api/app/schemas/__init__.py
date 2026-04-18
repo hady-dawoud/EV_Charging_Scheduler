@@ -1,6 +1,5 @@
 from app.schemas.errors import ErrorResponse
 from app.schemas.recommendations import (
-    Recommendation,
     RecommendationRequest,
     RecommendationsResponse,
 )
