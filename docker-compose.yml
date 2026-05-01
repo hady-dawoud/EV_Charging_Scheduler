@@ -1,0 +1,70 @@
+services:
+  runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: ev_runtime
+    working_dir: /app
+    command: >
+      python -m services.sim_runtime.main start
+      --day 2024-06-10
+      --hour 14
+      --minute 0
+      --policy overload_aware
+      --mode hybrid
+      --preset busy_afternoon
+      --warm-start-hours 2
+      --loop
+      --interval-seconds 2
+    volumes:
+      - ./outputs/runtime:/app/outputs/runtime
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app:/app/packages/ev_core/src
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: ev_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./outputs/runtime:/app/outputs/runtime
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app:/app/packages/ev_core/src
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8081,http://127.0.0.1:8081
+    depends_on:
+      - runtime
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: ev_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./outputs/runtime:/app/outputs/runtime
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app:/app/packages/ev_core/src
+    depends_on:
+      - runtime
+    restart: unless-stopped
+
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobile
+      args:
+        EXPO_PUBLIC_API_BASE_URL: http://localhost:8000
+    container_name: ev_mobile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
