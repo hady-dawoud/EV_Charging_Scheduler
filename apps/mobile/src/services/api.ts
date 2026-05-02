@@ -7,15 +7,14 @@ import {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const API_BASE_URL =
+const LOCAL_API_BASE_URL =
   Platform.OS === 'android'
     ? 'http://10.0.2.2:8000'
     : 'http://127.0.0.1:8000';
 
-/*
-For a physical phone, replace API_BASE_URL with your laptop LAN IP, for example:
-const API_BASE_URL = 'http://192.168.1.7:8000';
-*/
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || LOCAL_API_BASE_URL;
+
 
 const mapChargerType = (chargerType: MobileRecommendationRequest['chargerType']) => {
   switch (chargerType) {
