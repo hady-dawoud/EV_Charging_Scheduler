@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -182,14 +183,18 @@ class RuntimeStorage:
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.db_path)
-        # Some synced/workspace-mounted drives reject SQLite's default journal writes.
-        # Use an in-memory journal so the runtime can still persist a local DB file.
-        connection.execute("pragma journal_mode=MEMORY")
-        connection.execute("pragma synchronous=NORMAL")
-        return connection
+        try:
+            # Some synced/workspace-mounted drives reject SQLite's default journal writes.
+            # Use an in-memory journal so the runtime can still persist a local DB file.
+            connection.execute("pragma journal_mode=MEMORY")
+            connection.execute("pragma synchronous=NORMAL")
+            return connection
+        except sqlite3.Error:
+            connection.close()
+            raise
 
     def _ensure_schema(self) -> None:
-        last_error: sqlite3.OperationalError | None = None
+        last_error: sqlite3.Error | None = None
         candidates: list[Path] = []
         for candidate in (
             self.db_path,
@@ -205,7 +210,16 @@ class RuntimeStorage:
                 self._initialize_schema()
                 self._save_db_path()
                 return
-            except sqlite3.OperationalError as exc:
+            except sqlite3.Error as exc:
+                if self._is_corruption_error(exc):
+                    if self._quarantine_db_file(candidate):
+                        try:
+                            self._initialize_schema()
+                            self._save_db_path()
+                            return
+                        except sqlite3.Error as retry_exc:
+                            last_error = retry_exc
+                            continue
                 last_error = exc
                 continue
 
@@ -273,6 +287,21 @@ class RuntimeStorage:
             connection.commit()
         finally:
             connection.close()
+
+    def _is_corruption_error(self, error: sqlite3.Error) -> bool:
+        message = str(error).lower()
+        return "malformed" in message or "not a database" in message
+
+    def _quarantine_db_file(self, path: Path) -> bool:
+        if not path.exists():
+            return False
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+        quarantined = path.with_name(f"{path.stem}.corrupt-{timestamp}{path.suffix}")
+        try:
+            path.replace(quarantined)
+        except PermissionError:
+            return False
+        return True
 
     def _write_json(self, path: Path, payload: Any) -> None:
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
