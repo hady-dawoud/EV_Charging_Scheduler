@@ -35,7 +35,7 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONPATH=/app:/app/packages/ev_core/src
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:8081,http://127.0.0.1:8081
+      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000
     depends_on:
       - runtime
     restart: unless-stopped
@@ -61,7 +61,7 @@ services:
       context: .
       dockerfile: Dockerfile.mobile
       args:
-        EXPO_PUBLIC_API_BASE_URL: http://localhost:8000
+        EXPO_PUBLIC_API_BASE_URL: http://20.216.14.193:8000
     container_name: ev_mobile
     ports:
       - "3000:80"
