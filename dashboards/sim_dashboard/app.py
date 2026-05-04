@@ -8,7 +8,10 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from streamlit_autorefresh import st_autorefresh
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -93,10 +96,15 @@ def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
     refresh_option = st.sidebar.selectbox("Auto-refresh", ["Off", 2, 5, 10], index=2)
 
     if refresh_option != "Off":
-        st_autorefresh(
-            interval=int(refresh_option) * 1000,
-            key="sim_dashboard_autorefresh",
-        )
+        if st_autorefresh is not None:
+            st_autorefresh(
+                interval=int(refresh_option) * 1000,
+                key="sim_dashboard_autorefresh",
+            )
+        else:
+            st.sidebar.warning(
+                "Auto-refresh package is missing. Install streamlit-autorefresh or use manual refresh."
+            )
 
     preset = st.sidebar.selectbox("Preset", ["Custom", "Busy Afternoon Demo"])
     use_preset = preset == "Busy Afternoon Demo"
