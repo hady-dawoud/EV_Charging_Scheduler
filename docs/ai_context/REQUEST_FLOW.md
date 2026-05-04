@@ -1,0 +1,108 @@
+# Request Flow
+
+This is the verified live recommendation path from the mobile app to the runtime-backed response.
+
+## Mobile Request Creation
+
+1. `apps/mobile/src/screens/ChargingRequestScreen.tsx`
+   - User selects:
+     - `targetSoc`
+     - `preferenceMode`: `cheapest`, `fastest`, or `closest`
+     - `chargerType`: `any`, `ac`, or `dc`
+   - `handleFindRecommendations` navigates to `LoadingRecommendations` with a `MobileRecommendationRequest`.
+
+2. `apps/mobile/src/screens/LoadingRecommendationsScreen.tsx`
+   - Reads `route.params.request`.
+   - Calls `api.getRecommendations(request)`.
+   - On success, navigates to `Results` with the returned API result.
+
+3. `apps/mobile/src/services/api.ts`
+   - `api.getRecommendations` builds payload:
+     - `client_request_id`
+     - `request_timestamp`
+     - `current_latitude`
+     - `current_longitude`
+     - `target_soc`
+     - `current_soc`
+     - `battery_kwh`
+     - `requested_energy_kwh`
+     - `preference_mode`
+     - `charger_type`
+     - `latest_finish_ts`
+     - `source_type`
+     - `request_id`
+     - `zone_id`
+     - `metadata`
+   - Calls `fetch(`${API_BASE_URL}/recommendations`, { method: 'POST', ... })`.
+
+## FastAPI Endpoint
+
+4. `apps/api/app/main.py`
+   - Includes `recommendations_router`.
+
+5. `apps/api/app/routers/recommendations.py`
+   - `get_recommendations(request: RecommendationRequest) -> RecommendationsResponse`
+   - `RecommendationRequest` is an alias to `ExternalChargingRequest`.
+   - Calls `generate_recommendations(request)`.
+   - Converts `RuntimeNotStartedError` into HTTP 409.
+
+6. `apps/api/app/schemas/recommendations.py`
+   - `RecommendationRequest = ExternalChargingRequest`
+   - `RecommendationsResponse = RecommendationResponse`
+
+7. `packages/ev_core/src/ev_core/contracts/requests.py`
+   - `ExternalChargingRequest` validates:
+     - `extra="forbid"`
+     - `request_timestamp` and `latest_finish_ts` normalized to naive UTC if timezone-aware.
+     - `requested_energy_kwh` inferred from `target_soc`, `current_soc`, `battery_kwh` if missing.
+     - If still missing, defaults to `20.0`.
+   - Domain validation gaps remain: coordinate bounds, SOC ranges, timestamp ordering, positive energy limits, and consistency between explicit energy and SOC-derived energy are not strongly enforced.
+
+## API Runtime Service
+
+8. `apps/api/app/services/recommendations_service.py`
+   - `generate_recommendations(request)` returns `inject_live_request(request)`.
+
+9. `apps/api/app/services/runtime_service.py`
+   - `get_runtime_manager()` returns cached `RuntimeManager(repo_root=REPO_ROOT)`.
+   - `ensure_runtime_started()` checks `get_runtime_manager().get_latest_state()`.
+   - `inject_live_request(request)` calls `ensure_runtime_started()` then `RuntimeManager.inject_request(request)`.
+
+## Runtime Manager
+
+10. `services/sim_runtime/runtime_manager.py`
+    - `RuntimeManager.inject_request(payload)`:
+      - `_load_env()` loads latest `StateSnapshot` from storage or creates a new `DundeeEnv`.
+      - Converts dict payloads using `ExternalChargingRequest.model_validate`.
+      - Calls `env.inject_external_request(request)`.
+      - Calls `env.get_ranked_recommendations(sim_request)`.
+      - Persists external request with `RuntimeStorage.save_external_request`.
+      - Persists recommendation with `RuntimeStorage.save_recommendation`.
+      - Persists state/metrics/events with `_persist_env(env, include_events=True)`.
+      - Returns `RecommendationResponse`.
+
+## Environment Injection
+
+11. `packages/ev_core/src/ev_core/env/dundee_env.py`
+    - `DundeeEnv.inject_external_request(request)`:
+      - Calls `_build_simulation_request_from_external`.
+      - Stores the `SimulationRequest` in `self.requests`.
+      - Increments `requests_seen_total`.
+      - Sets `latest_external_request_id`.
+      - Records `external_request_injected` event.
+    - `_build_simulation_request_from_external(request)`:
+      - Uses provided `request_id` or generates `external_<uuid>`.
+      - Floors `request_timestamp` to the 15-minute time base.
+      - Derives `zone_id` from request zone or nearest station location.
+      - Normalizes charger type.
+      - Sets `requested_energy_kwh`.
+      - Computes `requested_duration_minutes` from request window.
+      - Returns `SimulationRequest`.
+
+## Response Consumption
+
+12. `apps/mobile/src/screens/ResultsScreen.tsx`
+    - Reads `bundle.top_recommendation` and `bundle.alternatives`.
+    - `mapOptionToUiStation` maps fields from `RecommendationOption` into UI station cards.
+    - Uses `metadata.connector_mix_total` to infer charger display label.
+
