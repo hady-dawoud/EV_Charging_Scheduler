@@ -1,5 +1,7 @@
 # Next Refactor Plan
 
+Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
+
 Do not implement this until the next implementation prompt. Preserve the current mobile/API/dashboard response shape.
 
 ## Goal
@@ -15,6 +17,8 @@ Create a thin policy abstraction around the current weighted heuristic ranker an
 - Keep FastAPI thin.
 - Preserve `ExternalChargingRequest`, `RecommendationOption`, and `RecommendationResponse` field names.
 - Preserve mobile result mapping in `apps/mobile/src/screens/ResultsScreen.tsx`.
+- Preserve deployed/mobile API URL behavior in `apps/mobile/src/services/api.ts`: `EXPO_PUBLIC_API_BASE_URL` override with local platform fallback.
+- Preserve API CORS env behavior in `apps/api/app/main.py`: comma-separated `CORS_ORIGINS` with local defaults.
 - Preserve dashboard reads until there is a deliberate API/dashboard migration PR.
 - Do not extract candidate building in the first PR unless tests require a tiny adapter.
 - Do not add MARL inference in the first PR.
@@ -84,4 +88,3 @@ The first implementation should wrap the current `WeightedHeuristicRanker` as `W
 - Tests prove current weighted heuristic behavior before and after the abstraction.
 - No MARL/RL dependency is added.
 - API endpoint remains a thin call into runtime service.
-

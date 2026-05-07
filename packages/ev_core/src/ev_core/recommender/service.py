@@ -3,17 +3,29 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
-from ev_core.contracts.responses import RecommendationResponse
+from ev_core.contracts.responses import RecommendationOption, RecommendationResponse
 
-from .ranker import CandidateContext, CandidateRanker, RecommendationInput, WeightedHeuristicRanker
+from .policies import RecommendationPolicy
+from .policy_registry import PolicyRegistry
+from .ranker import CandidateContext, CandidateRanker, RecommendationInput
 
 
 class RecommendationService:
     """Standalone recommendation service kept separate from the current app/backend."""
 
-    def __init__(self, ranker: CandidateRanker | None = None) -> None:
-        self.ranker = ranker or WeightedHeuristicRanker()
+    def __init__(
+        self,
+        ranker: CandidateRanker | None = None,
+        *,
+        policy_name: str | None = None,
+        policy_registry: PolicyRegistry | None = None,
+        policy: RecommendationPolicy | None = None,
+    ) -> None:
+        self.ranker = ranker
+        self.policy_registry = policy_registry or PolicyRegistry()
+        self.policy = policy or (None if ranker is not None else self.policy_registry.get(policy_name))
 
     def recommend(
         self,
@@ -28,12 +40,15 @@ class RecommendationService:
     ) -> RecommendationResponse:
         """Rank candidate stations and return a standalone response contract."""
 
-        ranked = self.ranker.rank(
-            RecommendationInput(
-                request_id=request_id,
-                preference_mode=preference_mode,
-                candidates=tuple(candidate_contexts),
-            )
+        payload = RecommendationInput(
+            request_id=request_id,
+            preference_mode=preference_mode,
+            candidates=tuple(candidate_contexts),
+        )
+        ranked = self._rank(
+            payload,
+            candidate_contexts,
+            runtime_context={"simulated_timestamp": simulated_timestamp},
         )
         top_recommendation = ranked[0] if ranked else None
         congestion_note = self._build_congestion_note(ranked)
@@ -69,6 +84,19 @@ class RecommendationService:
             f"Top option {top.station_name} scored {top.score:.3f} with distance {top.distance_km:.2f} km, "
             f"wait {top.estimated_wait_minutes} min, and headroom {top.transformer_headroom_kw:.1f} kW."
         )
+
+    def _rank(
+        self,
+        payload: RecommendationInput,
+        candidate_contexts: list[CandidateContext],
+        *,
+        runtime_context: dict[str, Any] | None = None,
+    ) -> list[RecommendationOption]:
+        if self.ranker is not None:
+            return self.ranker.rank(payload)
+        if self.policy is None:
+            self.policy = self.policy_registry.get()
+        return self.policy.rank(payload, candidate_contexts, runtime_context=runtime_context)
 
 
 __all__ = ["RecommendationService"]
