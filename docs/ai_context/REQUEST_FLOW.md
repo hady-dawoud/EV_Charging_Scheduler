@@ -1,5 +1,7 @@
 # Request Flow
 
+Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
+
 This is the verified live recommendation path from the mobile app to the runtime-backed response.
 
 ## Mobile Request Creation
@@ -17,6 +19,8 @@ This is the verified live recommendation path from the mobile app to the runtime
    - On success, navigates to `Results` with the returned API result.
 
 3. `apps/mobile/src/services/api.ts`
+   - Resolves `API_BASE_URL` as `process.env.EXPO_PUBLIC_API_BASE_URL || LOCAL_API_BASE_URL`.
+   - `LOCAL_API_BASE_URL` is `http://10.0.2.2:8000` on Android and `http://127.0.0.1:8000` otherwise.
    - `api.getRecommendations` builds payload:
      - `client_request_id`
      - `request_timestamp`
@@ -38,6 +42,8 @@ This is the verified live recommendation path from the mobile app to the runtime
 ## FastAPI Endpoint
 
 4. `apps/api/app/main.py`
+   - Reads `CORS_ORIGINS` from the environment, split by comma.
+   - Default CORS origins are `http://localhost:8081`, `http://127.0.0.1:8081`, and `http://localhost:3000`.
    - Includes `recommendations_router`.
 
 5. `apps/api/app/routers/recommendations.py`
@@ -105,4 +111,3 @@ This is the verified live recommendation path from the mobile app to the runtime
     - Reads `bundle.top_recommendation` and `bundle.alternatives`.
     - `mapOptionToUiStation` maps fields from `RecommendationOption` into UI station cards.
     - Uses `metadata.connector_mix_total` to infer charger display label.
-
