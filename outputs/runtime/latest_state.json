@@ -1,322 +1,44 @@
 {
-  "simulated_timestamp": "2024-06-18T14:45:00",
+  "simulated_timestamp": "2024-06-10T12:00:00",
   "active_policy": "overload_aware",
   "replay_year": 2024,
   "replay_day": "2024-06-10",
-  "runtime_mode": "hybrid",
-  "demand_multiplier": 1.35,
-  "warm_start_minutes": 240,
-  "loop_running": true,
-  "loop_interval_seconds": 1.0,
-  "operational_start_ts": "2024-06-10T15:00:00",
+  "runtime_mode": "replay",
+  "demand_multiplier": 1.0,
+  "warm_start_minutes": 0,
+  "loop_running": false,
+  "loop_interval_seconds": 0.0,
+  "operational_start_ts": "2024-06-10T12:00:00",
   "running": true,
-  "replay_cursor": 139,
-  "replay_total": 139,
-  "next_replay_arrival_ts": null,
-  "latest_external_request_id": "string",
+  "replay_cursor": 0,
+  "replay_total": 125,
+  "next_replay_arrival_ts": "2024-06-10T12:00:00",
+  "latest_external_request_id": "runtime-smoke-request",
   "active_requests": [
     {
-      "request_id": "string",
-      "client_request_id": "string",
+      "request_id": "runtime-smoke-request",
+      "client_request_id": "runtime-smoke",
       "source_type": "external_live",
       "status": "pending",
-      "arrival_ts": "2026-04-15T06:15:00",
-      "latest_finish_ts": "2026-04-15T06:30:00",
+      "arrival_ts": "2024-06-10T12:00:00",
+      "latest_finish_ts": "2024-06-10T15:00:00",
       "requested_energy_kwh": 20.0,
-      "requested_duration_minutes": 15,
-      "preference_mode": "fastest",
+      "requested_duration_minutes": 90,
+      "preference_mode": "closest",
       "charger_type_preference": "Any",
       "station_id": null,
       "station_name": null,
       "transformer_id": null,
-      "zone_id": "string",
+      "zone_id": "zone_central_waterfront",
       "queue_entered_ts": null,
       "started_at": null,
       "expected_completion_ts": null,
       "remaining_minutes": null,
-      "metadata": {
-        "additionalProp1": {}
-      }
+      "metadata": {}
     }
   ],
   "queued_requests": [],
-  "active_sessions": [
-    {
-      "request_id": "synthetic_202406181345_2421",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T13:45:00",
-      "latest_finish_ts": "2024-06-18T15:30:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 90,
-      "preference_mode": "fastest",
-      "charger_type_preference": "AC",
-      "station_id": "trades_lane_dundee",
-      "station_name": "Trades Lane, Dundee",
-      "transformer_id": "tx_central_waterfront",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T13:45:00",
-      "expected_completion_ts": "2024-06-18T15:15:00",
-      "remaining_minutes": 30,
-      "metadata": {
-        "synthetic_anchor_station_id": "gellatly_street_car_park_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_waterfront",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181345_2422",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T13:45:00",
-      "latest_finish_ts": "2024-06-18T15:00:00",
-      "requested_energy_kwh": 26.226,
-      "requested_duration_minutes": 15,
-      "preference_mode": "fastest",
-      "charger_type_preference": "AC",
-      "station_id": "olympia_multi_storey_car_park_dundee",
-      "station_name": "Olympia Multi-Storey Car Park, Dundee",
-      "transformer_id": "tx_central_waterfront",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T13:45:00",
-      "expected_completion_ts": "2024-06-18T15:00:00",
-      "remaining_minutes": 15,
-      "metadata": {
-        "synthetic_anchor_station_id": "olympia_multi_storey_car_park_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_waterfront",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181400_2423",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:00:00",
-      "latest_finish_ts": "2024-06-18T16:45:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 45,
-      "preference_mode": "fastest",
-      "charger_type_preference": "Rapid",
-      "station_id": "princes_street_charging_hub_dundee",
-      "station_name": "Princes Street Charging Hub, Dundee",
-      "transformer_id": "tx_central_waterfront",
-      "zone_id": "zone_west_lochee",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:00:00",
-      "expected_completion_ts": "2024-06-18T15:15:00",
-      "remaining_minutes": 30,
-      "metadata": {
-        "synthetic_anchor_station_id": "dundee_ice_arena_dundee",
-        "synthetic_anchor_transformer_id": "tx_west_camperdown",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181415_2429",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:15:00",
-      "latest_finish_ts": "2024-06-18T16:30:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 120,
-      "preference_mode": "cheapest",
-      "charger_type_preference": "AC",
-      "station_id": "gellatly_street_car_park_dundee",
-      "station_name": "Gellatly Street Car Park, Dundee",
-      "transformer_id": "tx_central_waterfront",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:15:00",
-      "expected_completion_ts": "2024-06-18T16:30:00",
-      "remaining_minutes": 105,
-      "metadata": {
-        "synthetic_anchor_station_id": "gellatly_street_car_park_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_waterfront",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181415_2430",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:15:00",
-      "latest_finish_ts": "2024-06-18T16:45:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 30,
-      "preference_mode": "fastest",
-      "charger_type_preference": "AC",
-      "station_id": "dundee_house_depot_north_lindsay_street_dundee",
-      "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
-      "transformer_id": "tx_central_waterfront",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:15:00",
-      "expected_completion_ts": "2024-06-18T15:45:00",
-      "remaining_minutes": 60,
-      "metadata": {
-        "synthetic_anchor_station_id": "nethergate_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_market",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181415_2431",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:15:00",
-      "latest_finish_ts": "2024-06-18T17:45:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 90,
-      "preference_mode": "closest",
-      "charger_type_preference": "Rapid",
-      "station_id": "lochee_charging_hub_aimer_square_dundee",
-      "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-      "transformer_id": "tx_west_lochee",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:15:00",
-      "expected_completion_ts": "2024-06-18T15:30:00",
-      "remaining_minutes": 45,
-      "metadata": {
-        "synthetic_anchor_station_id": "greenmarket_multi_storey_car_park_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_market",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181430_2433",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:30:00",
-      "latest_finish_ts": "2024-06-18T17:00:00",
-      "requested_energy_kwh": 38.823,
-      "requested_duration_minutes": 120,
-      "preference_mode": "cheapest",
-      "charger_type_preference": "AC",
-      "station_id": "dundee_railway_station",
-      "station_name": "Dundee Railway Station",
-      "transformer_id": "tx_central_market",
-      "zone_id": "zone_central_waterfront",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:30:00",
-      "expected_completion_ts": "2024-06-18T15:45:00",
-      "remaining_minutes": 60,
-      "metadata": {
-        "synthetic_anchor_station_id": "dundee_taybridge_rail_station_south_union_street_dundee",
-        "synthetic_anchor_transformer_id": "tx_central_market",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181430_2434",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:30:00",
-      "latest_finish_ts": "2024-06-18T16:30:00",
-      "requested_energy_kwh": 48.133,
-      "requested_duration_minutes": 90,
-      "preference_mode": "closest",
-      "charger_type_preference": "Rapid",
-      "station_id": "lochee_charging_hub_aimer_square_dundee",
-      "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-      "transformer_id": "tx_west_lochee",
-      "zone_id": "zone_north_inner",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:30:00",
-      "expected_completion_ts": "2024-06-18T15:45:00",
-      "remaining_minutes": 60,
-      "metadata": {
-        "synthetic_anchor_station_id": "clepington_road_4th_hub",
-        "synthetic_anchor_transformer_id": "tx_north_clepington",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181430_2435",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:30:00",
-      "latest_finish_ts": "2024-06-18T17:00:00",
-      "requested_energy_kwh": 5.134,
-      "requested_duration_minutes": 120,
-      "preference_mode": "fastest",
-      "charger_type_preference": "Rapid",
-      "station_id": "lochee_charging_hub_aimer_square_dundee",
-      "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-      "transformer_id": "tx_west_lochee",
-      "zone_id": "zone_west_lochee",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:30:00",
-      "expected_completion_ts": "2024-06-18T14:45:00",
-      "remaining_minutes": 0,
-      "metadata": {
-        "synthetic_anchor_station_id": "lochee_charging_hub_aimer_square_dundee",
-        "synthetic_anchor_transformer_id": "tx_west_lochee",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181430_2436",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:30:00",
-      "latest_finish_ts": "2024-06-18T15:00:00",
-      "requested_energy_kwh": 16.704,
-      "requested_duration_minutes": 15,
-      "preference_mode": "fastest",
-      "charger_type_preference": "Rapid",
-      "station_id": "clepington_road_4th_hub",
-      "station_name": "Clepington Road - 4th Hub",
-      "transformer_id": "tx_north_clepington",
-      "zone_id": "zone_west_lochee",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:30:00",
-      "expected_completion_ts": "2024-06-18T14:45:00",
-      "remaining_minutes": 0,
-      "metadata": {
-        "synthetic_anchor_station_id": "lochee_charging_hub_aimer_square_dundee",
-        "synthetic_anchor_transformer_id": "tx_west_lochee",
-        "demand_multiplier": 1.35
-      }
-    },
-    {
-      "request_id": "synthetic_202406181430_2437",
-      "client_request_id": null,
-      "source_type": "synthetic_background",
-      "status": "charging",
-      "arrival_ts": "2024-06-18T14:30:00",
-      "latest_finish_ts": "2024-06-18T15:15:00",
-      "requested_energy_kwh": 16.704,
-      "requested_duration_minutes": 15,
-      "preference_mode": "fastest",
-      "charger_type_preference": "Rapid",
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
-      "transformer_id": "tx_central_market",
-      "zone_id": "zone_east_corridor",
-      "queue_entered_ts": null,
-      "started_at": "2024-06-18T14:30:00",
-      "expected_completion_ts": "2024-06-18T14:45:00",
-      "remaining_minutes": 0,
-      "metadata": {
-        "synthetic_anchor_station_id": "queen_street_charging_hub_dundee",
-        "synthetic_anchor_transformer_id": "tx_east_queen_street",
-        "demand_multiplier": 1.35
-      }
-    }
-  ],
+  "active_sessions": [],
   "recently_completed_request_ids": [],
   "recently_missed_request_ids": [],
   "stations": [
@@ -333,7 +55,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 276.26518,
+      "transformer_headroom_kw": 355.61748,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -350,7 +72,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 126.6184425,
+      "transformer_headroom_kw": 131.319555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -367,7 +89,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 276.26518,
+      "transformer_headroom_kw": 355.61748,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -384,7 +106,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 127.4334425,
+      "transformer_headroom_kw": 132.134555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -397,14 +119,12 @@
       "longitude": -2.985238,
       "cp_count_total": 6,
       "station_capacity_kw_assumed": 340.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.16666666666666666,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 276.26518,
-      "active_request_ids": [
-        "synthetic_202406181430_2436"
-      ],
+      "transformer_headroom_kw": 355.61748,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -420,7 +140,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 276.26518,
+      "transformer_headroom_kw": 355.61748,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -437,7 +157,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 333.6464083333333,
+      "transformer_headroom_kw": 440.44785,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -454,7 +174,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 126.6184425,
+      "transformer_headroom_kw": 131.319555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -471,7 +191,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 128.6554425,
+      "transformer_headroom_kw": 133.356555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -488,7 +208,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 333.6464083333333,
+      "transformer_headroom_kw": 440.44785,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -505,7 +225,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 295.2937124999999,
+      "transformer_headroom_kw": 640.301775,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -522,7 +242,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 126.6184425,
+      "transformer_headroom_kw": 131.319555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -535,14 +255,12 @@
       "longitude": -2.9755925,
       "cp_count_total": 1,
       "station_capacity_kw_assumed": 30.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 1.0,
-      "estimated_wait_minutes": 60,
-      "transformer_headroom_kw": 295.2937124999999,
-      "active_request_ids": [
-        "synthetic_202406181415_2430"
-      ],
+      "utilization": 0.0,
+      "estimated_wait_minutes": 0,
+      "transformer_headroom_kw": 640.301775,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -558,7 +276,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 127.4334425,
+      "transformer_headroom_kw": 132.134555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -571,14 +289,12 @@
       "longitude": -2.969612,
       "cp_count_total": 1,
       "station_capacity_kw_assumed": 30.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 1.0,
-      "estimated_wait_minutes": 60,
-      "transformer_headroom_kw": 272.2029275,
-      "active_request_ids": [
-        "synthetic_202406181430_2433"
-      ],
+      "utilization": 0.0,
+      "estimated_wait_minutes": 0,
+      "transformer_headroom_kw": 384.180665,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -594,7 +310,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 272.2029275,
+      "transformer_headroom_kw": 384.180665,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -611,7 +327,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 337.64918,
+      "transformer_headroom_kw": 350.18548,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -624,14 +340,12 @@
       "longitude": -2.9662611,
       "cp_count_total": 13,
       "station_capacity_kw_assumed": 290.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.07692307692307693,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 295.2937124999999,
-      "active_request_ids": [
-        "synthetic_202406181415_2429"
-      ],
+      "transformer_headroom_kw": 640.301775,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -643,14 +357,12 @@
       "longitude": -2.969515,
       "cp_count_total": 2,
       "station_capacity_kw_assumed": 260.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.5,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 272.2029275,
-      "active_request_ids": [
-        "synthetic_202406181430_2437"
-      ],
+      "transformer_headroom_kw": 384.180665,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -666,7 +378,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 272.2029275,
+      "transformer_headroom_kw": 384.180665,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -683,7 +395,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 128.6554425,
+      "transformer_headroom_kw": 133.356555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -696,16 +408,12 @@
       "longitude": -3.0099183,
       "cp_count_total": 12,
       "station_capacity_kw_assumed": 440.0,
-      "active_sessions": 3,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.25,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 333.6464083333333,
-      "active_request_ids": [
-        "synthetic_202406181415_2431",
-        "synthetic_202406181430_2434",
-        "synthetic_202406181430_2435"
-      ],
+      "transformer_headroom_kw": 440.44785,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -721,7 +429,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 333.6464083333333,
+      "transformer_headroom_kw": 440.44785,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -738,7 +446,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 337.64918,
+      "transformer_headroom_kw": 350.18548,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -755,7 +463,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 128.6554425,
+      "transformer_headroom_kw": 133.356555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -772,7 +480,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 272.2029275,
+      "transformer_headroom_kw": 384.180665,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -789,7 +497,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 295.2937124999999,
+      "transformer_headroom_kw": 640.301775,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -802,14 +510,12 @@
       "longitude": -2.963022,
       "cp_count_total": 4,
       "station_capacity_kw_assumed": 90.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.25,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 295.2937124999999,
-      "active_request_ids": [
-        "synthetic_202406181345_2422"
-      ],
+      "transformer_headroom_kw": 640.301775,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -825,7 +531,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 333.6464083333333,
+      "transformer_headroom_kw": 440.44785,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -838,14 +544,12 @@
       "longitude": -2.962377,
       "cp_count_total": 9,
       "station_capacity_kw_assumed": 360.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 0.1111111111111111,
+      "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 295.2937124999999,
-      "active_request_ids": [
-        "synthetic_202406181400_2423"
-      ],
+      "transformer_headroom_kw": 640.301775,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -861,7 +565,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 337.64918,
+      "transformer_headroom_kw": 350.18548,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -878,7 +582,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 128.6554425,
+      "transformer_headroom_kw": 133.356555,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -895,7 +599,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 272.2029275,
+      "transformer_headroom_kw": 384.180665,
       "active_request_ids": [],
       "queued_request_ids": []
     },
@@ -908,14 +612,12 @@
       "longitude": -2.9662628,
       "cp_count_total": 1,
       "station_capacity_kw_assumed": 30.0,
-      "active_sessions": 1,
+      "active_sessions": 0,
       "queue_length": 0,
-      "utilization": 1.0,
-      "estimated_wait_minutes": 30,
-      "transformer_headroom_kw": 295.2937124999999,
-      "active_request_ids": [
-        "synthetic_202406181345_2421"
-      ],
+      "utilization": 0.0,
+      "estimated_wait_minutes": 0,
+      "transformer_headroom_kw": 640.301775,
+      "active_request_ids": [],
       "queued_request_ids": []
     },
     {
@@ -931,7 +633,7 @@
       "queue_length": 0,
       "utilization": 0.0,
       "estimated_wait_minutes": 0,
-      "transformer_headroom_kw": 126.6184425,
+      "transformer_headroom_kw": 131.319555,
       "active_request_ids": [],
       "queued_request_ids": []
     }
@@ -942,11 +644,11 @@
       "transformer_name": "Central Market Feeder",
       "zone_id": "zone_central_waterfront",
       "capacity_kw": 450.0,
-      "background_load_kw": 133.798,
-      "ev_load_kw": 97.87440000000001,
-      "pv_generation_kw": 53.875327500000004,
-      "net_load_kw": 177.7970725,
-      "headroom_kw": 272.2029275,
+      "background_load_kw": 127.498,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 61.678664999999995,
+      "net_load_kw": 65.81933500000001,
+      "headroom_kw": 384.180665,
       "overload": false,
       "attached_station_ids": [
         "dundee_railway_station",
@@ -962,12 +664,170 @@
       "transformer_name": "Central Waterfront Feeder",
       "zone_id": "zone_central_waterfront",
       "capacity_kw": 750.0,
-      "background_load_kw": 222.996,
-      "ev_load_kw": 321.5025,
-      "pv_generation_kw": 89.79221249999999,
-      "net_load_kw": 454.70628750000003,
-      "headroom_kw": 295.29371249999997,
+      "background_load_kw": 212.496,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 102.79777500000002,
+      "net_load_kw": 109.698225,
+      "headroom_kw": 640.301775,
       "overload": false,
       "attached_station_ids": [
         "dock_street_dundee",
-        "dundee_house_
+        "dundee_house_depot_north_lindsay_street_dundee",
+        "gellatly_street_car_park_dundee",
+        "olympia_hub",
+        "olympia_multi_storey_car_park_dundee",
+        "princes_street_charging_hub_dundee",
+        "trades_lane_dundee"
+      ]
+    },
+    {
+      "transformer_id": "tx_east_broughty",
+      "transformer_name": "East Broughty Feeder",
+      "zone_id": "zone_east_corridor",
+      "capacity_kw": 150.0,
+      "background_load_kw": 39.24,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 20.559555,
+      "net_load_kw": 18.680445000000002,
+      "headroom_kw": 131.319555,
+      "overload": false,
+      "attached_station_ids": [
+        "balmerino_road",
+        "dawson_park_broughty_ferry",
+        "douglas_community_library",
+        "whitfield_centre_lothian_crescent_dundee"
+      ]
+    },
+    {
+      "transformer_id": "tx_east_queen_street",
+      "transformer_name": "East Queen Street Feeder",
+      "zone_id": "zone_east_corridor",
+      "capacity_kw": 400.0,
+      "background_load_kw": 104.64,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 54.825480000000006,
+      "net_load_kw": 49.814519999999995,
+      "headroom_kw": 350.18548,
+      "overload": false,
+      "attached_station_ids": [
+        "eastern_primary_school",
+        "michelin_scotland_innovation_park",
+        "queen_street_charging_hub_dundee"
+      ]
+    },
+    {
+      "transformer_id": "tx_north_clepington",
+      "transformer_name": "North Clepington Feeder",
+      "zone_id": "zone_north_inner",
+      "capacity_kw": 400.0,
+      "background_load_kw": 99.208,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 54.825480000000006,
+      "net_load_kw": 44.38251999999999,
+      "headroom_kw": 355.61748,
+      "overload": false,
+      "attached_station_ids": [
+        "alexander_street_dundee",
+        "caird_avenue",
+        "clepington_road_4th_hub",
+        "coldside_nursery"
+      ]
+    },
+    {
+      "transformer_id": "tx_north_midcraigie",
+      "transformer_name": "North Mid Craigie Feeder",
+      "zone_id": "zone_north_inner",
+      "capacity_kw": 150.0,
+      "background_load_kw": 37.203,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 20.559555,
+      "net_load_kw": 16.643445000000003,
+      "headroom_kw": 133.356555,
+      "overload": false,
+      "attached_station_ids": [
+        "derby_street",
+        "housing_office_east_midmill_road_dundee",
+        "mill_o_mains_primary_school",
+        "rpc_dundee"
+      ]
+    },
+    {
+      "transformer_id": "tx_west_camperdown",
+      "transformer_name": "West Camperdown Feeder",
+      "zone_id": "zone_west_lochee",
+      "capacity_kw": 150.0,
+      "background_load_kw": 38.425,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 20.559555,
+      "net_load_kw": 17.865444999999998,
+      "headroom_kw": 132.134555,
+      "overload": false,
+      "attached_station_ids": [
+        "camperdown_country_park",
+        "dundee_ice_arena_dundee"
+      ]
+    },
+    {
+      "transformer_id": "tx_west_lochee",
+      "transformer_name": "West Lochee Feeder",
+      "zone_id": "zone_west_lochee",
+      "capacity_kw": 500.0,
+      "background_load_kw": 128.084,
+      "ev_load_kw": 0.0,
+      "pv_generation_kw": 68.53185,
+      "net_load_kw": 59.55215,
+      "headroom_kw": 440.44785,
+      "overload": false,
+      "attached_station_ids": [
+        "craigowen_road",
+        "deveron_terrace",
+        "lochee_charging_hub_aimer_square_dundee",
+        "menzieshill_community_centre",
+        "orleans_place_dundee"
+      ]
+    }
+  ],
+  "metrics": {
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "active_policy": "overload_aware",
+    "active_request_count": 1,
+    "queued_request_count": 0,
+    "active_session_count": 0,
+    "completed_requests_total": 0,
+    "missed_requests_total": 0,
+    "overload_event_count": 0,
+    "queue_length_total": 0,
+    "requests_seen_total": 1,
+    "queue_length_by_zone": {},
+    "requests_by_zone": {
+      "zone_central_waterfront": 1
+    },
+    "transformer_loading_kw": {
+      "tx_central_market": 65.819,
+      "tx_central_waterfront": 109.698,
+      "tx_east_broughty": 18.68,
+      "tx_east_queen_street": 49.815,
+      "tx_north_clepington": 44.383,
+      "tx_north_midcraigie": 16.643,
+      "tx_west_camperdown": 17.865,
+      "tx_west_lochee": 59.552
+    },
+    "transformer_headroom_kw": {
+      "tx_central_market": 384.181,
+      "tx_central_waterfront": 640.302,
+      "tx_east_broughty": 131.32,
+      "tx_east_queen_street": 350.185,
+      "tx_north_clepington": 355.617,
+      "tx_north_midcraigie": 133.357,
+      "tx_west_camperdown": 132.135,
+      "tx_west_lochee": 440.448
+    }
+  },
+  "metadata": {
+    "time_step_minutes": 15,
+    "replay_window_start": "2024-06-10T12:00:00",
+    "replay_window_end": "2024-06-10T23:45:00",
+    "synthetic_request_sequence": 0,
+    "runtime_status_updated_at": "2026-05-08T00:40:30.897061"
+  }
+}

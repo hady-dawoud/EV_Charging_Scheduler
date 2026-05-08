@@ -1,0 +1,4 @@
+station_id,final_latitude,final_longitude,verification_status,location_confidence_final
+public_station,56.46,-2.97,accepted_current,high
+fleet_station,56.47,-2.98,accepted_current,high
+member_station,56.48,-2.99,accepted_current,high

@@ -1,0 +1,3 @@
+station_id,is_public,is_fleet_only,requires_membership,needs_followup,exclude_from_recommendations,access_notes,review_status,review_source
+fleet_station,false,true,false,false,false,Fleet depot by name,assumed,station_name_keyword
+member_station,yes,no,1,0,false,Membership wording,needs_manual_review,station_name_keyword

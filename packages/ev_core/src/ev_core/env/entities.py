@@ -13,6 +13,8 @@ class ChargingConnector:
 
     connector_id: str
     max_power_kw: float
+    connector_type: str = "unknown"
+    cp_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,12 @@ class Station:
     connector_mix_total: str
     station_capacity_kw_assumed: float
     connectors: tuple[ChargingConnector, ...] = field(default_factory=tuple)
+    is_public: bool = True
+    is_fleet_only: bool = False
+    requires_membership: bool = False
+    needs_followup: bool = False
+    exclude_from_recommendations: bool = False
+    access_notes: str | None = None
 
     @property
     def average_port_power_kw(self) -> float:
@@ -72,6 +80,9 @@ class SimulationRequest:
     target_soc: float | None = None
     current_soc: float | None = None
     battery_kwh: float | None = None
+    vehicle_profile_id: str | None = None
+    vehicle_max_ac_kw: float | None = None
+    vehicle_max_dc_kw: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     status: str = "pending"
     queue_entered_ts: datetime | None = None
@@ -91,6 +102,8 @@ class ActiveChargingSession:
     expected_completion_ts: datetime
     assigned_power_kw: float
     estimated_cost_gbp: float
+    connector_id: str | None = None
+    connector_type: str | None = None
 
 
 @dataclass

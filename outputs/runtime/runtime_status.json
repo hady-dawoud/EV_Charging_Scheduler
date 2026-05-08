@@ -1,18 +1,19 @@
 {
-  "loop_running": true,
-  "loop_interval_seconds": 1.0,
-  "runtime_mode": "hybrid",
+  "loop_running": false,
+  "loop_interval_seconds": 0.0,
+  "runtime_mode": "replay",
   "active_policy": "overload_aware",
-  "demand_multiplier": 1.35,
-  "warm_start_minutes": 240,
+  "recommendation_policy_name": "weighted_score",
+  "demand_multiplier": 1.0,
+  "warm_start_minutes": 0,
   "replay_year": 2024,
   "replay_day": "2024-06-10",
-  "operational_start_ts": "2024-06-10T15:00:00",
-  "simulated_timestamp": "2024-06-18T14:45:00",
-  "latest_external_request_id": "string",
+  "operational_start_ts": "2024-06-10T12:00:00",
+  "simulated_timestamp": "2024-06-10T12:00:00",
+  "latest_external_request_id": "runtime-smoke-request",
   "active_request_count": 1,
   "queued_request_count": 0,
-  "active_session_count": 11,
-  "completed_requests_total": 2359,
-  "missed_requests_total": 206
-}
+  "active_session_count": 0,
+  "completed_requests_total": 0,
+  "missed_requests_total": 0
+}

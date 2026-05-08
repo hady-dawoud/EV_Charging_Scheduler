@@ -1,0 +1,2 @@
+station_id,is_public,is_fleet_only,requires_membership,needs_followup,exclude_from_recommendations,access_notes,review_status,review_source
+missing_station,false,true,false,false,false,Unknown station,assumed,station_name_keyword

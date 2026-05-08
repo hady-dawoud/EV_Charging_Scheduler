@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 
 from app.bootstrap_paths import bootstrap_repo_paths
@@ -9,7 +10,7 @@ REPO_ROOT = bootstrap_repo_paths()
 from ev_core.contracts.events import RuntimeEvent
 from ev_core.contracts.requests import ExternalChargingRequest
 from ev_core.contracts.responses import RecommendationResponse, StateSnapshot
-from services.sim_runtime.runtime_manager import RuntimeManager
+from services.sim_runtime.runtime_manager import RuntimeConfig, RuntimeManager
 
 
 class RuntimeNotStartedError(RuntimeError):
@@ -18,7 +19,13 @@ class RuntimeNotStartedError(RuntimeError):
 
 @lru_cache(maxsize=1)
 def get_runtime_manager() -> RuntimeManager:
-    return RuntimeManager(repo_root=REPO_ROOT)
+    return RuntimeManager(
+        repo_root=REPO_ROOT,
+        config=RuntimeConfig(
+            recommendation_policy_name=os.getenv("RECOMMENDATION_POLICY_NAME", "weighted_score"),
+            topology_scenario_id=os.getenv("TOPOLOGY_SCENARIO_ID") or None,
+        ),
+    )
 
 
 def ensure_runtime_started() -> None:
@@ -31,9 +38,14 @@ def ensure_runtime_started() -> None:
 
 def inject_live_request(
     request: ExternalChargingRequest,
+    *,
+    recommendation_policy_name: str | None = None,
 ) -> RecommendationResponse:
     ensure_runtime_started()
-    return get_runtime_manager().inject_request(request)
+    return get_runtime_manager().inject_request(
+        request,
+        recommendation_policy_name=recommendation_policy_name,
+    )
 
 
 def get_runtime_status() -> dict:

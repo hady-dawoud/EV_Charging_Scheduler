@@ -17,6 +17,7 @@ from ev_core.contracts.responses import MetricsSnapshot, RecommendationResponse,
 from ev_core.data.repositories import DundeeSimulationRepository
 from ev_core.env.environment import DundeeEnv
 from ev_core.forecasting.provider import PlaceholderForecastProvider
+from ev_core.topology.scenarios import TopologyScenario
 
 from .event_bus import EventBus
 from .storage import RuntimeStorage
@@ -28,9 +29,11 @@ class RuntimeConfig:
 
     replay_year: int = 2024
     default_policy: str = "overload_aware"
+    recommendation_policy_name: str = "weighted_score"
     default_runtime_mode: str = "replay"
     default_loop_interval_seconds: float = 1.0
     default_demand_multiplier: float = 1.0
+    topology_scenario_id: str | None = None
 
 
 class RuntimeManager:
@@ -40,6 +43,7 @@ class RuntimeManager:
         self.repo_root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve()
         self.config = config or RuntimeConfig()
         self.repository = DundeeSimulationRepository(self.repo_root)
+        self.topology_scenario = self._load_topology_scenario()
         self.bundle = self.repository.load_bundle()
         self.forecast_provider = PlaceholderForecastProvider(
             background_load=self.bundle.background_load,
@@ -97,6 +101,7 @@ class RuntimeManager:
             replay_window_start=window_start,
             replay_window_end=window_end,
             forecast_provider=self.forecast_provider,
+            topology_scenario=self.topology_scenario,
         )
         env.start()
         self.storage.save_runtime_status(
@@ -233,24 +238,40 @@ class RuntimeManager:
         if self._loop_thread is not None:
             self._loop_thread.join()
 
-    def inject_request(self, payload: ExternalChargingRequest | dict[str, Any]) -> RecommendationResponse:
+    def inject_request(
+        self,
+        payload: ExternalChargingRequest | dict[str, Any],
+        *,
+        recommendation_policy_name: str | None = None,
+    ) -> RecommendationResponse:
         """Inject an external-style request into the current Dundee runtime."""
 
         env = self._load_env()
         request = payload if isinstance(payload, ExternalChargingRequest) else ExternalChargingRequest.model_validate(payload)
         sim_request = env.inject_external_request(request)
-        response = env.get_ranked_recommendations(sim_request)
+        response = env.get_ranked_recommendations(
+            sim_request,
+            recommendation_policy_name=recommendation_policy_name or self.config.recommendation_policy_name,
+        )
         self.storage.save_external_request(request, status="injected")
         self.storage.save_recommendation(response)
         self._persist_env(env, include_events=True)
         return response
 
-    def recommend(self, payload: ExternalChargingRequest | dict[str, Any]) -> RecommendationResponse:
+    def recommend(
+        self,
+        payload: ExternalChargingRequest | dict[str, Any],
+        *,
+        recommendation_policy_name: str | None = None,
+    ) -> RecommendationResponse:
         """Produce a recommendation against the current runtime state without queuing the request."""
 
         env = self._load_env()
         request = payload if isinstance(payload, ExternalChargingRequest) else ExternalChargingRequest.model_validate(payload)
-        response = env.get_ranked_recommendations(request)
+        response = env.get_ranked_recommendations(
+            request,
+            recommendation_policy_name=recommendation_policy_name or self.config.recommendation_policy_name,
+        )
         self.storage.save_recommendation(response)
         self._persist_env(env, include_events=True)
         return response
@@ -290,8 +311,14 @@ class RuntimeManager:
                 runtime_mode=self.config.default_runtime_mode,
                 demand_multiplier=self.config.default_demand_multiplier,
                 forecast_provider=self.forecast_provider,
+                topology_scenario=self.topology_scenario,
             )
-        return DundeeEnv.from_state_snapshot(self.bundle, snapshot, forecast_provider=self.forecast_provider)
+        return DundeeEnv.from_state_snapshot(
+            self.bundle,
+            snapshot,
+            forecast_provider=self.forecast_provider,
+            topology_scenario=self.topology_scenario,
+        )
 
     def _load_env(self) -> DundeeEnv:
         snapshot = self.storage.load_latest_state()
@@ -303,8 +330,14 @@ class RuntimeManager:
                 runtime_mode=self.config.default_runtime_mode,
                 demand_multiplier=self.config.default_demand_multiplier,
                 forecast_provider=self.forecast_provider,
+                topology_scenario=self.topology_scenario,
             )
-        return DundeeEnv.from_state_snapshot(self.bundle, snapshot, forecast_provider=self.forecast_provider)
+        return DundeeEnv.from_state_snapshot(
+            self.bundle,
+            snapshot,
+            forecast_provider=self.forecast_provider,
+            topology_scenario=self.topology_scenario,
+        )
 
     def _persist_env(self, env: DundeeEnv, *, include_events: bool = False) -> StateSnapshot:
         status = self.storage.load_runtime_status()
@@ -351,6 +384,7 @@ class RuntimeManager:
             "loop_interval_seconds": float(loop_interval_seconds),
             "runtime_mode": env.runtime_mode,
             "active_policy": env.policy_mode,
+            "recommendation_policy_name": self.config.recommendation_policy_name,
             "demand_multiplier": env.demand_multiplier,
             "warm_start_minutes": env.warm_start_minutes,
             "replay_year": env.replay_year,
@@ -407,6 +441,11 @@ class RuntimeManager:
             hours=max(int(start_hour), 0),
             minutes=max(int(start_minute), 0),
         )
+
+    def _load_topology_scenario(self) -> TopologyScenario | None:
+        if not self.config.topology_scenario_id:
+            return None
+        return self.repository.load_topology_scenario(self.config.topology_scenario_id)
 
 
 __all__ = ["RuntimeConfig", "RuntimeManager"]

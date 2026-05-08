@@ -1,0 +1,10 @@
+station_id,is_public,is_fleet_only,requires_membership,needs_followup,exclude_from_recommendations,access_notes,review_status,review_source
+greenmarket_150kw_bus_charger,true,false,false,true,false,"Name suggests bus/high-power use; verify exact access but keep public in public-station simulator unless source confirms restricted.",needs_manual_review,station_name_keyword
+dundee_house_depot_north_lindsay_street_dundee,true,false,false,true,false,"Name suggests depot use; verify exact access but keep public in public-station simulator unless source confirms restricted.",needs_manual_review,station_name_keyword
+south_tay_street_car_club_public,true,false,false,true,false,"Name includes car-club wording but also says public; verify exact access but keep public unless source confirms restricted.",needs_manual_review,station_name_keyword
+alexander_street_dundee,true,false,false,true,false,"Existing location verification says the point is a postcode centroid rather than charger-level placement.",needs_manual_review,existing_verification_flag
+caird_avenue,true,false,false,true,false,"Existing location verification says this is a low-confidence road-only match with no postcode in source data.",needs_manual_review,existing_verification_flag
+camperdown_country_park,true,false,false,true,false,"Existing location verification says the park feature centroid may not align with charger bays.",needs_manual_review,existing_verification_flag
+clepington_road_4th_hub,true,false,false,true,false,"Existing location verification says this major hub uses a postcode centroid and needs precise pinning.",needs_manual_review,existing_verification_flag
+dundee_taybridge_rail_station_south_union_street_dundee,true,false,false,true,false,"Existing location verification says the railway-station location should be confirmed at site level.",needs_manual_review,existing_verification_flag
+housing_office_east_midmill_road_dundee,true,false,false,true,false,"Existing location verification says this postcode centroid should be confirmed against exact site frontage.",needs_manual_review,existing_verification_flag

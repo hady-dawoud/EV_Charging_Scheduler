@@ -19,8 +19,11 @@ from ev_core.contracts.responses import (
 )
 from ev_core.data.repositories import DundeeDataBundle
 from ev_core.forecasting.provider import ForecastProvider, ForecastRequest, NullForecastProvider
+from ev_core.recommender.candidates import CandidateBuilder
+from ev_core.recommender.eligibility import StationEligibilityFilter
 from ev_core.recommender.ranker import CandidateContext
 from ev_core.recommender.service import RecommendationService
+from ev_core.topology.scenarios import TopologyScenario, TopologyScenarioProvider
 from ev_core.utils.timebase import (
     TIME_STEP_MINUTES,
     advance_timebase,
@@ -28,6 +31,7 @@ from ev_core.utils.timebase import (
     floor_to_timebase,
     minutes_between,
 )
+from ev_core.vehicles.duration import estimate_connector_effective_power_kw, estimate_effective_power_kw
 
 from .allocator import AllocationDecision
 from .baselines import get_policy
@@ -42,6 +46,36 @@ from .entities import (
 )
 from .environment import SimulationEnvironment, StepResult
 from .reward import RewardBreakdown
+
+
+def _coerce_bool(value: Any, *, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if value != value:
+            return default
+        return bool(value)
+    normalized = str(value).strip().lower()
+    if normalized in {"", "nan", "none", "null"}:
+        return default
+    if normalized in {"1", "true", "t", "yes", "y"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n"}:
+        return False
+    return default
+
+
+def _optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, float) and value != value:
+        return None
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "null"}:
+        return None
+    return text
 
 
 class DundeeEnv(SimulationEnvironment):
@@ -61,9 +95,20 @@ class DundeeEnv(SimulationEnvironment):
         replay_window_start: datetime | None = None,
         replay_window_end: datetime | None = None,
         forecast_provider: ForecastProvider | None = None,
+        topology_scenario: TopologyScenario | None = None,
+        topology_provider: TopologyScenarioProvider | None = None,
     ) -> None:
         self.bundle = bundle
+        self.topology_provider = topology_provider or TopologyScenarioProvider(topology_scenario)
+        self.topology_scenario = self.topology_provider.scenario
+        self.topology_station_rows = self.topology_provider.apply_to_station_rows(bundle.stations)
+        self.topology_transformer_rows = self.topology_provider.transformer_rows(
+            bundle.transformers,
+            station_rows=self.topology_station_rows,
+        )
         self.request_generator_params = bundle.request_generator_params
+        self.candidate_builder = CandidateBuilder()
+        self.station_eligibility_filter = StationEligibilityFilter()
         self.recommendation_service = RecommendationService()
         self.forecast_provider = forecast_provider or NullForecastProvider()
         self.policy_mode = policy_mode
@@ -122,6 +167,7 @@ class DundeeEnv(SimulationEnvironment):
         snapshot: StateSnapshot,
         *,
         forecast_provider: ForecastProvider | None = None,
+        topology_scenario: TopologyScenario | None = None,
     ) -> "DundeeEnv":
         """Restore a Dundee environment from a serialized state snapshot."""
 
@@ -145,6 +191,7 @@ class DundeeEnv(SimulationEnvironment):
                 else datetime.combine(date.fromisoformat(snapshot.replay_day), time(hour=23, minute=45))
             ),
             forecast_provider=forecast_provider,
+            topology_scenario=topology_scenario,
         )
         env.restore(snapshot)
         return env
@@ -326,7 +373,11 @@ class DundeeEnv(SimulationEnvironment):
         )
         return simulation_request
 
-    def get_ranked_recommendations(self, request: SimulationRequest | ExternalChargingRequest) -> RecommendationResponse:
+    def get_ranked_recommendations(
+        self,
+        request: SimulationRequest | ExternalChargingRequest,
+        recommendation_policy_name: str | None = None,
+    ) -> RecommendationResponse:
         """Rank Dundee stations for the provided request against the current state."""
 
         simulation_request = request if isinstance(request, SimulationRequest) else self._build_simulation_request_from_external(request)
@@ -339,6 +390,7 @@ class DundeeEnv(SimulationEnvironment):
             source_type=simulation_request.source_type,
             preference_mode=simulation_request.preference_mode,
             candidate_contexts=contexts,
+            policy_name=recommendation_policy_name,
         )
         top_station = response.top_recommendation.station_id if response.top_recommendation is not None else None
         top_transformer = response.top_recommendation.transformer_id if response.top_recommendation is not None else None
@@ -357,6 +409,7 @@ class DundeeEnv(SimulationEnvironment):
                 "candidate_count": len(contexts),
                 "top_station_id": top_station,
                 "preference_mode": simulation_request.preference_mode,
+                "recommendation_policy_name": recommendation_policy_name,
             },
         )
         return response
@@ -383,6 +436,9 @@ class DundeeEnv(SimulationEnvironment):
             target_soc=request.target_soc,
             current_soc=request.current_soc,
             battery_kwh=request.battery_kwh,
+            vehicle_profile_id=request.vehicle_profile_id,
+            vehicle_max_ac_kw=request.vehicle_max_ac_kw,
+            vehicle_max_dc_kw=request.vehicle_max_dc_kw,
             metadata=request.metadata,
         )
 
@@ -480,17 +536,46 @@ class DundeeEnv(SimulationEnvironment):
         return list(self.recent_events)
 
     def _build_station_index(self, bundle: DundeeDataBundle) -> dict[str, Station]:
+        chargepoint_rows = []
+        if getattr(bundle, "chargepoints", None) is not None:
+            chargepoint_rows = bundle.chargepoints.to_dict(orient="records")
+        chargepoints_by_station: dict[str, list[dict[str, Any]]] = {}
+        for row in chargepoint_rows:
+            chargepoints_by_station.setdefault(str(row.get("station_id", "")), []).append(row)
         stations: dict[str, Station] = {}
-        for row in bundle.stations.to_dict(orient="records"):
-            connectors = tuple(
+        station_rows = getattr(self, "topology_station_rows", bundle.stations)
+        for row in station_rows.to_dict(orient="records"):
+            station_id = str(row["station_id"])
+            chargepoint_connectors = tuple(
                 ChargingConnector(
-                    connector_id=f"{row['station_id']}_port_{idx + 1}",
-                    max_power_kw=float(row["station_capacity_kw_assumed"]) / max(int(row["cp_count_total"]), 1),
+                    connector_id=str(cp_row["cp_id"]),
+                    cp_id=str(cp_row["cp_id"]),
+                    connector_type=str(cp_row.get("connector_type_mode") or "unknown"),
+                    max_power_kw=float(cp_row.get("assumed_port_kw") or 0.0),
                 )
-                for idx in range(int(row["cp_count_total"]))
+                for cp_row in chargepoints_by_station.get(station_id, [])
+                if _optional_text(cp_row.get("cp_id")) is not None
             )
-            stations[str(row["station_id"])] = Station(
-                station_id=str(row["station_id"]),
+            if chargepoint_connectors:
+                connectors = chargepoint_connectors
+            else:
+                connector_tokens = [
+                    item.strip().lower()
+                    for item in str(row["connector_mix_total"]).split(";")
+                    if item and item.strip()
+                ] or ["unknown"]
+                cp_count_total = int(row["cp_count_total"])
+                fallback_power_kw = float(row["station_capacity_kw_assumed"]) / max(cp_count_total, 1)
+                connectors = tuple(
+                    ChargingConnector(
+                        connector_id=f"{station_id}_port_{idx + 1}",
+                        max_power_kw=fallback_power_kw,
+                        connector_type=connector_tokens[min(idx, len(connector_tokens) - 1)],
+                    )
+                    for idx in range(cp_count_total)
+                )
+            stations[station_id] = Station(
+                station_id=station_id,
                 station_name=str(row["station_name"]),
                 zone_id=str(row["zone_id"]),
                 transformer_id=str(row["transformer_id"]),
@@ -500,13 +585,21 @@ class DundeeEnv(SimulationEnvironment):
                 connector_mix_total=str(row["connector_mix_total"]),
                 station_capacity_kw_assumed=float(row["station_capacity_kw_assumed"]),
                 connectors=connectors,
+                is_public=_coerce_bool(row.get("is_public", True), default=True),
+                is_fleet_only=_coerce_bool(row.get("is_fleet_only", False), default=False),
+                requires_membership=_coerce_bool(row.get("requires_membership", False), default=False),
+                needs_followup=_coerce_bool(row.get("needs_followup", False), default=False),
+                exclude_from_recommendations=_coerce_bool(row.get("exclude_from_recommendations", False), default=False),
+                access_notes=_optional_text(row.get("access_notes")),
             )
         return stations
 
     def _build_transformer_index(self, bundle: DundeeDataBundle) -> dict[str, Transformer]:
-        grouped_station_ids = bundle.stations.groupby("transformer_id")["station_id"].apply(list).to_dict()
+        station_rows = getattr(self, "topology_station_rows", bundle.stations)
+        transformer_rows = getattr(self, "topology_transformer_rows", bundle.transformers)
+        grouped_station_ids = station_rows.groupby("transformer_id")["station_id"].apply(list).to_dict()
         transformers: dict[str, Transformer] = {}
-        for row in bundle.transformers.to_dict(orient="records"):
+        for row in transformer_rows.to_dict(orient="records"):
             transformer_id = str(row["transformer_id"])
             transformers[transformer_id] = Transformer(
                 transformer_id=transformer_id,
@@ -799,6 +892,7 @@ class DundeeEnv(SimulationEnvironment):
         request.expected_completion_ts = expected_completion
         request.remaining_minutes = option.estimated_duration_minutes
         station_state = self.stations_runtime[option.station_id]
+        connector = self._select_connector_for_request(request, option.station_id)
         if request.request_id not in station_state.active_session_ids:
             station_state.active_session_ids.append(request.request_id)
         self.active_sessions[request.request_id] = ActiveChargingSession(
@@ -809,6 +903,8 @@ class DundeeEnv(SimulationEnvironment):
             expected_completion_ts=expected_completion,
             assigned_power_kw=assigned_power_kw,
             estimated_cost_gbp=option.estimated_cost_gbp,
+            connector_id=connector.connector_id if connector is not None else None,
+            connector_type=connector.connector_type if connector is not None else None,
         )
         self._record_event(
             "request_started",
@@ -827,12 +923,25 @@ class DundeeEnv(SimulationEnvironment):
             return False
         headroom = self._current_transformer_headroom(option.transformer_id)
         required_power = max(request.requested_energy_kwh * 60.0 / max(option.estimated_duration_minutes, TIME_STEP_MINUTES), 1.0)
-        return self._station_free_ports(option.station_id) > 0 and headroom >= required_power
+        return self._station_free_compatible_ports(option.station_id, request.charger_type_preference) > 0 and headroom >= required_power
 
     def _station_free_ports(self, station_id: str) -> int:
         station = self.station_index[station_id]
         active = len(self.stations_runtime[station_id].active_session_ids)
+        if station.connectors:
+            if self._has_generic_busy_sessions(station_id):
+                return max(station.cp_count_total - active, 0)
+            return max(len(station.connectors) - len(self._busy_connector_ids(station_id)), 0)
         return max(station.cp_count_total - active, 0)
+
+    def _station_free_compatible_ports(self, station_id: str, requested_type: str) -> int:
+        station = self.station_index[station_id]
+        compatible = self._compatible_connectors(station, requested_type)
+        if not compatible:
+            return 0
+        if self._has_generic_busy_sessions(station_id):
+            return min(self._station_free_ports(station_id), len(compatible))
+        return len(self._available_compatible_connectors(station_id, requested_type))
 
     def _station_specific_option(self, request: SimulationRequest, station_id: str):
         options = self._build_candidate_contexts(request, only_station_id=station_id)
@@ -858,37 +967,21 @@ class DundeeEnv(SimulationEnvironment):
         return response.top_recommendation
 
     def _build_candidate_contexts(self, request: SimulationRequest, only_station_id: str | None = None) -> list[CandidateContext]:
-        contexts: list[CandidateContext] = []
-        remaining_window_minutes = max(minutes_between(self.current_time, request.latest_finish_ts), TIME_STEP_MINUTES)
-        for station in self.station_index.values():
-            if only_station_id is not None and station.station_id != only_station_id:
-                continue
-            compatible = self._is_charger_compatible(request.charger_type_preference, station.connector_mix_total)
-            effective_power = max(station.average_port_power_kw, 7.0)
-            estimated_duration = max(
-                int(round((request.requested_energy_kwh / effective_power) * 60.0 / TIME_STEP_MINUTES) * TIME_STEP_MINUTES),
-                TIME_STEP_MINUTES,
-            )
-            estimated_wait = self._estimate_station_wait_minutes(station.station_id)
-            if compatible and estimated_duration + estimated_wait <= remaining_window_minutes:
-                contexts.append(
-                    CandidateContext(
-                        station_id=station.station_id,
-                        station_name=station.station_name,
-                        zone_id=station.zone_id,
-                        transformer_id=station.transformer_id,
-                        distance_km=self._distance_to_station_km(request, station),
-                        estimated_wait_minutes=estimated_wait,
-                        estimated_duration_minutes=estimated_duration,
-                        estimated_cost_gbp=request.requested_energy_kwh * self._current_price_per_kwh(),
-                        transformer_headroom_kw=self._current_transformer_headroom(station.transformer_id),
-                        current_queue=len(self.stations_runtime[station.station_id].queue_request_ids),
-                        utilization=len(self.stations_runtime[station.station_id].active_session_ids) / max(station.cp_count_total, 1),
-                        charger_compatible=compatible,
-                        metadata={"connector_mix_total": station.connector_mix_total},
-                    )
-                )
-        return contexts
+        return self.candidate_builder.build(
+            request=request,
+            stations=self.station_index.values(),
+            stations_runtime=self.stations_runtime,
+            current_time=self.current_time,
+            only_station_id=only_station_id,
+            distance_to_station_km=self._distance_to_station_km,
+            estimate_station_wait_minutes=self._estimate_station_wait_minutes,
+            current_price_per_kwh=self._current_price_per_kwh,
+            current_transformer_headroom=self._current_transformer_headroom,
+            is_charger_compatible=self._is_charger_compatible,
+            station_eligibility_filter=getattr(self, "station_eligibility_filter", StationEligibilityFilter()),
+            station_effective_power_kw=self._best_available_connector_power_kw,
+            compatible_available_port_count=self._compatible_available_port_count,
+        )
 
     def _estimate_station_wait_minutes(self, station_id: str) -> int:
         station_state = self.stations_runtime[station_id]
@@ -1128,6 +1221,82 @@ class DundeeEnv(SimulationEnvironment):
         if value in {"ac"}:
             return "AC"
         return "Any"
+
+    def _normalize_connector_type(self, connector_type: str) -> str:
+        value = str(connector_type or "unknown").strip().lower()
+        if value in {"ultra_rapid", "ultrarapid"}:
+            return "ultra_rapid"
+        if value in {"rapid", "dc"}:
+            return "rapid"
+        if value == "ac":
+            return "ac"
+        return value or "unknown"
+
+    def _connector_type_compatible(self, requested_type: str, connector_type: str) -> bool:
+        desired = str(requested_type or "Any").strip().lower()
+        available = self._normalize_connector_type(connector_type)
+        if desired in {"any", ""}:
+            return True
+        if desired in {"rapid", "dc"}:
+            return available in {"rapid", "ultra_rapid"}
+        if desired in {"ultra_rapid", "ultrarapid"}:
+            return available == "ultra_rapid"
+        if desired == "ac":
+            return available == "ac"
+        return desired == available
+
+    def _compatible_connectors(self, station: Station, requested_type: str) -> list[ChargingConnector]:
+        return [
+            connector
+            for connector in station.connectors
+            if self._connector_type_compatible(requested_type, connector.connector_type)
+        ]
+
+    def _busy_connector_ids(self, station_id: str) -> set[str]:
+        busy: set[str] = set()
+        for request_id in self.stations_runtime[station_id].active_session_ids:
+            session = self.active_sessions.get(request_id)
+            if session is not None and session.connector_id:
+                busy.add(session.connector_id)
+        return busy
+
+    def _has_generic_busy_sessions(self, station_id: str) -> bool:
+        for request_id in self.stations_runtime[station_id].active_session_ids:
+            session = self.active_sessions.get(request_id)
+            if session is None or session.connector_id is None:
+                return True
+        return False
+
+    def _available_compatible_connectors(self, station_id: str, requested_type: str) -> list[ChargingConnector]:
+        station = self.station_index[station_id]
+        compatible = self._compatible_connectors(station, requested_type)
+        if self._has_generic_busy_sessions(station_id):
+            return compatible[: min(self._station_free_ports(station_id), len(compatible))]
+        busy = self._busy_connector_ids(station_id)
+        return [connector for connector in compatible if connector.connector_id not in busy]
+
+    def _compatible_available_port_count(self, request: SimulationRequest, station: Station) -> int:
+        return len(self._available_compatible_connectors(station.station_id, request.charger_type_preference))
+
+    def _best_available_connector_power_kw(self, request: SimulationRequest, station: Station) -> float:
+        available = self._available_compatible_connectors(station.station_id, request.charger_type_preference)
+        if not available:
+            return estimate_effective_power_kw(request, station)
+        return max(estimate_connector_effective_power_kw(request, connector) for connector in available)
+
+    def _select_connector_for_request(self, request: SimulationRequest, station_id: str) -> ChargingConnector | None:
+        station = self.station_index[station_id]
+        available = self._available_compatible_connectors(station_id, request.charger_type_preference)
+        if not available:
+            return None
+        return max(
+            available,
+            key=lambda connector: (
+                estimate_connector_effective_power_kw(request, connector),
+                connector.max_power_kw,
+                connector.connector_id,
+            ),
+        )
 
     def _is_charger_compatible(self, requested_type: str, connector_mix_total: str) -> bool:
         desired = str(requested_type or "Any").strip().lower()

@@ -6,7 +6,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EV_CORE_SRC = REPO_ROOT / "packages" / "ev_core" / "src"
+API_SRC = REPO_ROOT / "apps" / "api"
 
 if str(EV_CORE_SRC) not in sys.path:
     sys.path.insert(0, str(EV_CORE_SRC))
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+if str(API_SRC) not in sys.path:
+    sys.path.insert(0, str(API_SRC))
 

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytest
+
+from ev_core.contracts.responses import RecommendationOption
 from ev_core.recommender.ranker import CandidateContext
 from ev_core.recommender.ranker import RecommendationInput, WeightedHeuristicRanker
 from ev_core.recommender.service import RecommendationService
@@ -128,3 +131,60 @@ def test_default_policy_matches_legacy_weighted_ranker_behavior() -> None:
     legacy_response = RecommendationService(ranker=WeightedHeuristicRanker()).recommend(**kwargs)
 
     assert default_response.model_dump(mode="json") == legacy_response.model_dump(mode="json")
+
+
+def test_recommendation_service_can_select_named_baseline_policy() -> None:
+    response = RecommendationService(policy_name="cheapest").recommend(
+        request_id="request-1",
+        client_request_id="client-1",
+        simulated_timestamp=datetime(2024, 6, 10, 12, 0),
+        zone_id="zone",
+        source_type="external_live",
+        preference_mode="closest",
+        candidate_contexts=[
+            candidate("near_expensive", distance_km=0.1, wait_minutes=0, cost_gbp=10.0),
+            candidate("far_cheap", distance_km=4.0, wait_minutes=15, cost_gbp=1.0),
+            candidate("mid", distance_km=2.0, wait_minutes=15, cost_gbp=2.0),
+            candidate("alt_3", distance_km=3.0, wait_minutes=15, cost_gbp=3.0),
+            candidate("alt_4", distance_km=5.0, wait_minutes=15, cost_gbp=4.0),
+        ],
+    )
+
+    assert isinstance(response.top_recommendation, RecommendationOption)
+    assert response.top_recommendation.station_id == "far_cheap"
+    assert len(response.alternatives) == 3
+
+
+def test_recommendation_service_per_call_policy_name_overrides_service_default() -> None:
+    service = RecommendationService(policy_name="cheapest")
+
+    response = service.recommend(
+        request_id="request-1",
+        client_request_id="client-1",
+        simulated_timestamp=datetime(2024, 6, 10, 12, 0),
+        zone_id="zone",
+        source_type="external_live",
+        preference_mode="closest",
+        candidate_contexts=[
+            candidate("near_expensive", distance_km=0.1, wait_minutes=0, cost_gbp=10.0),
+            candidate("far_cheap", distance_km=4.0, wait_minutes=15, cost_gbp=1.0),
+        ],
+        policy_name="closest",
+    )
+
+    assert response.top_recommendation is not None
+    assert response.top_recommendation.station_id == "near_expensive"
+
+
+def test_recommendation_service_unknown_per_call_policy_raises_value_error() -> None:
+    with pytest.raises(ValueError, match="Unsupported recommendation policy: nope"):
+        RecommendationService().recommend(
+            request_id="request-1",
+            client_request_id="client-1",
+            simulated_timestamp=datetime(2024, 6, 10, 12, 0),
+            zone_id="zone",
+            source_type="external_live",
+            preference_mode="closest",
+            candidate_contexts=[candidate("rank_1", distance_km=0.1, wait_minutes=0, cost_gbp=5.0)],
+            policy_name="nope",
+        )

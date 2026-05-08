@@ -1,6 +1,6 @@
 # Current Implementation Map
 
-Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
+Last verified against repo state: 2026-05-08.
 
 ## Root
 
@@ -51,11 +51,15 @@ Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
   - `RuntimeStorage`: JSON plus SQLite persistence for state, metrics, events, external requests, and recommendations.
 - `services/sim_runtime/event_bus.py`: event bus; currently used with a no-op wildcard subscriber in `RuntimeManager`.
 - `services/sim_runtime/demo.py`, `scripts/run_demo_runtime.py`, `scripts/inject_live_request.py`: runtime demo/helper entry points.
+- `scripts/verify_station_access.py`: reports station access counts and normal-user eligibility for the real Dundee station table.
+- `scripts/calibrate_transformer_capacities.py`: computes CP-inventory-based synthetic transformer capacity recommendations and can write calibrated realistic/stress topology scenario JSON files.
+- `scripts/verify_topology_scenario.py`: reports processed/default or optional scenario station-transformer counts, transformer capacities, connected CP kW, capacity warning flags, and validates every station maps to an existing transformer.
+- `scripts/verify_runtime_smoke.py`: starts runtime, injects a live request, verifies persistence, and sweeps recommendation policies.
 
 ## EV Core
 
 - `packages/ev_core/src/ev_core/contracts/requests.py`
-  - `ExternalChargingRequest`: current live request contract.
+  - `ExternalChargingRequest`: current live request contract with domain validation for SOC, battery capacity, requested energy, energy/SOC consistency, timestamp ordering, global coordinate bounds, supported charger types, and optional vehicle max AC/DC power fields. Missing requested energy is inferred from SOC/battery when possible and otherwise defaults to `20.0` for compatibility.
   - `PreferenceMode`: `closest`, `cheapest`, `fastest`.
   - `SourceType`: `replay_background`, `synthetic_background`, `external_live`.
 - `packages/ev_core/src/ev_core/contracts/responses.py`
@@ -64,21 +68,43 @@ Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
 - `packages/ev_core/src/ev_core/contracts/events.py`
   - `RuntimeEvent`.
 - `packages/ev_core/src/ev_core/env/dundee_env.py`
-  - `DundeeEnv`: request-driven simulator and current recommendation candidate builder.
+  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. It now builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, and tracks connector assignment internally for active sessions. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
 - `packages/ev_core/src/ev_core/env/entities.py`
-  - `Station`, `Transformer`, `SimulationRequest`, `ActiveChargingSession`, `GridContext`, `StationRuntimeState`.
+  - `Station`, `Transformer`, `SimulationRequest`, `ActiveChargingSession`, `GridContext`, `StationRuntimeState`. `Station` includes optional/default access flags for public, fleet-only, membership-required, follow-up-needed, and excluded sites. `ChargingConnector` now carries optional connector type / CP identity. `ActiveChargingSession` can store internal connector assignment. `SimulationRequest` can carry optional `vehicle_profile_id`, `vehicle_max_ac_kw`, and `vehicle_max_dc_kw`.
 - `packages/ev_core/src/ev_core/env/baselines.py`
   - Allocation policies: `RandomPolicy`, `GreedyFastestServicePolicy`, `OverloadAwarePolicy`, `CostAwarePolicy`.
 - `packages/ev_core/src/ev_core/env/allocator.py`
   - `AllocationDecision`, `AllocationPolicy`.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
+- `packages/ev_core/src/ev_core/recommender/candidates.py`
+  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. It can also consume CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
+- `packages/ev_core/src/ev_core/recommender/eligibility.py`
+  - `StationEligibilityFilter`: blocks excluded, non-public, fleet-only, and membership-required stations by default, with request-metadata overrides for non-public/fleet/membership sites. `needs_followup` is informational and does not block recommendations.
 - `packages/ev_core/src/ev_core/recommender/service.py`
   - `RecommendationService`: calls ranker, assembles `RecommendationResponse`.
+- `packages/ev_core/src/ev_core/vehicles/profiles.py`
+  - `VehicleProfile` and in-code default vehicle profiles for small, mid-size, large, and van EVs.
+- `packages/ev_core/src/ev_core/vehicles/duration.py`
+  - Vehicle-aware station-level and connector-level effective-power helpers plus the shared 15-minute duration estimator used by candidate construction.
 - `packages/ev_core/src/ev_core/data/repositories.py`
-  - `DundeeDataPaths`, `DundeeDataBundle`, `DundeeSimulationRepository`.
+  - `DundeeDataPaths`, `DundeeDataBundle`, `DundeeSimulationRepository`. Station loading optionally merges `data/processed/station_access_overrides.csv` by `station_id`, normalizes access booleans, validates unknown override IDs, and defaults missing access flags to public/unrestricted. Missing background load CSV falls back to generated background load. The repository can load optional JSON topology scenarios from `data/processed/topology_scenarios`, but does not apply them by default.
+- `packages/ev_core/src/ev_core/topology/scenarios.py`
+  - `TransformerScenario`, `TopologyScenario`, `TopologyScenarioProvider`, and JSON scenario loading.
+  - Scenario overlays can remap stations to transformers and apply static transformer capacity derating.
+  - Current scope is lightweight synthetic topology configuration only: no routing, no dynamic reconfiguration, no MARL/RL.
+- `packages/ev_core/src/ev_core/topology/capacity_calibration.py`
+  - Lightweight capacity calibration helpers for synthetic transformer scenarios.
+  - Uses connected CP kW from `chargepoint_master.csv`, max single CP kW, station count, simple diversity assumptions, and standard active-power capacity steps.
+  - Produces calibrated realistic and stress recommendations plus warning flags for obviously low synthetic capacities.
 - `packages/ev_core/src/ev_core/forecasting/provider.py`
   - `ForecastProvider`, `NullForecastProvider`, `PlaceholderForecastProvider`.
+- `packages/ev_core/src/ev_core/generation/synthetic_live.py`
+  - `SyntheticLiveRequestGenerator`: creates fresh mobile/API-style `ExternalChargingRequest` objects with `source_type="external_live"`, synthetic-live metadata, Dundee historical priors, station/zone anchor sampling, jittered origins, and default vehicle profile fields. It does not depend on `DundeeEnv` and does not replace replay or `synthetic_background`.
+- `scripts/generate_synthetic_live_requests.py`
+  - CLI for writing synthetic-live request JSONL to `outputs/runtime/synthetic_live_requests.jsonl`.
+- `scripts/verify_synthetic_live_requests.py`
+  - CLI smoke check that generates synthetic-live requests and verifies runtime recommendations.
 
 ## Dashboard
 
@@ -86,4 +112,15 @@ Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
 
 ## Tests
 
-No test files were found by repo-wide search for common test/spec paths and names. This should be treated as weak or missing coverage.
+- `tests/data/test_station_access_overrides.py`: station access override merge, boolean parsing, unknown ID validation, and real override file public/default behavior.
+- `tests/sim_runtime/test_runtime_smoke.py`: pandas-gated runtime start, live recommendation smoke, persistence, and policy sweep.
+- `tests/recommender/test_cp_aware_availability.py`: CP-aware connector loading, compatibility, busy-port accounting, power selection, and connector assignment coverage.
+- `tests/data/test_chargepoint_inventory.py`: bundle chargepoint inventory loading smoke test.
+- `tests/data/test_topology_scenario_loading.py`: JSON topology scenario loading and bad-file validation.
+- `tests/topology/test_topology_scenarios.py`: provider behavior, mapping validation, default preservation, and capacity derating.
+- `tests/topology/test_capacity_calibration.py`: standard capacity rounding, realistic/stress sizing rules, warning flags, CP-load aggregation, fallback proxy behavior, and required-column validation.
+- `tests/topology/test_calibrated_topology_scenarios.py`: calibrated scenario loading, station/transformer consistency, realistic capacity checks against CP inventory, and runtime startup with realistic/stress scenarios.
+- `tests/sim_runtime/test_topology_scenario_runtime.py`: `DundeeEnv` and runtime-manager scenario integration while preserving default topology behavior.
+- `tests/generation/test_synthetic_live_generator.py`: contract validity, determinism, SOC/energy consistency, vehicle fields, location/preference/charger validity, and batch generation coverage.
+- `tests/sim_runtime/test_synthetic_live_runtime.py`: verifies a generated synthetic-live request can use the runtime recommendation path.
+- `tests/recommender/*`, `tests/contracts/*`, `tests/vehicles/*`, `tests/api/*`, and `tests/sim_runtime/*`: focused coverage added across the recommendation refactor series.

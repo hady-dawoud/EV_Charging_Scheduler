@@ -1,0 +1,4 @@
+station_id,transformer_id,transformer_name,station_capacity_kw_assumed
+public_station,tx-a,Transformer A,44
+fleet_station,tx-a,Transformer A,50
+member_station,tx-b,Transformer B,22

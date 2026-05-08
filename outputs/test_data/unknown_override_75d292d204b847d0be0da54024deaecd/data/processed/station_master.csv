@@ -1,0 +1,4 @@
+station_id,station_name,postcode_mode,cp_count_total,connector_mix_total,station_max_power_kw_proxy,first_seen_year,last_seen_year,sessions_total,energy_total_kwh,latitude,longitude,location_source,notes
+public_station,Public Station,DD1,2,ac,22,2024,2024,1,10,56.46,-2.97,fixture,
+fleet_station,Fleet Depot,DD2,1,rapid,50,2024,2024,1,10,56.47,-2.98,fixture,Depot candidate
+member_station,Member Site,DD3,1,ac,22,2024,2024,1,10,56.48,-2.99,fixture,

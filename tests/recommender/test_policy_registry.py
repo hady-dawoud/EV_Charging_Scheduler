@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from ev_core.recommender.policy_registry import PolicyRegistry
 from ev_core.recommender.ranker import CandidateContext, RecommendationInput, WeightedHeuristicRanker
 
@@ -35,4 +37,23 @@ def test_policy_registry_returns_weighted_score_by_name() -> None:
     policy = PolicyRegistry().get("weighted_score")
 
     assert policy.name == "weighted_score"
+
+
+def test_policy_registry_returns_all_recommendation_baselines_by_name() -> None:
+    registry = PolicyRegistry()
+
+    assert registry.get("closest").name == "closest"
+    assert registry.get("cheapest").name == "cheapest"
+    assert registry.get("fastest").name == "fastest"
+    assert registry.get("overload_aware").name == "overload_aware"
+
+
+def test_policy_registry_default_remains_weighted_score() -> None:
+    assert PolicyRegistry.default_policy_name == "weighted_score"
+    assert PolicyRegistry().get().name == "weighted_score"
+
+
+def test_policy_registry_rejects_unknown_policy_name() -> None:
+    with pytest.raises(ValueError, match="Unsupported recommendation policy: nope"):
+        PolicyRegistry().get("nope")
 
