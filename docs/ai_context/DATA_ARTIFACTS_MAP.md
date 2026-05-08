@@ -138,8 +138,20 @@ Fields observed in `request_replay_2024.csv`:
 ## Routing
 
 - Recommendation routing is now abstracted in code under `packages/ev_core/src/ev_core/routing`.
-- No routing graph, OSMnx dataset, OSRM service, or road-matrix artifact is loaded yet.
 - Default runtime behavior still uses `SimpleDistanceRoutingProvider`, which computes a simple lat/lon approximation or zone fallback distance rather than a road-network route.
+- `data/processed/routing/.gitkeep`
+  - Keeps the generated-routing artifact directory present in git.
+- `data/processed/routing/*.graphml`
+  - Generated local OSMnx graph artifacts such as `dundee_drive.graphml`.
+  - Ignored in git. Build with `scripts/build_dundee_osmnx_graph.py`; do not commit.
+- `data/processed/routing/*.gpkg`
+- `data/processed/routing/*.osm`
+  - Reserved ignored routing artifacts for future local export/import workflows.
+- `outputs/runtime/osmnx_route_preview.geojson`
+  - Optional manual-inspection route preview written by `scripts/export_osmnx_route_preview.py`.
+  - Generated artifact, not for commit.
+- Fake-graph unit tests cover provider logic without requiring a real Dundee graph or internet.
+- OSRM remains future work; there is no OSRM service artifact in the repo yet.
 
 ## Price
 

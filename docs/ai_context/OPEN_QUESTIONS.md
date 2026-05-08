@@ -37,8 +37,10 @@
 - Should distance be road routing or simple approximation?
   - Current truth: recommendation distance now goes through an injectable routing-provider seam in `ev_core.routing`.
   - Current truth: the default `SimpleDistanceRoutingProvider` preserves the old behavior exactly: simple lat/lon approximation when coordinates exist, `0.5` km same-zone fallback otherwise, `3.0` km different-zone fallback otherwise.
+  - Current truth: an optional offline `OSMnxRoutingProvider` now exists and can use a locally built Dundee drive graph when available.
+  - Current truth: if the graph file or OSMnx/NetworkX backend is unavailable, the OSMnx provider falls back to simple-distance behavior by default unless configured fail-closed.
   - Current truth: synthetic-live origins are jittered around station/zone anchors, not sampled from road nodes.
-  - Still open: when to introduce road routing and whether the first provider should be offline OSMnx graph routing, OSRM service routing, or both behind the same seam.
+  - Still open: how to compare simple-distance vs OSMnx routing quantitatively, and when to add OSRM service routing behind the same seam.
 
 - How should synthetic-live scenarios evolve?
   - Current truth: `SyntheticLiveRequestGenerator` creates valid `ExternalChargingRequest` objects with `source_type="external_live"` and synthetic-live metadata.

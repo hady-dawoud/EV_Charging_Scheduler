@@ -16,6 +16,8 @@ Candidate construction is owned by `packages/ev_core/src/ev_core/recommender/can
 - `DundeeEnv._build_candidate_contexts(request, only_station_id=None)` remains as a compatibility method and delegates to `CandidateBuilder`.
 - `CandidateBuilder.build(...)` receives station/runtime state plus callables for distance, wait, price, transformer headroom, charger compatibility, optional CP-aware effective power, optional compatible-available-port counts, and optional station-aware pricing/metadata hooks.
 - Recommendation distance now flows through `ev_core.routing` via `DundeeEnv.routing_provider`; `CandidateBuilder` still receives only the `distance_to_station_km` callback and does not know about concrete routing implementations.
+- `SimpleDistanceRoutingProvider` remains the default runtime provider.
+- An optional `OSMnxRoutingProvider` now exists behind the same seam for offline road routing from a locally built Dundee drive graph.
 - `CandidateBuilder.build(...)` applies `StationEligibilityFilter` before charger compatibility, duration, distance, or scoring work.
 - `CandidateBuilder.build(...)` loops over the provided stations, currently `self.station_index.values()` from `DundeeEnv`.
 - `DundeeEnv.station_index` may be built from the processed topology or from an optional `TopologyScenarioProvider` overlay. The default runtime still uses processed topology unless a scenario is explicitly configured.
@@ -46,6 +48,7 @@ Supporting methods still supplied by `DundeeEnv`:
 
 - `_distance_to_station_km`: delegates to `self.routing_provider.estimate_route(...).distance_km`.
 - `routing_provider`: defaults to `SimpleDistanceRoutingProvider`.
+- `OSMnxRoutingProvider`: optional local GraphML-backed road-routing provider that falls back to simple distance when graph/backend requirements are unavailable unless configured fail-closed.
 - `_distance_simple`: compatibility helper using the same simple lat/lon approximation with `lat_scale = 111.0`, `lon_scale = 111.0 * 0.56`.
 - `_estimate_station_wait_minutes`: zero if free ports and no queue, otherwise earliest active-session release plus 15 minutes per queued request.
 - `_current_price_per_kwh`: uses `ForecastProvider.forecast_price` and remains the base/system tariff signal.
@@ -113,9 +116,13 @@ Station access filtering lives in `packages/ev_core/src/ev_core/recommender/elig
 ## Verification
 
 - `scripts/verify_station_access.py` loads the real station table and reports total/public/fleet/membership/follow-up/excluded/eligible counts plus blocked reasons.
+- `scripts/verify_routing_provider.py` confirms the default provider remains `simple_distance`.
+- `scripts/verify_osmnx_routing_provider.py` verifies real Dundee OSMnx routing when a local graph exists and otherwise prints a clear build-first message.
+- `scripts/export_osmnx_route_preview.py` exports a manual-inspection GeoJSON route preview when the local graph exists.
 - `scripts/verify_runtime_smoke.py` starts the runtime, injects a mobile-style live request, verifies recommendation persistence, and sweeps `weighted_score`, `closest`, `cheapest`, `fastest`, and `overload_aware`.
 - `scripts/verify_dynamic_pricing.py` starts the runtime, prints recommendation pricing metadata, adds artificial transformer stress, and re-checks displayed recommendation prices under the `cheapest` policy.
 - `tests/sim_runtime/test_runtime_smoke.py` covers the same runtime start/recommendation and policy sweep paths when real pandas/numpy are installed.
+- `tests/routing/test_osmnx_provider.py` uses missing-graph and fake-graph coverage so provider logic is tested without internet or a real Dundee graph artifact.
 
 ## Vehicle-Aware Duration
 
