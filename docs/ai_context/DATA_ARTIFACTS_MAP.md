@@ -135,6 +135,12 @@ Fields observed in `request_replay_2024.csv`:
   - Contains JSONL-serialized `ExternalChargingRequest` objects with `source_type="external_live"` and `metadata.generator_type="synthetic_live"`.
   - Generated requests use station/zone jittered origins and default vehicle profiles. OSMnx/OSRM road-node origins are not implemented yet.
 
+## Routing
+
+- Recommendation routing is now abstracted in code under `packages/ev_core/src/ev_core/routing`.
+- No routing graph, OSMnx dataset, OSRM service, or road-matrix artifact is loaded yet.
+- Default runtime behavior still uses `SimpleDistanceRoutingProvider`, which computes a simple lat/lon approximation or zone fallback distance rather than a road-network route.
+
 ## Price
 
 - `data/processed/price_table_15min.csv`

@@ -35,9 +35,10 @@
   - Still open: manual verification with external live maps/site data before marking any station restricted.
 
 - Should distance be road routing or simple approximation?
-  - Current truth: `_distance_simple` uses a simple lat/lon approximation.
+  - Current truth: recommendation distance now goes through an injectable routing-provider seam in `ev_core.routing`.
+  - Current truth: the default `SimpleDistanceRoutingProvider` preserves the old behavior exactly: simple lat/lon approximation when coordinates exist, `0.5` km same-zone fallback otherwise, `3.0` km different-zone fallback otherwise.
   - Current truth: synthetic-live origins are jittered around station/zone anchors, not sampled from road nodes.
-  - Need to decide when to introduce routing and which provider/cache to use.
+  - Still open: when to introduce road routing and whether the first provider should be offline OSMnx graph routing, OSRM service routing, or both behind the same seam.
 
 - How should synthetic-live scenarios evolve?
   - Current truth: `SyntheticLiveRequestGenerator` creates valid `ExternalChargingRequest` objects with `source_type="external_live"` and synthetic-live metadata.
