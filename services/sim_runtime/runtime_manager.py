@@ -17,6 +17,8 @@ from ev_core.contracts.responses import MetricsSnapshot, RecommendationResponse,
 from ev_core.data.repositories import DundeeSimulationRepository
 from ev_core.env.environment import DundeeEnv
 from ev_core.forecasting.provider import PlaceholderForecastProvider
+from ev_core.routing.osmnx_provider import OSMnxRoutingProvider
+from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider
 from ev_core.topology.scenarios import TopologyScenario
 
 from .event_bus import EventBus
@@ -35,6 +37,8 @@ class RuntimeConfig:
     default_demand_multiplier: float = 1.0
     topology_scenario_id: str | None = None
     dynamic_pricing_enabled: bool = True
+    routing_provider_name: str = "simple_distance"
+    osmnx_graph_path: str = "data/processed/routing/dundee_drive.graphml"
 
 
 class RuntimeManager:
@@ -45,6 +49,7 @@ class RuntimeManager:
         self.config = config or RuntimeConfig()
         self.repository = DundeeSimulationRepository(self.repo_root)
         self.topology_scenario = self._load_topology_scenario()
+        self.osmnx_graph_path = (self.repo_root / self.config.osmnx_graph_path).resolve()
         self.bundle = self.repository.load_bundle()
         self.forecast_provider = PlaceholderForecastProvider(
             background_load=self.bundle.background_load,
@@ -104,6 +109,7 @@ class RuntimeManager:
             forecast_provider=self.forecast_provider,
             topology_scenario=self.topology_scenario,
             dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
+            routing_provider=self._build_routing_provider(),
         )
         env.start()
         self.storage.save_runtime_status(
@@ -315,12 +321,14 @@ class RuntimeManager:
                 forecast_provider=self.forecast_provider,
                 topology_scenario=self.topology_scenario,
                 dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
+                routing_provider=self._build_routing_provider(),
             )
         return DundeeEnv.from_state_snapshot(
             self.bundle,
             snapshot,
             forecast_provider=self.forecast_provider,
             topology_scenario=self.topology_scenario,
+            routing_provider=self._build_routing_provider(),
         )
 
     def _load_env(self) -> DundeeEnv:
@@ -335,12 +343,14 @@ class RuntimeManager:
                 forecast_provider=self.forecast_provider,
                 topology_scenario=self.topology_scenario,
                 dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
+                routing_provider=self._build_routing_provider(),
             )
         return DundeeEnv.from_state_snapshot(
             self.bundle,
             snapshot,
             forecast_provider=self.forecast_provider,
             topology_scenario=self.topology_scenario,
+            routing_provider=self._build_routing_provider(),
         )
 
     def _persist_env(self, env: DundeeEnv, *, include_events: bool = False) -> StateSnapshot:
@@ -357,6 +367,8 @@ class RuntimeManager:
                 "metadata": {
                     **base_snapshot.metadata,
                     "runtime_status_updated_at": datetime.now(UTC).isoformat(),
+                    "dynamic_pricing_enabled": env.dynamic_pricing_enabled,
+                    "last_routing_fallback_reason": env.last_routing_fallback_reason,
                 },
             }
         )
@@ -383,12 +395,23 @@ class RuntimeManager:
         loop_running: bool,
         loop_interval_seconds: float,
     ) -> dict[str, Any]:
+        routing_provider = env.routing_provider
+        routing_provider_name = getattr(routing_provider, "name", "unknown")
+        routing_provider_available = bool(getattr(routing_provider, "is_available", lambda: True)())
+        osmnx_graph_exists = self.osmnx_graph_path.exists()
         return {
             "loop_running": bool(loop_running),
             "loop_interval_seconds": float(loop_interval_seconds),
             "runtime_mode": env.runtime_mode,
             "active_policy": env.policy_mode,
             "recommendation_policy_name": self.config.recommendation_policy_name,
+            "pricing_model": "dundee_tariff_plus_dynamic_overlay",
+            "dynamic_pricing_enabled": env.dynamic_pricing_enabled,
+            "routing_provider_name": routing_provider_name,
+            "routing_provider_available": routing_provider_available,
+            "osmnx_graph_path": str(self.osmnx_graph_path),
+            "osmnx_graph_exists": osmnx_graph_exists,
+            "last_routing_fallback_reason": env.last_routing_fallback_reason,
             "demand_multiplier": env.demand_multiplier,
             "warm_start_minutes": env.warm_start_minutes,
             "replay_year": env.replay_year,
@@ -450,6 +473,12 @@ class RuntimeManager:
         if not self.config.topology_scenario_id:
             return None
         return self.repository.load_topology_scenario(self.config.topology_scenario_id)
+
+    def _build_routing_provider(self):
+        name = str(self.config.routing_provider_name or "simple_distance").strip().lower()
+        if name == "osmnx":
+            return OSMnxRoutingProvider(graph_path=self.osmnx_graph_path)
+        return SimpleDistanceRoutingProvider()
 
 
 __all__ = ["RuntimeConfig", "RuntimeManager"]

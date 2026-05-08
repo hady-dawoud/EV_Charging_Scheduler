@@ -256,6 +256,17 @@ def main() -> None:
     secondary[4].metric("Demand x", f"{state.demand_multiplier:.2f}")
     secondary[5].metric("Warm-start", f"{state.warm_start_minutes} min")
 
+    st.subheader("Runtime Configuration")
+    config_cols = st.columns(3)
+    config_cols[0].metric("Pricing Model", str(status.get("pricing_model", "unknown")))
+    config_cols[1].metric("Dynamic Pricing", "On" if status.get("dynamic_pricing_enabled") else "Off")
+    config_cols[2].metric("Routing Provider", str(status.get("routing_provider_name", "unknown")))
+    st.caption(
+        f"Routing available: {status.get('routing_provider_available')} | "
+        f"OSMnx graph exists: {status.get('osmnx_graph_exists')} | "
+        f"Last routing fallback: {status.get('last_routing_fallback_reason')}"
+    )
+
     st.subheader("Map")
     render_map(state)
 

@@ -32,6 +32,8 @@ def get_runtime_manager() -> RuntimeManager:
             recommendation_policy_name=os.getenv("RECOMMENDATION_POLICY_NAME", "weighted_score"),
             topology_scenario_id=os.getenv("TOPOLOGY_SCENARIO_ID") or None,
             dynamic_pricing_enabled=_env_flag("DYNAMIC_PRICING_ENABLED", True),
+            routing_provider_name=os.getenv("ROUTING_PROVIDER_NAME", "simple_distance"),
+            osmnx_graph_path=os.getenv("OSMNX_GRAPH_PATH", "data/processed/routing/dundee_drive.graphml"),
         ),
     )
 

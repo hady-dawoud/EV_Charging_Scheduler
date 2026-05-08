@@ -24,5 +24,8 @@ class RoutingProvider(Protocol):
     def estimate_route(self, request: Any, station: Any) -> RouteEstimate:
         """Return a routing estimate between a request origin and a station."""
 
+    def is_available(self) -> bool:
+        """Return whether the provider appears usable in the current environment."""
+
 
 __all__ = ["RouteEstimate", "RoutingProvider"]

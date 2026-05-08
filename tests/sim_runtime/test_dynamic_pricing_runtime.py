@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
 
@@ -8,6 +10,8 @@ from ev_core.data.repositories import DundeeDataBundle
 from ev_core.env.entities import ActiveChargingSession, SimulationRequest
 from ev_core.env.environment import DundeeEnv
 from ev_core.forecasting.provider import ForecastProvider, ForecastRequest, ForecastSeries
+from services.sim_runtime.runtime_manager import RuntimeConfig, RuntimeManager
+from services.sim_runtime.storage import RuntimeStorage
 
 
 class StaticForecastProvider:
@@ -146,7 +150,7 @@ def _env(*, dynamic_pricing_enabled: bool = True) -> DundeeEnv:
 def test_station_price_can_drop_to_or_below_base_under_low_transformer_load() -> None:
     env = _env(dynamic_pricing_enabled=True)
 
-    base_price = env._current_price_per_kwh()
+    base_price = env._current_station_pricing_result("station_a").base_price_per_kwh
     station_price = env._current_station_price_per_kwh("station_a")
 
     assert station_price <= base_price
@@ -189,3 +193,19 @@ def test_cheapest_policy_prefers_lower_dynamic_cost_station() -> None:
     assert response.top_recommendation is not None
     assert response.top_recommendation.station_id == "station_a"
     assert response.top_recommendation.estimated_cost_gbp < response.alternatives[0].estimated_cost_gbp
+
+
+def test_runtime_status_exposes_pricing_and_routing_configuration() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    manager = RuntimeManager(repo_root, config=RuntimeConfig(dynamic_pricing_enabled=True))
+    manager.storage = RuntimeStorage(repo_root / "outputs" / "test_runtime" / f"runtime_pricing_status_{uuid4().hex}")
+    state = manager.start(replay_day="2024-06-10", start_hour=12, start_minute=0, warm_start_hours=0)
+    status = manager.get_runtime_status()
+
+    assert state is not None
+    assert status["dynamic_pricing_enabled"] is True
+    assert status["pricing_model"] == "dundee_tariff_plus_dynamic_overlay"
+    assert "routing_provider_name" in status
+    assert "routing_provider_available" in status
+    assert "osmnx_graph_path" in status
+    assert "osmnx_graph_exists" in status

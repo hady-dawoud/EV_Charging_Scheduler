@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -22,6 +23,12 @@ from ev_core.routing.osmnx_provider import OSMnxRoutingProvider
 GRAPH_PATH = REPO_ROOT / "data" / "processed" / "routing" / "dundee_drive.graphml"
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Verify the optional Dundee OSMnx routing provider.")
+    parser.add_argument("--allow-fallback", action="store_true")
+    return parser.parse_args()
+
+
 def request_payload() -> ExternalChargingRequest:
     return ExternalChargingRequest(
         client_request_id="osmnx-routing-check",
@@ -39,6 +46,7 @@ def request_payload() -> ExternalChargingRequest:
 
 
 def main() -> int:
+    args = parse_args()
     if not GRAPH_PATH.exists():
         print("Run scripts/build_dundee_osmnx_graph.py first")
         return 0
@@ -61,6 +69,10 @@ def main() -> int:
     print(f"distance_km: {round(estimate.distance_km, 4)}")
     print(f"duration_minutes: {None if estimate.duration_minutes is None else round(estimate.duration_minutes, 2)}")
     print(f"graph_path: {metadata.get('graph_path', str(GRAPH_PATH))}")
+    print(f"fallback_reason: {metadata.get('fallback_reason')}")
+    if metadata.get("fallback_used") and not args.allow_fallback:
+        print("OSMnx routing verification failed because the provider fell back.")
+        return 1
     return 0
 
 

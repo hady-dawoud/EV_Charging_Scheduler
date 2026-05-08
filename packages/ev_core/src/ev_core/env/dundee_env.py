@@ -19,12 +19,13 @@ from ev_core.contracts.responses import (
 )
 from ev_core.data.repositories import DundeeDataBundle
 from ev_core.forecasting.provider import ForecastProvider, ForecastRequest, NullForecastProvider
+from ev_core.pricing.dundee_tariffs import build_dundee_tariff_metadata
 from ev_core.pricing.dynamic_pricing import DynamicPricingInput, DynamicPricingResult, calculate_dynamic_price
 from ev_core.recommender.candidates import CandidateBuilder
 from ev_core.recommender.eligibility import StationEligibilityFilter
 from ev_core.recommender.ranker import CandidateContext
 from ev_core.recommender.service import RecommendationService
-from ev_core.routing.providers import RoutingProvider
+from ev_core.routing.providers import RouteEstimate, RoutingProvider
 from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider, simple_distance_km
 from ev_core.topology.scenarios import TopologyScenario, TopologyScenarioProvider
 from ev_core.utils.timebase import (
@@ -118,6 +119,8 @@ class DundeeEnv(SimulationEnvironment):
         self.forecast_provider = forecast_provider or NullForecastProvider()
         self.dynamic_pricing_enabled = bool(dynamic_pricing_enabled)
         self.routing_provider = routing_provider or SimpleDistanceRoutingProvider()
+        self.last_routing_fallback_reason: str | None = None
+        self._route_estimate_cache: dict[tuple[str, str], RouteEstimate] = {}
         self.policy_mode = policy_mode
         self.replay_year = replay_year
         self.runtime_mode = runtime_mode
@@ -175,6 +178,7 @@ class DundeeEnv(SimulationEnvironment):
         *,
         forecast_provider: ForecastProvider | None = None,
         topology_scenario: TopologyScenario | None = None,
+        routing_provider: RoutingProvider | None = None,
     ) -> "DundeeEnv":
         """Restore a Dundee environment from a serialized state snapshot."""
 
@@ -200,6 +204,7 @@ class DundeeEnv(SimulationEnvironment):
             forecast_provider=forecast_provider,
             topology_scenario=topology_scenario,
             dynamic_pricing_enabled=bool(snapshot.metadata.get("dynamic_pricing_enabled", True)),
+            routing_provider=routing_provider,
         )
         env.restore(snapshot)
         return env
@@ -260,6 +265,8 @@ class DundeeEnv(SimulationEnvironment):
         self.requests_seen_total = 0
         self.overload_event_count = 0
         self.latest_external_request_id = None
+        self.last_routing_fallback_reason = None
+        self._route_estimate_cache = {}
         self._record_event(
             "reset",
             summary="Environment reset for the selected Dundee runtime window.",
@@ -305,6 +312,8 @@ class DundeeEnv(SimulationEnvironment):
         self.overload_event_count = snapshot.metrics.overload_event_count
         self.recently_completed_request_ids = list(snapshot.recently_completed_request_ids)
         self.recently_missed_request_ids = list(snapshot.recently_missed_request_ids)
+        self.last_routing_fallback_reason = snapshot.metadata.get("last_routing_fallback_reason")
+        self._route_estimate_cache = {}
         self.requests = {}
         self.active_sessions = {}
         for station_state in self.stations_runtime.values():
@@ -976,6 +985,8 @@ class DundeeEnv(SimulationEnvironment):
         return response.top_recommendation
 
     def _build_candidate_contexts(self, request: SimulationRequest, only_station_id: str | None = None) -> list[CandidateContext]:
+        self._route_estimate_cache = {}
+        self.last_routing_fallback_reason = None
         return self.candidate_builder.build(
             request=request,
             stations=self.station_index.values(),
@@ -985,8 +996,14 @@ class DundeeEnv(SimulationEnvironment):
             distance_to_station_km=self._distance_to_station_km,
             estimate_station_wait_minutes=self._estimate_station_wait_minutes,
             current_price_per_kwh=self._current_price_per_kwh,
-            station_price_per_kwh=self._current_station_price_per_kwh,
-            station_pricing_metadata=self._current_station_pricing_metadata,
+            station_price_per_kwh=lambda station_id, _request=request: self._candidate_station_price_per_kwh(
+                _request,
+                self.station_index[station_id],
+            ),
+            station_pricing_metadata=lambda station_id, _request=request: self._candidate_station_pricing_metadata(
+                _request,
+                self.station_index[station_id],
+            ),
             current_transformer_headroom=self._current_transformer_headroom,
             is_charger_compatible=self._is_charger_compatible,
             station_eligibility_filter=getattr(self, "station_eligibility_filter", StationEligibilityFilter()),
@@ -1047,20 +1064,7 @@ class DundeeEnv(SimulationEnvironment):
         station = self.station_index[station_id]
         station_state = self.stations_runtime[station_id]
         transformer_state = self._transformer_snapshot(station.transformer_id)
-        base_price = self._current_price_per_kwh()
-        if not self.dynamic_pricing_enabled:
-            capacity_kw = max(float(transformer_state.capacity_kw), 0.0)
-            load_ratio = transformer_state.net_load_kw / capacity_kw if capacity_kw > 0.0 else 0.0
-            headroom_ratio = max(transformer_state.headroom_kw, 0.0) / capacity_kw if capacity_kw > 0.0 else 0.0
-            return DynamicPricingResult(
-                base_price_per_kwh=base_price,
-                dynamic_price_per_kwh=base_price,
-                transformer_multiplier=1.0,
-                congestion_multiplier=1.0,
-                load_ratio=load_ratio,
-                headroom_ratio=headroom_ratio,
-                reason="dynamic_pricing_disabled",
-            )
+        base_price = self._station_default_base_price_per_kwh(station)
         return calculate_dynamic_price(
             DynamicPricingInput(
                 base_price_per_kwh=base_price,
@@ -1069,6 +1073,7 @@ class DundeeEnv(SimulationEnvironment):
                 transformer_headroom_kw=transformer_state.headroom_kw,
                 station_queue_length=len(station_state.queue_request_ids),
                 station_utilization=len(station_state.active_session_ids) / max(station.cp_count_total, 1),
+                dynamic_pricing_enabled=self.dynamic_pricing_enabled,
             )
         )
 
@@ -1078,10 +1083,13 @@ class DundeeEnv(SimulationEnvironment):
     def _current_station_pricing_metadata(self, station_id: str) -> dict[str, Any]:
         result = self._current_station_pricing_result(station_id)
         return {
-            "pricing_mode": "dynamic_grid_aware" if self.dynamic_pricing_enabled else "base_only",
+            "pricing_model": "dundee_tariff_plus_dynamic_overlay",
             "base_price_per_kwh": round(result.base_price_per_kwh, 4),
-            "transformer_price_multiplier": round(result.transformer_multiplier, 4),
-            "congestion_price_multiplier": round(result.congestion_multiplier, 4),
+            "final_price_per_kwh": round(result.dynamic_price_per_kwh, 4),
+            "dynamic_pricing_enabled": self.dynamic_pricing_enabled,
+            "total_dynamic_multiplier": round(result.total_multiplier, 4),
+            "transformer_multiplier": round(result.transformer_multiplier, 4),
+            "congestion_multiplier": round(result.congestion_multiplier, 4),
             "transformer_load_ratio": round(result.load_ratio, 4),
             "transformer_headroom_ratio": round(result.headroom_ratio, 4),
             "pricing_reason": result.reason,
@@ -1337,14 +1345,17 @@ class DundeeEnv(SimulationEnvironment):
         return len(self._available_compatible_connectors(station.station_id, request.charger_type_preference))
 
     def _best_available_connector_power_kw(self, request: SimulationRequest, station: Station) -> float:
-        available = self._available_compatible_connectors(station.station_id, request.charger_type_preference)
-        if not available:
+        connector = self._select_recommendation_connector(request, station)
+        if connector is None:
             return estimate_effective_power_kw(request, station)
-        return max(estimate_connector_effective_power_kw(request, connector) for connector in available)
+        return estimate_connector_effective_power_kw(request, connector)
 
     def _select_connector_for_request(self, request: SimulationRequest, station_id: str) -> ChargingConnector | None:
         station = self.station_index[station_id]
-        available = self._available_compatible_connectors(station_id, request.charger_type_preference)
+        return self._select_recommendation_connector(request, station)
+
+    def _select_recommendation_connector(self, request: SimulationRequest, station: Station) -> ChargingConnector | None:
+        available = self._available_compatible_connectors(station.station_id, request.charger_type_preference)
         if not available:
             return None
         return max(
@@ -1355,6 +1366,123 @@ class DundeeEnv(SimulationEnvironment):
                 connector.connector_id,
             ),
         )
+
+    def _station_default_base_price_per_kwh(self, station: Station) -> float:
+        representative = max(
+            station.connectors or (
+                ChargingConnector(
+                    connector_id=f"{station.station_id}_default",
+                    connector_type="unknown",
+                    max_power_kw=station.average_port_power_kw,
+                ),
+            ),
+            key=lambda connector: (float(getattr(connector, "max_power_kw", 0.0)), str(getattr(connector, "connector_type", ""))),
+        )
+        return float(
+            build_dundee_tariff_metadata(
+                connector_type=representative.connector_type,
+                power_kw=representative.max_power_kw,
+            )["base_price_per_kwh"]
+        )
+
+    def _candidate_station_price_per_kwh(self, request: SimulationRequest, station: Station) -> float:
+        return float(self._candidate_station_pricing_result(request, station).dynamic_price_per_kwh)
+
+    def _candidate_station_pricing_result(self, request: SimulationRequest, station: Station) -> DynamicPricingResult:
+        connector = self._select_recommendation_connector(request, station)
+        connector_type = connector.connector_type if connector is not None else station.connector_mix_total
+        connector_power_kw = (
+            float(connector.max_power_kw)
+            if connector is not None
+            else max(float(station.average_port_power_kw), 7.0)
+        )
+        base_price = float(
+            build_dundee_tariff_metadata(
+                connector_type=connector_type,
+                power_kw=connector_power_kw,
+            )["base_price_per_kwh"]
+        )
+        transformer_state = self._transformer_snapshot(station.transformer_id)
+        station_state = self.stations_runtime[station.station_id]
+        return calculate_dynamic_price(
+            DynamicPricingInput(
+                base_price_per_kwh=base_price,
+                transformer_capacity_kw=transformer_state.capacity_kw,
+                transformer_net_load_kw=transformer_state.net_load_kw,
+                transformer_headroom_kw=transformer_state.headroom_kw,
+                station_queue_length=len(station_state.queue_request_ids),
+                station_utilization=len(station_state.active_session_ids) / max(station.cp_count_total, 1),
+                dynamic_pricing_enabled=self.dynamic_pricing_enabled,
+            )
+        )
+
+    def _candidate_station_pricing_metadata(self, request: SimulationRequest, station: Station) -> dict[str, Any]:
+        connector = self._select_recommendation_connector(request, station)
+        connector_type = connector.connector_type if connector is not None else station.connector_mix_total
+        connector_power_kw = (
+            float(connector.max_power_kw)
+            if connector is not None
+            else max(float(station.average_port_power_kw), 7.0)
+        )
+        effective_power_kw = (
+            estimate_connector_effective_power_kw(request, connector)
+            if connector is not None
+            else estimate_effective_power_kw(request, station)
+        )
+        tariff_metadata = build_dundee_tariff_metadata(
+            connector_type=connector_type,
+            power_kw=connector_power_kw,
+        )
+        pricing_result = self._candidate_station_pricing_result(request, station)
+        route_metadata = self._route_metadata_for_station(request, station)
+        return {
+            "pricing_model": "dundee_tariff_plus_dynamic_overlay",
+            "tariff_class": tariff_metadata["tariff_class"],
+            "base_price_per_kwh": round(pricing_result.base_price_per_kwh, 4),
+            "final_price_per_kwh": round(pricing_result.dynamic_price_per_kwh, 4),
+            "price_per_kwh": round(pricing_result.dynamic_price_per_kwh, 4),
+            "dynamic_pricing_enabled": self.dynamic_pricing_enabled,
+            "total_dynamic_multiplier": round(pricing_result.total_multiplier, 4),
+            "transformer_multiplier": round(pricing_result.transformer_multiplier, 4),
+            "congestion_multiplier": round(pricing_result.congestion_multiplier, 4),
+            "transformer_load_ratio": round(pricing_result.load_ratio, 4),
+            "transformer_headroom_ratio": round(pricing_result.headroom_ratio, 4),
+            "connection_fee_gbp": 0.0,
+            "pricing_source": "dundee_simplified_tariff_v1",
+            "pricing_reason": pricing_result.reason,
+            "tariff_fallback_used": bool(tariff_metadata["tariff_fallback_used"]),
+            "selected_connector_type": connector_type,
+            "selected_connector_power_kw": round(connector_power_kw, 3),
+            "selected_connector_id": connector.connector_id if connector is not None else None,
+            "effective_power_kw": round(float(effective_power_kw), 3),
+            **route_metadata,
+        }
+
+    def _estimate_route(self, request: SimulationRequest, station: Station) -> RouteEstimate:
+        if not hasattr(self, "_route_estimate_cache"):
+            self._route_estimate_cache = {}
+        if not hasattr(self, "last_routing_fallback_reason"):
+            self.last_routing_fallback_reason = None
+        request_id = request.request_id or f"{request.arrival_ts.isoformat()}_{request.client_request_id}"
+        cache_key = (request_id, station.station_id)
+        if cache_key not in self._route_estimate_cache:
+            estimate = self.routing_provider.estimate_route(request, station)
+            metadata = estimate.metadata or {}
+            self.last_routing_fallback_reason = metadata.get("fallback_reason") if metadata.get("fallback_used") else None
+            self._route_estimate_cache[cache_key] = estimate
+        return self._route_estimate_cache[cache_key]
+
+    def _route_metadata_for_station(self, request: SimulationRequest, station: Station) -> dict[str, Any]:
+        estimate = self._estimate_route(request, station)
+        metadata = dict(estimate.metadata or {})
+        return {
+            "routing_provider_name": estimate.provider,
+            "route_distance_km": round(float(estimate.distance_km), 4),
+            "route_duration_minutes": None if estimate.duration_minutes is None else round(float(estimate.duration_minutes), 3),
+            "routing_fallback_used": bool(metadata.get("fallback_used", False)),
+            "routing_fallback_reason": metadata.get("fallback_reason"),
+            "routing_provider_requested": metadata.get("provider_requested", estimate.provider),
+        }
 
     def _is_charger_compatible(self, requested_type: str, connector_mix_total: str) -> bool:
         desired = str(requested_type or "Any").strip().lower()
@@ -1375,7 +1503,7 @@ class DundeeEnv(SimulationEnvironment):
         return nearest_station.zone_id
 
     def _distance_to_station_km(self, request: SimulationRequest, station: Station) -> float:
-        return float(self.routing_provider.estimate_route(request, station).distance_km)
+        return float(self._estimate_route(request, station).distance_km)
 
     def _distance_simple(self, lat_a: float | None, lon_a: float | None, lat_b: float, lon_b: float) -> float:
         return simple_distance_km(lat_a, lon_a, lat_b, lon_b)
