@@ -61,7 +61,7 @@ services:
       context: .
       dockerfile: Dockerfile.mobile
       args:
-        EXPO_PUBLIC_API_BASE_URL: http://20.216.14.193:8000
+        EXPO_PUBLIC_API_BASE_URL: http://smartevcharging.uaenorth.cloudapp.azure.com/api
     container_name: ev_mobile
     ports:
       - "3000:80"
