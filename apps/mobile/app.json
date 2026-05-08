@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "evMock",
-    "slug": "evmock-mobile",
+    "name": "ev-smart-charging-app",
+    "slug": "ev-smart-charging",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
