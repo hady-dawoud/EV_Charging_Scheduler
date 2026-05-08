@@ -42,3 +42,8 @@ outputs/runtime/*
 outputs/test_data/*
 outputs/test_runtime/*
 runtime/
+
+# Runtime-generated simulator outputs
+outputs/runtime/*.json
+outputs/runtime/*.jsonl
+outputs/runtime/*.db
