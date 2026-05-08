@@ -99,6 +99,12 @@ These generated requests are not replayed historical sessions and use the same r
 
 9. `apps/api/app/services/runtime_service.py`
    - `get_runtime_manager()` returns cached `RuntimeManager(repo_root=REPO_ROOT)`.
+   - It reads runtime env toggles for:
+     - `RECOMMENDATION_POLICY_NAME`
+     - `DYNAMIC_PRICING_ENABLED`
+     - `ROUTING_PROVIDER_NAME`
+     - `OSMNX_GRAPH_PATH`
+     - optional `TOPOLOGY_SCENARIO_ID`
    - `ensure_runtime_started()` checks `get_runtime_manager().get_latest_state()`.
    - `inject_live_request(request)` calls `ensure_runtime_started()` then `RuntimeManager.inject_request(request)`.
 
@@ -114,6 +120,15 @@ These generated requests are not replayed historical sessions and use the same r
       - Persists recommendation with `RuntimeStorage.save_recommendation`.
       - Persists state/metrics/events with `_persist_env(env, include_events=True)`.
       - Returns `RecommendationResponse`.
+   - `RuntimeManager.get_runtime_status()` now exposes app-facing runtime config/status including:
+     - `pricing_model`
+     - `dynamic_pricing_enabled`
+     - `routing_provider_name`
+     - `routing_provider_available`
+     - `osmnx_graph_path`
+     - `osmnx_graph_exists`
+     - `last_routing_fallback_reason`
+     - `recommendation_policy_name`
 
 ## Environment Injection
 
@@ -137,6 +152,19 @@ These generated requests are not replayed historical sessions and use the same r
 ## Response Consumption
 
 12. `apps/mobile/src/screens/ResultsScreen.tsx`
-    - Reads `bundle.top_recommendation` and `bundle.alternatives`.
-    - `mapOptionToUiStation` maps fields from `RecommendationOption` into UI station cards.
-    - Uses `metadata.connector_mix_total` to infer charger display label.
+   - Reads `bundle.top_recommendation` and `bundle.alternatives`.
+   - `mapOptionToUiStation` maps fields from `RecommendationOption` into UI station cards.
+   - Uses `metadata.connector_mix_total` to infer charger display label.
+   - Mobile still only displays `estimated_cost_gbp`; pricing/routing transparency remains in `RecommendationOption.metadata` for API/dashboard/debug use.
+
+## App-Facing Pricing And Routing
+
+- Recommendation pricing now flows through the live app/API/runtime path as:
+  - selected compatible connector/power
+  - Dundee simplified charger-class tariff (`ac_standard`, `ac_fast`, `rapid`, `ultra_rapid`)
+  - capped dynamic transformer/congestion multiplier
+  - `estimated_cost_gbp = requested_energy_kwh * final_price_per_kwh`
+- Recommendation routing also flows through the live path:
+  - default `SimpleDistanceRoutingProvider`
+  - optional `OSMnxRoutingProvider` when explicitly configured
+  - routing metadata is attached per option without changing the mobile response schema

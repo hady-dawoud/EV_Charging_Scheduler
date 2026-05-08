@@ -51,15 +51,25 @@
 
 - Are the current dynamic pricing multipliers final?
   - Current truth: no. The transformer/congestion multipliers are intentionally simple, deterministic, and explainable first-step simulation coefficients.
-  - Current truth: they are designed to change displayed recommendation cost and ranking signal, not to represent real customer tariffs.
+  - Current truth: displayed recommendation cost now uses simplified Dundee charger-class base tariffs plus the capped dynamic overlay.
+  - Current truth: this is still simulation/display pricing only, not real billing.
+  - Current truth: no connection, parking, overstay, or reservation fees are applied.
   - Still open: calibration against stress scenarios, queue sensitivity tuning, and whether future policy/MARL work should consume the same signal directly.
+
+## Routing
+
+- Is OSMnx useful enough to keep for evaluation or future RL routing realism?
+  - Current truth: OSMnx support remains optional and default runtime routing is still `simple_distance`.
+  - Current truth: real Dundee verification and usefulness-evaluation scripts now exist for the locally built GraphML path.
+  - Current truth: if OSMnx is unavailable, the graph is missing, nearest-node snapping fails, or no route exists, runtime can still fall back safely.
+  - Still open: whether sampled Dundee success rate, fallback rate, and distance realism are strong enough to justify using OSMnx in later RL evaluation/training loops.
 
 ## Dashboard Architecture
 
 - Should the dashboard continue reading `RuntimeStorage` directly or move to FastAPI endpoints?
   - Current truth: dashboard reads storage directly.
   - Pros: simple and local, no API dependency.
-  - Cons: dashboard bypasses API contracts and can diverge from mobile/backend behavior.
+  - Cons: dashboard bypasses API contracts and can diverge from mobile/backend behavior, even though runtime status now exposes pricing/routing config fields for visibility.
 
 - Should transformer map markers use topology coordinates?
   - Current truth: `TransformerStateSnapshot` does not include latitude/longitude, while `dashboards/sim_dashboard/app.py` tries to plot transformer dataframe with longitude/latitude.

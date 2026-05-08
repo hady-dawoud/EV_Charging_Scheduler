@@ -53,8 +53,11 @@ def main() -> int:
     estimate = provider.estimate_route(request, station_row)
     metadata = estimate.metadata or {}
     if metadata.get("fallback_used"):
-        print("OSMnx route preview could not be exported because the provider fell back.")
-        return 0
+        print(
+            "OSMnx route preview could not be exported because the provider fell back. "
+            f"reason={metadata.get('fallback_reason')}"
+        )
+        return 1
 
     graph = provider._load_graph()
     route_nodes = metadata.get("route_nodes", [])

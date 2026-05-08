@@ -11,7 +11,7 @@ from ev_core.pricing.dynamic_pricing import (
 def test_low_load_and_high_headroom_applies_discount_multiplier() -> None:
     result = calculate_dynamic_price(
         DynamicPricingInput(
-            base_price_per_kwh=0.30,
+            base_price_per_kwh=0.50,
             transformer_capacity_kw=100.0,
             transformer_net_load_kw=30.0,
             transformer_headroom_kw=70.0,
@@ -20,14 +20,14 @@ def test_low_load_and_high_headroom_applies_discount_multiplier() -> None:
 
     assert result.transformer_multiplier == 0.90
     assert result.congestion_multiplier == 1.0
-    assert round(result.dynamic_price_per_kwh, 3) == 0.27
+    assert round(result.dynamic_price_per_kwh, 3) == 0.45
     assert result.reason == "high_transformer_headroom"
 
 
 def test_normal_load_keeps_transformer_multiplier_neutral() -> None:
     result = calculate_dynamic_price(
         DynamicPricingInput(
-            base_price_per_kwh=0.30,
+            base_price_per_kwh=0.50,
             transformer_capacity_kw=100.0,
             transformer_net_load_kw=60.0,
             transformer_headroom_kw=40.0,
@@ -35,16 +35,16 @@ def test_normal_load_keeps_transformer_multiplier_neutral() -> None:
     )
 
     assert result.transformer_multiplier == 1.0
-    assert round(result.dynamic_price_per_kwh, 3) == 0.30
+    assert round(result.dynamic_price_per_kwh, 3) == 0.50
     assert result.reason == "normal_transformer_load"
 
 
 @pytest.mark.parametrize(
     ("net_load_kw", "headroom_kw", "expected_multiplier", "expected_reason"),
     [
-        (75.0, 25.0, 1.30, "high_transformer_load"),
-        (90.0, 10.0, 1.60, "very_high_transformer_load"),
-        (100.0, 0.0, 2.00, "transformer_overloaded"),
+        (75.0, 25.0, 1.15, "high_transformer_load"),
+        (90.0, 10.0, 1.30, "very_high_transformer_load"),
+        (100.0, 0.0, 1.50, "transformer_overloaded"),
     ],
 )
 def test_high_load_bands_apply_expected_transformer_multiplier(
@@ -69,7 +69,7 @@ def test_high_load_bands_apply_expected_transformer_multiplier(
 def test_station_queue_and_utilization_increase_congestion_multiplier() -> None:
     result = calculate_dynamic_price(
         DynamicPricingInput(
-            base_price_per_kwh=0.30,
+            base_price_per_kwh=0.50,
             transformer_capacity_kw=100.0,
             transformer_net_load_kw=60.0,
             transformer_headroom_kw=40.0,
@@ -79,14 +79,14 @@ def test_station_queue_and_utilization_increase_congestion_multiplier() -> None:
     )
 
     assert result.transformer_multiplier == 1.0
-    assert round(result.congestion_multiplier, 2) == 1.27
-    assert round(result.dynamic_price_per_kwh, 3) == 0.381
+    assert round(result.congestion_multiplier, 2) == 1.24
+    assert round(result.dynamic_price_per_kwh, 3) == 0.62
 
 
 def test_dynamic_price_is_clamped_to_upper_bound() -> None:
     result = calculate_dynamic_price(
         DynamicPricingInput(
-            base_price_per_kwh=0.10,
+            base_price_per_kwh=0.50,
             transformer_capacity_kw=100.0,
             transformer_net_load_kw=100.0,
             transformer_headroom_kw=0.0,
@@ -95,8 +95,40 @@ def test_dynamic_price_is_clamped_to_upper_bound() -> None:
         )
     )
 
-    assert round(result.congestion_multiplier, 2) == 1.40
-    assert round(result.dynamic_price_per_kwh, 2) == 0.28
+    assert round(result.congestion_multiplier, 2) == 1.35
+    assert round(result.dynamic_price_per_kwh, 2) == 0.88
+
+
+def test_total_multiplier_is_reported_and_capped() -> None:
+    result = calculate_dynamic_price(
+        DynamicPricingInput(
+            base_price_per_kwh=0.50,
+            transformer_capacity_kw=100.0,
+            transformer_net_load_kw=100.0,
+            transformer_headroom_kw=0.0,
+            station_queue_length=99,
+            station_utilization=1.0,
+        )
+    )
+
+    assert result.total_multiplier <= 1.75
+
+
+def test_dynamic_pricing_disabled_keeps_price_neutral() -> None:
+    result = calculate_dynamic_price(
+        DynamicPricingInput(
+            base_price_per_kwh=0.57,
+            transformer_capacity_kw=100.0,
+            transformer_net_load_kw=100.0,
+            transformer_headroom_kw=0.0,
+            station_queue_length=10,
+            station_utilization=1.0,
+            dynamic_pricing_enabled=False,
+        )
+    )
+
+    assert result.dynamic_price_per_kwh == 0.57
+    assert result.total_multiplier == 1.0
 
 
 def test_invalid_capacity_is_handled_safely() -> None:

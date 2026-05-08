@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+import math
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,15 @@ class OSMnxRoutingProvider:
             osmnx, _ = self._import_backends()
             self._graph = osmnx.load_graphml(self.graph_path)
         return self._graph
+
+    def is_available(self) -> bool:
+        if not self.graph_path.exists():
+            return False
+        try:
+            self._import_backends()
+        except ModuleNotFoundError:
+            return False
+        return True
 
     def _failure(self, reason: str, error: Exception | None = None) -> RuntimeError:
         detail = str(error) if error is not None else reason
@@ -92,17 +102,27 @@ class OSMnxRoutingProvider:
         try:
             graph = self._load_graph()
             osmnx, networkx = self._import_backends()
-            origin_node = osmnx.distance.nearest_nodes(graph, origin_longitude, origin_latitude)
-            destination_node = osmnx.distance.nearest_nodes(graph, float(station.longitude), float(station.latitude))
-            route_nodes = networkx.shortest_path(graph, origin_node, destination_node, weight="length")
-            distance_m = float(networkx.path_weight(graph, route_nodes, weight="length"))
-            distance_km = distance_m / 1000.0
-            try:
-                duration_minutes = float(networkx.path_weight(graph, route_nodes, weight="travel_time")) / 60.0
-                duration_source = "graph_travel_time"
-            except Exception:
-                duration_minutes = (distance_km / self.speed_kph) * 60.0
-                duration_source = "speed_kph_fallback"
+            origin_node = self._nearest_node_id(graph, osmnx, longitude=origin_longitude, latitude=origin_latitude)
+            destination_node = self._nearest_node_id(graph, osmnx, longitude=float(station.longitude), latitude=float(station.latitude))
+            if hasattr(graph, "nodes"):
+                route_nodes = networkx.shortest_path(graph, origin_node, destination_node, weight=self._edge_weight_resolver("length"))
+                distance_m = self._path_weight(graph, route_nodes, "length")
+                distance_km = distance_m / 1000.0
+                try:
+                    duration_minutes = self._path_weight(graph, route_nodes, "travel_time") / 60.0
+                    duration_source = "graph_travel_time"
+                except Exception:
+                    duration_minutes = (distance_km / self.speed_kph) * 60.0
+                    duration_source = "speed_kph_fallback"
+            else:
+                route_nodes = networkx.shortest_path(graph, origin_node, destination_node, weight="length")
+                distance_km = float(networkx.path_weight(graph, route_nodes, weight="length")) / 1000.0
+                try:
+                    duration_minutes = float(networkx.path_weight(graph, route_nodes, weight="travel_time")) / 60.0
+                    duration_source = "graph_travel_time"
+                except Exception:
+                    duration_minutes = (distance_km / self.speed_kph) * 60.0
+                    duration_source = "speed_kph_fallback"
             return RouteEstimate(
                 distance_km=distance_km,
                 duration_minutes=duration_minutes,
@@ -123,6 +143,49 @@ class OSMnxRoutingProvider:
             return self._fallback_estimate(request, station, reason="backend_unavailable", error=error)
         except Exception as error:
             return self._fallback_estimate(request, station, reason="route_estimation_failed", error=error)
+
+    def _nearest_node_id(self, graph: Any, osmnx: Any, *, longitude: float, latitude: float) -> Any:
+        if not hasattr(graph, "nodes"):
+            return osmnx.distance.nearest_nodes(graph, longitude, latitude)
+        nearest_node: Any | None = None
+        nearest_distance = float("inf")
+        for node_id, attrs in graph.nodes(data=True):
+            node_x = float(attrs["x"])
+            node_y = float(attrs["y"])
+            distance = math.hypot((longitude - node_x) * 111.0 * 0.56, (latitude - node_y) * 111.0)
+            if distance < nearest_distance:
+                nearest_distance = distance
+                nearest_node = node_id
+        if nearest_node is None:
+            raise RuntimeError("graph_contains_no_nodes")
+        return nearest_node
+
+    def _edge_weight_resolver(self, weight_name: str):
+        def _resolver(u: Any, v: Any, attrs: Any) -> float:
+            return self._edge_weight_from_attrs(attrs, weight_name)
+
+        return _resolver
+
+    def _path_weight(self, graph: Any, route_nodes: list[Any], weight_name: str) -> float:
+        total = 0.0
+        for origin, destination in zip(route_nodes, route_nodes[1:]):
+            edge_data = graph.get_edge_data(origin, destination)
+            if edge_data is None:
+                raise KeyError(f"missing edge {origin}->{destination}")
+            total += self._edge_weight_from_attrs(edge_data, weight_name)
+        return total
+
+    def _edge_weight_from_attrs(self, attrs: Any, weight_name: str) -> float:
+        if isinstance(attrs, dict) and weight_name in attrs:
+            return float(attrs[weight_name])
+        if isinstance(attrs, dict):
+            candidates = []
+            for value in attrs.values():
+                if isinstance(value, dict) and weight_name in value:
+                    candidates.append(float(value[weight_name]))
+            if candidates:
+                return min(candidates)
+        raise KeyError(weight_name)
 
 
 __all__ = ["OSMnxRoutingProvider"]

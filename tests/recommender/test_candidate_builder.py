@@ -317,3 +317,29 @@ def test_candidate_builder_uses_cp_aware_effective_power_when_provided() -> None
     )[0]
 
     assert candidate.estimated_duration_minutes == 60
+
+
+def test_candidate_builder_can_surface_connector_aware_pricing_metadata() -> None:
+    rapid = station("rapid", connector_mix_total="rapid", station_capacity_kw_assumed=150.0, cp_count_total=2)
+
+    candidate = build(
+        stations=(rapid,),
+        station_price_per_kwh=lambda station_id: 0.75,
+        station_pricing_metadata=lambda station_id: {
+            "tariff_class": "ultra_rapid",
+            "base_price_per_kwh": 0.75,
+            "final_price_per_kwh": 0.75,
+            "dynamic_pricing_enabled": True,
+            "total_dynamic_multiplier": 1.0,
+            "transformer_multiplier": 1.0,
+            "congestion_multiplier": 1.0,
+            "connection_fee_gbp": 0.0,
+            "pricing_source": "dundee_simplified_tariff_v1",
+            "selected_connector_type": "rapid",
+            "selected_connector_power_kw": 150.0,
+        },
+    )[0]
+
+    assert candidate.estimated_cost_gbp == 6.0
+    assert candidate.metadata["tariff_class"] == "ultra_rapid"
+    assert candidate.metadata["selected_connector_power_kw"] == 150.0

@@ -97,6 +97,7 @@ class CapturingCandidateBuilder:
 def test_build_candidate_contexts_delegates_to_candidate_builder() -> None:
     env = DundeeEnv.__new__(DundeeEnv)
     builder = CapturingCandidateBuilder()
+    request = simulation_request()
     env.candidate_builder = builder
     env.station_index = {"station-1": object()}
     env.stations_runtime = {"station-1": object()}
@@ -107,7 +108,12 @@ def test_build_candidate_contexts_delegates_to_candidate_builder() -> None:
     env._current_transformer_headroom = lambda transformer_id: 100.0
     env._is_charger_compatible = lambda requested_type, connector_mix: True
 
-    result = env._build_candidate_contexts(simulation_request(), only_station_id="station-1")
+    env._current_station_price_per_kwh = lambda station_id: 0.25
+    env._current_station_pricing_metadata = lambda station_id: {"price_per_kwh": 0.25}
+    env._candidate_station_price_per_kwh = lambda request, station: 0.4
+    env._candidate_station_pricing_metadata = lambda request, station: {"price_per_kwh": 0.4}
+
+    result = env._build_candidate_contexts(request, only_station_id="station-1")
 
     assert result == [candidate()]
     assert builder.seen_kwargs is not None
@@ -116,8 +122,11 @@ def test_build_candidate_contexts_delegates_to_candidate_builder() -> None:
     assert builder.seen_kwargs["stations_runtime"] == env.stations_runtime
     assert builder.seen_kwargs["station_effective_power_kw"] == env._best_available_connector_power_kw
     assert builder.seen_kwargs["compatible_available_port_count"] == env._compatible_available_port_count
-    assert builder.seen_kwargs["station_price_per_kwh"] == env._current_station_price_per_kwh
-    assert builder.seen_kwargs["station_pricing_metadata"] == env._current_station_pricing_metadata
+    station = env.station_index["station-1"]
+    assert builder.seen_kwargs["station_price_per_kwh"]("station-1") == 0.4
+    assert builder.seen_kwargs["station_pricing_metadata"]("station-1") == {"price_per_kwh": 0.4}
+    assert env._candidate_station_price_per_kwh(request, station) == 0.4
+    assert env._candidate_station_pricing_metadata(request, station) == {"price_per_kwh": 0.4}
 
 
 def test_external_vehicle_fields_are_passed_to_simulation_request() -> None:
@@ -217,8 +226,9 @@ def test_distance_to_station_km_uses_routing_provider_estimate() -> None:
 
     env = DundeeEnv.__new__(DundeeEnv)
     env.routing_provider = FakeRoutingProvider()
+    station = SimpleNamespace(station_id="station-1", zone_id="zone")
 
-    assert env._distance_to_station_km(simulation_request(), SimpleNamespace(zone_id="zone")) == 7.25
+    assert env._distance_to_station_km(simulation_request(), station) == 7.25
 
 
 def test_distance_simple_preserves_existing_formula() -> None:

@@ -42,7 +42,7 @@ Candidate fields:
 - `utilization`
 - `charger_compatible`
 - `metadata={"connector_mix_total": station.connector_mix_total, "price_per_kwh": ...}`
-- optional pricing transparency fields such as `base_price_per_kwh`, transformer/congestion multipliers, load/headroom ratios, and pricing reason.
+- optional pricing transparency fields such as `tariff_class`, `base_price_per_kwh`, `final_price_per_kwh`, transformer/congestion multipliers, load/headroom ratios, selected connector info, routing provider info, and pricing reason.
 
 Supporting methods still supplied by `DundeeEnv`:
 
@@ -51,8 +51,9 @@ Supporting methods still supplied by `DundeeEnv`:
 - `OSMnxRoutingProvider`: optional local GraphML-backed road-routing provider that falls back to simple distance when graph/backend requirements are unavailable unless configured fail-closed.
 - `_distance_simple`: compatibility helper using the same simple lat/lon approximation with `lat_scale = 111.0`, `lon_scale = 111.0 * 0.56`.
 - `_estimate_station_wait_minutes`: zero if free ports and no queue, otherwise earliest active-session release plus 15 minutes per queued request.
-- `_current_price_per_kwh`: uses `ForecastProvider.forecast_price` and remains the base/system tariff signal.
-- `_current_station_price_per_kwh`: optional station-aware overlay that adjusts displayed recommendation price by transformer stress and station congestion.
+- `_current_price_per_kwh`: still exposes the forecast/system tariff signal for compatibility and non-candidate station status views.
+- `_candidate_station_price_per_kwh`: request-aware candidate price using selected connector tariff class plus the dynamic overlay.
+- `_candidate_station_pricing_metadata`: attaches tariff and routing transparency without changing the response schema.
 - `_current_transformer_headroom`: transformer capacity minus net background load minus active EV load.
 - `_is_charger_compatible`: checks requested AC/Rapid/Ultra Rapid/Any against `connector_mix_total`.
 
@@ -60,16 +61,36 @@ Supporting methods still supplied by `DundeeEnv`:
 
 - Grid-aware dynamic pricing now lives in `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`.
 - This pricing is a simulation/display overlay only. It is not a real billing tariff, settlement price, or customer payment calculation.
-- Base tariff still comes from `ForecastProvider.forecast_price` through `_current_price_per_kwh()`.
-- `DundeeEnv._current_station_pricing_result(station_id)` combines:
-  - base price
+- Base candidate tariff now comes from `packages/ev_core/src/ev_core/pricing/dundee_tariffs.py`.
+- Simplified Dundee tariff classes are:
+  - `ac_standard`: `£0.50/kWh`
+  - `ac_fast`: `£0.57/kWh`
+  - `rapid`: `£0.69/kWh`
+  - `ultra_rapid`: `£0.75/kWh`
+- `DundeeEnv._candidate_station_pricing_result(request, station)` combines:
+  - selected connector class base tariff
   - transformer capacity/net load/headroom
   - station queue length
   - station utilization
+- Final displayed candidate price is:
+  - `final_price_per_kwh = base_tariff_per_kwh * total_dynamic_multiplier`
+  - `estimated_cost_gbp = requested_energy_kwh * final_price_per_kwh`
 - High transformer load raises displayed `price_per_kwh`; high headroom can reduce it; queue/utilization add congestion uplift.
-- `estimated_cost_gbp` now reflects this dynamic station-aware recommendation price when `dynamic_pricing_enabled=True`.
+- Total multiplier is capped for stability:
+  - minimum `0.90`
+  - maximum `1.75`
+- `estimated_cost_gbp` now reflects connector-aware Dundee tariff pricing when `dynamic_pricing_enabled=True`.
 - Public response shape is unchanged. Pricing transparency is carried only through `RecommendationOption.metadata`.
 - The `cheapest` policy naturally reacts to the overlay because it already ranks by `estimated_cost_gbp`.
+
+## Routing Providers
+
+- `DundeeEnv._distance_to_station_km(...)` delegates through `self.routing_provider`.
+- Default runtime behavior remains `SimpleDistanceRoutingProvider`.
+- Optional offline road routing is available through `OSMnxRoutingProvider`.
+- `OSMnxRoutingProvider` requires a locally built `data/processed/routing/dundee_drive.graphml`.
+- If the graph/backend is unavailable or a route cannot be computed, OSMnx falls back to simple distance unless configured fail-closed.
+- Candidate metadata can include route distance, route duration, provider name, and fallback reason.
 
 ## Topology Scenarios
 
@@ -119,8 +140,10 @@ Station access filtering lives in `packages/ev_core/src/ev_core/recommender/elig
 - `scripts/verify_routing_provider.py` confirms the default provider remains `simple_distance`.
 - `scripts/verify_osmnx_routing_provider.py` verifies real Dundee OSMnx routing when a local graph exists and otherwise prints a clear build-first message.
 - `scripts/export_osmnx_route_preview.py` exports a manual-inspection GeoJSON route preview when the local graph exists.
+- `scripts/evaluate_osmnx_routing_usefulness.py` compares simple-distance and OSMnx routing across sampled Dundee request/station pairs and reports success rate, fallback rate, and suspicious cases.
 - `scripts/verify_runtime_smoke.py` starts the runtime, injects a mobile-style live request, verifies recommendation persistence, and sweeps `weighted_score`, `closest`, `cheapest`, `fastest`, and `overload_aware`.
 - `scripts/verify_dynamic_pricing.py` starts the runtime, prints recommendation pricing metadata, adds artificial transformer stress, and re-checks displayed recommendation prices under the `cheapest` policy.
+- `scripts/verify_dundee_tariff_pricing.py` prints same-energy examples proving `AC Standard < AC Fast < Rapid < Ultra Rapid` under the same multiplier.
 - `tests/sim_runtime/test_runtime_smoke.py` covers the same runtime start/recommendation and policy sweep paths when real pandas/numpy are installed.
 - `tests/routing/test_osmnx_provider.py` uses missing-graph and fake-graph coverage so provider logic is tested without internet or a real Dundee graph artifact.
 

@@ -21,7 +21,7 @@ Last verified against repo state: 2026-05-08.
 - `apps/api/app/bootstrap_paths.py`: locates repo root and adds `packages/ev_core/src` plus repo root to `sys.path`.
 - `apps/api/app/routers/recommendations.py`: defines `POST /recommendations`; calls `generate_recommendations`.
 - `apps/api/app/services/recommendations_service.py`: thin wrapper over `inject_live_request`.
-- `apps/api/app/services/runtime_service.py`: cached `RuntimeManager`, runtime-start guard, runtime state/events/recommendation accessors. It now reads `DYNAMIC_PRICING_ENABLED` in addition to `RECOMMENDATION_POLICY_NAME` and optional `TOPOLOGY_SCENARIO_ID`.
+- `apps/api/app/services/runtime_service.py`: cached `RuntimeManager`, runtime-start guard, runtime state/events/recommendation accessors. It now reads `DYNAMIC_PRICING_ENABLED`, `ROUTING_PROVIDER_NAME`, and `OSMNX_GRAPH_PATH` in addition to `RECOMMENDATION_POLICY_NAME` and optional `TOPOLOGY_SCENARIO_ID`.
 - `apps/api/app/schemas/recommendations.py`: aliases API schemas to `ev_core.contracts.requests.ExternalChargingRequest` and `ev_core.contracts.responses.RecommendationResponse`.
 - `apps/api/app/routers/system.py`: root, health, runtime status/state/events/recent recommendations endpoints.
 - `apps/api/app/routers/stations.py` and `apps/api/app/services/stations_service.py`: mock CRUD station API backed by `apps/api/app/mock_data.py`.
@@ -39,13 +39,14 @@ Last verified against repo state: 2026-05-08.
 ## Runtime Service
 
 - `services/sim_runtime/runtime_manager.py`
-  - `RuntimeConfig`: default replay year, policy, runtime mode, loop interval, demand multiplier, optional topology scenario, and `dynamic_pricing_enabled`.
+  - `RuntimeConfig`: default replay year, policy, runtime mode, loop interval, demand multiplier, optional topology scenario, `dynamic_pricing_enabled`, `routing_provider_name`, and `osmnx_graph_path`.
   - `RuntimeManager.__init__`: loads Dundee data bundle, creates `PlaceholderForecastProvider`, `RuntimeStorage`, and `EventBus`.
-  - `RuntimeManager.start`: creates `DundeeEnv`, starts it, persists state, optionally warm-starts, and passes through the dynamic-pricing toggle.
+  - `RuntimeManager.start`: creates `DundeeEnv`, starts it, persists state, optionally warm-starts, and passes through the dynamic-pricing toggle plus the configured routing provider.
   - `RuntimeManager.tick`: advances environment and persists state.
   - `RuntimeManager.inject_request`: loads env from persisted state, validates/builds `ExternalChargingRequest`, injects it, gets ranked recommendations, saves request/recommendation/state.
   - `RuntimeManager.recommend`: produces recommendations without queuing the request.
   - `RuntimeManager.get_latest_state`, `get_recent_events`, `get_recent_recommendations`, `get_runtime_status`: storage-backed read APIs.
+  - Runtime status now surfaces active pricing/routing config including pricing model, dynamic-pricing toggle, routing provider name/availability, OSMnx graph path/existence, and last routing fallback reason.
 - `services/sim_runtime/storage.py`
   - `RuntimeArtifacts`: paths under `outputs/runtime`.
   - `RuntimeStorage`: JSON plus SQLite persistence for state, metrics, events, external requests, and recommendations.
@@ -55,7 +56,10 @@ Last verified against repo state: 2026-05-08.
 - `scripts/calibrate_transformer_capacities.py`: computes CP-inventory-based synthetic transformer capacity recommendations and can write calibrated realistic/stress topology scenario JSON files.
 - `scripts/verify_topology_scenario.py`: reports processed/default or optional scenario station-transformer counts, transformer capacities, connected CP kW, capacity warning flags, and validates every station maps to an existing transformer.
 - `scripts/verify_runtime_smoke.py`: starts runtime, injects a live request, verifies persistence, and sweeps recommendation policies.
-- `scripts/verify_dynamic_pricing.py`: runtime-facing pricing smoke check that prints base/dynamic price metadata before and after added transformer stress.
+- `scripts/verify_dynamic_pricing.py`: runtime-facing pricing smoke check that prints tariff/dynamic price metadata before and after added transformer stress.
+- `scripts/verify_dundee_tariff_pricing.py`: same-energy tariff sanity check for AC Standard, AC Fast, Rapid, and Ultra Rapid.
+- `scripts/evaluate_osmnx_routing_usefulness.py`: compares simple-distance and OSMnx routing across sampled Dundee request/station pairs and summarizes success/fallback rates.
+- `scripts/verify_app_runtime_integration.py`: proves pricing/routing metadata and runtime status are connected to the app-facing recommendation path.
 
 ## EV Core
 
@@ -69,11 +73,11 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/contracts/events.py`
   - `RuntimeEvent`.
 - `packages/ev_core/src/ev_core/env/dundee_env.py`
-  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. Recommendation distance now goes through an injectable `routing_provider`, which defaults to `SimpleDistanceRoutingProvider` and preserves the previous simple lat/lon and zone-fallback behavior. It also builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, tracks connector assignment internally for active sessions, and can expose station-aware dynamic pricing metadata while preserving the public response shape. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
+  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. Recommendation distance now goes through an injectable `routing_provider`, which defaults to `SimpleDistanceRoutingProvider` and preserves the previous simple lat/lon and zone-fallback behavior. It also builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, tracks connector assignment internally for active sessions, and now prices candidates from the selected connector class plus capped dynamic transformer/congestion overlay while preserving the public response shape. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
 - `packages/ev_core/src/ev_core/routing/*`
   - `providers.py`: lightweight `RoutingProvider` protocol and `RouteEstimate`.
   - `simple_distance.py`: default `SimpleDistanceRoutingProvider` plus shared compatibility helper for the existing lat/lon approximation.
-  - `osmnx_provider.py`: optional `OSMnxRoutingProvider` that loads a local GraphML road graph lazily, estimates shortest road distance by edge length, derives duration from graph travel time or speed fallback, and safely falls back to simple distance when graph/backend requirements are missing unless `fail_closed=True`.
+  - `osmnx_provider.py`: optional `OSMnxRoutingProvider` that loads a local GraphML road graph lazily, estimates shortest road distance by edge length, derives duration from graph travel time or speed fallback, and safely falls back to simple distance when graph/backend requirements are missing or routing fails unless `fail_closed=True`.
 - `packages/ev_core/src/ev_core/env/entities.py`
   - `Station`, `Transformer`, `SimulationRequest`, `ActiveChargingSession`, `GridContext`, `StationRuntimeState`. `Station` includes optional/default access flags for public, fleet-only, membership-required, follow-up-needed, and excluded sites. `ChargingConnector` now carries optional connector type / CP identity. `ActiveChargingSession` can store internal connector assignment. `SimulationRequest` can carry optional `vehicle_profile_id`, `vehicle_max_ac_kw`, and `vehicle_max_dc_kw`.
 - `packages/ev_core/src/ev_core/env/baselines.py`
@@ -83,9 +87,16 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
 - `packages/ev_core/src/ev_core/recommender/candidates.py`
-  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. Distance still enters as a callback, so candidate construction is decoupled from the concrete routing implementation. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
+  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. Distance still enters as a callback, so candidate construction is decoupled from the concrete routing implementation. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent. Candidate pricing and metadata are now request-aware, using the same selected connector/power path as duration.
 - `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`
-  - `DynamicPricingInput`, `DynamicPricingResult`, and `calculate_dynamic_price(...)`: deterministic transformer-load and congestion overlay used for displayed recommendation cost estimation only.
+  - `DynamicPricingInput`, `DynamicPricingResult`, and `calculate_dynamic_price(...)`: deterministic transformer-load and congestion overlay used for displayed recommendation cost estimation only, now capped between `0.90x` and `1.75x`.
+- `packages/ev_core/src/ev_core/pricing/dundee_tariffs.py`
+  - Simple Dundee simulation tariff classifier and base prices:
+    - `ac_standard`: `£0.50/kWh`
+    - `ac_fast`: `£0.57/kWh`
+    - `rapid`: `£0.69/kWh`
+    - `ultra_rapid`: `£0.75/kWh`
+  - Candidate pricing uses selected connector type/power rather than a station-wide average.
 - `packages/ev_core/src/ev_core/recommender/eligibility.py`
   - `StationEligibilityFilter`: blocks excluded, non-public, fleet-only, and membership-required stations by default, with request-metadata overrides for non-public/fleet/membership sites. `needs_followup` is informational and does not block recommendations.
 - `packages/ev_core/src/ev_core/recommender/service.py`
@@ -121,7 +132,7 @@ Last verified against repo state: 2026-05-08.
 
 ## Dashboard
 
-- `dashboards/sim_dashboard/app.py`: Streamlit dashboard with runtime controls, map, live feed, recommendation panel, and metrics charts. It imports `RuntimeManager` and `RuntimeStorage` directly.
+- `dashboards/sim_dashboard/app.py`: Streamlit dashboard with runtime controls, map, live feed, recommendation panel, metrics charts, and visible runtime pricing/routing configuration fields. It imports `RuntimeManager` and `RuntimeStorage` directly.
 
 ## Tests
 
@@ -137,5 +148,6 @@ Last verified against repo state: 2026-05-08.
 - `tests/generation/test_synthetic_live_generator.py`: contract validity, determinism, SOC/energy consistency, vehicle fields, location/preference/charger validity, and batch generation coverage.
 - `tests/routing/test_simple_distance_provider.py`: default provider and legacy-distance behavior.
 - `tests/routing/test_osmnx_provider.py`: missing-graph fallback, fail-closed behavior, import safety without OSMnx, fake-graph route calculation, duration fallback, and safe `DundeeEnv` provider injection.
+- `tests/pricing/test_dundee_tariffs.py`: charger-class tariff classification and same-multiplier price ordering.
 - `tests/sim_runtime/test_synthetic_live_runtime.py`: verifies a generated synthetic-live request can use the runtime recommendation path.
 - `tests/recommender/*`, `tests/contracts/*`, `tests/vehicles/*`, `tests/api/*`, and `tests/sim_runtime/*`: focused coverage added across the recommendation refactor series.

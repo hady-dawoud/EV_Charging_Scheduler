@@ -78,5 +78,8 @@ class SimpleDistanceRoutingProvider:
             },
         )
 
+    def is_available(self) -> bool:
+        return True
+
 
 __all__ = ["SimpleDistanceRoutingProvider", "simple_distance_km"]
