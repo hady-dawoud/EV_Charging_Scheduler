@@ -35,4 +35,7 @@ data/processed/background_load_15min.csv
 
 # Ignore generated runtime outputs
 outputs/runtime/
+outputs/runtime/*
+outputs/test_data/*
+outputs/test_runtime/*
 runtime/
