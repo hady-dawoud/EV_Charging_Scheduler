@@ -8,7 +8,7 @@ bootstrap_repo_paths()
 
 import threading
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -356,7 +356,7 @@ class RuntimeManager:
                 "operational_start_ts": env.operational_start_time,
                 "metadata": {
                     **base_snapshot.metadata,
-                    "runtime_status_updated_at": datetime.utcnow().isoformat(),
+                    "runtime_status_updated_at": datetime.now(UTC).isoformat(),
                 },
             }
         )

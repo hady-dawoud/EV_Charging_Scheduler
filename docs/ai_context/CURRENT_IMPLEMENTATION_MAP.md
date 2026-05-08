@@ -69,7 +69,11 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/contracts/events.py`
   - `RuntimeEvent`.
 - `packages/ev_core/src/ev_core/env/dundee_env.py`
-  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. It now builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, tracks connector assignment internally for active sessions, and can expose station-aware dynamic pricing metadata while preserving the public response shape. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
+  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. Recommendation distance now goes through an injectable `routing_provider`, which defaults to `SimpleDistanceRoutingProvider` and preserves the previous simple lat/lon and zone-fallback behavior. It also builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, tracks connector assignment internally for active sessions, and can expose station-aware dynamic pricing metadata while preserving the public response shape. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
+- `packages/ev_core/src/ev_core/routing/*`
+  - `providers.py`: lightweight `RoutingProvider` protocol and `RouteEstimate`.
+  - `simple_distance.py`: default `SimpleDistanceRoutingProvider` plus shared compatibility helper for the existing lat/lon approximation.
+  - `osmnx_provider.py`: optional `OSMnxRoutingProvider` that loads a local GraphML road graph lazily, estimates shortest road distance by edge length, derives duration from graph travel time or speed fallback, and safely falls back to simple distance when graph/backend requirements are missing unless `fail_closed=True`.
 - `packages/ev_core/src/ev_core/env/entities.py`
   - `Station`, `Transformer`, `SimulationRequest`, `ActiveChargingSession`, `GridContext`, `StationRuntimeState`. `Station` includes optional/default access flags for public, fleet-only, membership-required, follow-up-needed, and excluded sites. `ChargingConnector` now carries optional connector type / CP identity. `ActiveChargingSession` can store internal connector assignment. `SimulationRequest` can carry optional `vehicle_profile_id`, `vehicle_max_ac_kw`, and `vehicle_max_dc_kw`.
 - `packages/ev_core/src/ev_core/env/baselines.py`
@@ -79,7 +83,7 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
 - `packages/ev_core/src/ev_core/recommender/candidates.py`
-  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
+  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. Distance still enters as a callback, so candidate construction is decoupled from the concrete routing implementation. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
 - `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`
   - `DynamicPricingInput`, `DynamicPricingResult`, and `calculate_dynamic_price(...)`: deterministic transformer-load and congestion overlay used for displayed recommendation cost estimation only.
 - `packages/ev_core/src/ev_core/recommender/eligibility.py`
@@ -108,6 +112,12 @@ Last verified against repo state: 2026-05-08.
   - CLI for writing synthetic-live request JSONL to `outputs/runtime/synthetic_live_requests.jsonl`.
 - `scripts/verify_synthetic_live_requests.py`
   - CLI smoke check that generates synthetic-live requests and verifies runtime recommendations.
+- `scripts/build_dundee_osmnx_graph.py`
+  - Internet-requiring helper script that builds `data/processed/routing/dundee_drive.graphml` from `Dundee, Scotland, United Kingdom` with OSMnx `network_type="drive"`.
+- `scripts/verify_osmnx_routing_provider.py`
+  - Verifies the optional OSMnx provider against real Dundee station data when a local graph exists; otherwise prints a build-first message and exits cleanly.
+- `scripts/export_osmnx_route_preview.py`
+  - Exports a manual-inspection GeoJSON route preview to `outputs/runtime/osmnx_route_preview.geojson` when the local graph exists.
 
 ## Dashboard
 
@@ -125,5 +135,7 @@ Last verified against repo state: 2026-05-08.
 - `tests/topology/test_calibrated_topology_scenarios.py`: calibrated scenario loading, station/transformer consistency, realistic capacity checks against CP inventory, and runtime startup with realistic/stress scenarios.
 - `tests/sim_runtime/test_topology_scenario_runtime.py`: `DundeeEnv` and runtime-manager scenario integration while preserving default topology behavior.
 - `tests/generation/test_synthetic_live_generator.py`: contract validity, determinism, SOC/energy consistency, vehicle fields, location/preference/charger validity, and batch generation coverage.
+- `tests/routing/test_simple_distance_provider.py`: default provider and legacy-distance behavior.
+- `tests/routing/test_osmnx_provider.py`: missing-graph fallback, fail-closed behavior, import safety without OSMnx, fake-graph route calculation, duration fallback, and safe `DundeeEnv` provider injection.
 - `tests/sim_runtime/test_synthetic_live_runtime.py`: verifies a generated synthetic-live request can use the runtime recommendation path.
 - `tests/recommender/*`, `tests/contracts/*`, `tests/vehicles/*`, `tests/api/*`, and `tests/sim_runtime/*`: focused coverage added across the recommendation refactor series.

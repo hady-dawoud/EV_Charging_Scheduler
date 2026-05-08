@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -24,6 +24,8 @@ from ev_core.recommender.candidates import CandidateBuilder
 from ev_core.recommender.eligibility import StationEligibilityFilter
 from ev_core.recommender.ranker import CandidateContext
 from ev_core.recommender.service import RecommendationService
+from ev_core.routing.providers import RoutingProvider
+from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider, simple_distance_km
 from ev_core.topology.scenarios import TopologyScenario, TopologyScenarioProvider
 from ev_core.utils.timebase import (
     TIME_STEP_MINUTES,
@@ -99,6 +101,7 @@ class DundeeEnv(SimulationEnvironment):
         topology_scenario: TopologyScenario | None = None,
         topology_provider: TopologyScenarioProvider | None = None,
         dynamic_pricing_enabled: bool = True,
+        routing_provider: RoutingProvider | None = None,
     ) -> None:
         self.bundle = bundle
         self.topology_provider = topology_provider or TopologyScenarioProvider(topology_scenario)
@@ -114,6 +117,7 @@ class DundeeEnv(SimulationEnvironment):
         self.recommendation_service = RecommendationService()
         self.forecast_provider = forecast_provider or NullForecastProvider()
         self.dynamic_pricing_enabled = bool(dynamic_pricing_enabled)
+        self.routing_provider = routing_provider or SimpleDistanceRoutingProvider()
         self.policy_mode = policy_mode
         self.replay_year = replay_year
         self.runtime_mode = runtime_mode
@@ -1210,7 +1214,7 @@ class DundeeEnv(SimulationEnvironment):
             RuntimeEvent(
                 event_id=f"evt_{uuid4().hex[:12]}",
                 event_type=event_type,
-                occurred_at=datetime.utcnow(),
+                occurred_at=datetime.now(UTC),
                 simulated_timestamp=self.current_time,
                 severity=severity,
                 request_id=request_id,
@@ -1371,16 +1375,10 @@ class DundeeEnv(SimulationEnvironment):
         return nearest_station.zone_id
 
     def _distance_to_station_km(self, request: SimulationRequest, station: Station) -> float:
-        if request.current_latitude is None or request.current_longitude is None:
-            return 0.5 if request.zone_id == station.zone_id else 3.0
-        return self._distance_simple(request.current_latitude, request.current_longitude, station.latitude, station.longitude)
+        return float(self.routing_provider.estimate_route(request, station).distance_km)
 
     def _distance_simple(self, lat_a: float | None, lon_a: float | None, lat_b: float, lon_b: float) -> float:
-        if lat_a is None or lon_a is None:
-            return 3.0
-        lat_scale = 111.0
-        lon_scale = 111.0 * 0.56
-        return (((lat_a - lat_b) * lat_scale) ** 2 + ((lon_a - lon_b) * lon_scale) ** 2) ** 0.5
+        return simple_distance_km(lat_a, lon_a, lat_b, lon_b)
 
 
 __all__ = ["DundeeEnv"]

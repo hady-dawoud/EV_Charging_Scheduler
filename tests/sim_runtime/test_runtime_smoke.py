@@ -78,6 +78,15 @@ def test_runtime_manager_starts_and_produces_live_recommendation() -> None:
     assert manager.get_recent_recommendations(limit=1)
 
 
+def test_runtime_manager_uses_simple_distance_routing_by_default() -> None:
+    manager = runtime_manager("routing_provider_default")
+
+    manager.start(replay_day="2024-06-10", start_hour=12, start_minute=0, warm_start_hours=0)
+    env = manager._load_env()
+
+    assert env.routing_provider.name == "simple_distance"
+
+
 def test_runtime_policy_sweep_produces_recommendation_for_each_policy() -> None:
     manager = runtime_manager("policy_sweep")
     state = manager.start(replay_day="2024-06-10", start_hour=12, start_minute=0, warm_start_hours=0)

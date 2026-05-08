@@ -15,6 +15,8 @@ from ev_core.contracts.responses import RecommendationResponse
 from ev_core.env.dundee_env import DundeeEnv
 from ev_core.env.entities import SimulationRequest, Station
 from ev_core.recommender.ranker import CandidateContext
+from ev_core.routing.providers import RouteEstimate
+from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider
 
 
 class CapturingRecommendationService:
@@ -204,3 +206,57 @@ def test_build_station_index_maps_optional_access_columns() -> None:
     assert station.needs_followup is True
     assert station.exclude_from_recommendations is False
     assert station.access_notes == "Depot-only site"
+
+
+def test_distance_to_station_km_uses_routing_provider_estimate() -> None:
+    class FakeRoutingProvider:
+        name = "fake"
+
+        def estimate_route(self, request, station):
+            return RouteEstimate(distance_km=7.25, provider=self.name)
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    env.routing_provider = FakeRoutingProvider()
+
+    assert env._distance_to_station_km(simulation_request(), SimpleNamespace(zone_id="zone")) == 7.25
+
+
+def test_distance_simple_preserves_existing_formula() -> None:
+    env = DundeeEnv.__new__(DundeeEnv)
+
+    result = env._distance_simple(56.462, -2.97, 56.46, -2.98)
+    expected = (((56.462 - 56.46) * 111.0) ** 2 + (((-2.97) - (-2.98)) * (111.0 * 0.56)) ** 2) ** 0.5
+
+    assert result == expected
+
+
+def test_distance_simple_uses_default_far_fallback_when_origin_missing() -> None:
+    env = DundeeEnv.__new__(DundeeEnv)
+
+    assert env._distance_simple(None, None, 56.46, -2.98) == 3.0
+
+
+def test_default_routing_provider_matches_legacy_distance_behavior() -> None:
+    env = DundeeEnv.__new__(DundeeEnv)
+    env.routing_provider = SimpleDistanceRoutingProvider()
+    request = simulation_request()
+    request.current_latitude = 56.462
+    request.current_longitude = -2.97
+    station = Station(
+        station_id="station-1",
+        station_name="Station 1",
+        zone_id="zone",
+        transformer_id="tx",
+        latitude=56.46,
+        longitude=-2.98,
+        cp_count_total=2,
+        connector_mix_total="rapid",
+        station_capacity_kw_assumed=64.0,
+    )
+
+    assert env._distance_to_station_km(request, station) == env._distance_simple(
+        request.current_latitude,
+        request.current_longitude,
+        station.latitude,
+        station.longitude,
+    )
