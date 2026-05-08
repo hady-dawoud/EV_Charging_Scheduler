@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -1210,7 +1210,7 @@ class DundeeEnv(SimulationEnvironment):
             RuntimeEvent(
                 event_id=f"evt_{uuid4().hex[:12]}",
                 event_type=event_type,
-                occurred_at=datetime.utcnow(),
+                occurred_at=datetime.now(UTC),
                 simulated_timestamp=self.current_time,
                 severity=severity,
                 request_id=request_id,

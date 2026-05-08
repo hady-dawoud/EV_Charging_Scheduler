@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -296,7 +296,7 @@ class RuntimeStorage:
     def _quarantine_db_file(self, path: Path) -> bool:
         if not path.exists():
             return False
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S%f")
         quarantined = path.with_name(f"{path.stem}.corrupt-{timestamp}{path.suffix}")
         try:
             path.replace(quarantined)
