@@ -78,6 +78,10 @@ def test_runtime_config_default_recommendation_policy_is_weighted_score() -> Non
     assert RuntimeConfig().recommendation_policy_name == "weighted_score"
 
 
+def test_runtime_config_enables_dynamic_pricing_by_default() -> None:
+    assert RuntimeConfig().dynamic_pricing_enabled is True
+
+
 def test_runtime_manager_inject_request_passes_configured_recommendation_policy() -> None:
     env = FakeEnv()
     manager = runtime_manager_with_fake_env(env, recommendation_policy_name="closest")

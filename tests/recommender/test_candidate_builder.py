@@ -4,6 +4,8 @@ import sys
 import types
 from datetime import datetime, timedelta
 
+import pytest
+
 for module_name in ("numpy", "pandas"):
     module = types.ModuleType(module_name)
     module.DataFrame = object
@@ -95,6 +97,8 @@ def build(
     only_station_id: str | None = None,
     station_effective_power_kw=None,
     compatible_available_port_count=None,
+    station_price_per_kwh=None,
+    station_pricing_metadata=None,
 ) -> list[CandidateContext]:
     runtime_states = runtime_states or {item.station_id: StationRuntimeState(station=item) for item in stations}
     wait_by_station = wait_by_station or {}
@@ -110,6 +114,8 @@ def build(
         distance_to_station_km=lambda req, st: distance_by_station.get(st.station_id, 1.25),
         estimate_station_wait_minutes=lambda station_id: wait_by_station.get(station_id, 0),
         current_price_per_kwh=lambda: 0.31,
+        station_price_per_kwh=station_price_per_kwh,
+        station_pricing_metadata=station_pricing_metadata,
         current_transformer_headroom=lambda transformer_id: headroom_by_transformer.get(transformer_id, 125.0),
         is_charger_compatible=lambda requested_type, connector_mix: compatibility_by_station.get(
             str(connector_mix).split(";")[0],
@@ -148,7 +154,49 @@ def test_candidate_builder_returns_candidate_context_with_existing_fields() -> N
     assert option.current_queue == 2
     assert option.utilization == 0.5
     assert option.charger_compatible is True
-    assert option.metadata == {"connector_mix_total": "rapid;ac"}
+    assert option.metadata == {"connector_mix_total": "rapid;ac", "price_per_kwh": 0.31}
+
+
+def test_candidate_builder_uses_station_aware_price_when_provided() -> None:
+    target = station("dynamic-priced", connector_mix_total="rapid;ac", transformer_id="tx-dynamic")
+
+    candidates = build(
+        stations=(target,),
+        station_price_per_kwh=lambda station_id: 0.52 if station_id == "dynamic-priced" else 0.31,
+    )
+
+    assert len(candidates) == 1
+    option = candidates[0]
+    assert round(option.estimated_cost_gbp, 2) == 4.16
+    assert option.metadata["price_per_kwh"] == 0.52
+
+
+def test_candidate_builder_includes_station_pricing_metadata_when_provided() -> None:
+    target = station("dynamic-priced", connector_mix_total="rapid;ac", transformer_id="tx-dynamic")
+
+    candidates = build(
+        stations=(target,),
+        station_price_per_kwh=lambda station_id: 0.52,
+        station_pricing_metadata=lambda station_id: {
+            "pricing_mode": "dynamic_grid_aware",
+            "base_price_per_kwh": 0.31,
+            "transformer_price_multiplier": 1.3,
+            "congestion_price_multiplier": 1.1,
+            "pricing_reason": "high_transformer_load",
+        },
+    )
+
+    assert len(candidates) == 1
+    option = candidates[0]
+    assert option.metadata == {
+        "connector_mix_total": "rapid;ac",
+        "price_per_kwh": 0.52,
+        "pricing_mode": "dynamic_grid_aware",
+        "base_price_per_kwh": 0.31,
+        "transformer_price_multiplier": 1.3,
+        "congestion_price_multiplier": 1.1,
+        "pricing_reason": "high_transformer_load",
+    }
 
 
 def test_candidate_builder_filters_incompatible_stations() -> None:

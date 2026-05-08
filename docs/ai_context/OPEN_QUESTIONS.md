@@ -44,6 +44,13 @@
   - Current truth: it uses Dundee historical priors, station/zone distributions, and default vehicle profiles without replaying old sessions.
   - Still open: scenario-level demand controls, route-aware origin sampling, richer vehicle-profile priors, and evaluation-set versioning.
 
+## Dynamic Pricing
+
+- Are the current dynamic pricing multipliers final?
+  - Current truth: no. The transformer/congestion multipliers are intentionally simple, deterministic, and explainable first-step simulation coefficients.
+  - Current truth: they are designed to change displayed recommendation cost and ranking signal, not to represent real customer tariffs.
+  - Still open: calibration against stress scenarios, queue sensitivity tuning, and whether future policy/MARL work should consume the same signal directly.
+
 ## Dashboard Architecture
 
 - Should the dashboard continue reading `RuntimeStorage` directly or move to FastAPI endpoints?

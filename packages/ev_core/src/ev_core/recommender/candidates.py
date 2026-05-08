@@ -27,6 +27,8 @@ class CandidateBuilder:
         distance_to_station_km: Callable[[Any, Any], float],
         estimate_station_wait_minutes: Callable[[str], int],
         current_price_per_kwh: Callable[[], float],
+        station_price_per_kwh: Callable[[str], float] | None = None,
+        station_pricing_metadata: Callable[[str], dict[str, Any]] | None = None,
         current_transformer_headroom: Callable[[str], float],
         is_charger_compatible: Callable[[str, str], bool],
         station_eligibility_filter: StationEligibilityFilter | None = None,
@@ -60,6 +62,17 @@ class CandidateBuilder:
             estimated_wait = estimate_station_wait_minutes(station.station_id)
             if compatible and estimated_duration + estimated_wait <= remaining_window_minutes:
                 station_runtime = stations_runtime[station.station_id]
+                price_per_kwh = (
+                    station_price_per_kwh(station.station_id)
+                    if station_price_per_kwh is not None
+                    else current_price_per_kwh()
+                )
+                metadata: dict[str, Any] = {
+                    "connector_mix_total": station.connector_mix_total,
+                    "price_per_kwh": round(price_per_kwh, 4),
+                }
+                if station_pricing_metadata is not None:
+                    metadata.update(station_pricing_metadata(station.station_id))
                 contexts.append(
                     CandidateContext(
                         station_id=station.station_id,
@@ -69,12 +82,12 @@ class CandidateBuilder:
                         distance_km=distance_to_station_km(request, station),
                         estimated_wait_minutes=estimated_wait,
                         estimated_duration_minutes=estimated_duration,
-                        estimated_cost_gbp=request.requested_energy_kwh * current_price_per_kwh(),
+                        estimated_cost_gbp=request.requested_energy_kwh * price_per_kwh,
                         transformer_headroom_kw=current_transformer_headroom(station.transformer_id),
                         current_queue=len(station_runtime.queue_request_ids),
                         utilization=len(station_runtime.active_session_ids) / max(station.cp_count_total, 1),
                         charger_compatible=compatible,
-                        metadata={"connector_mix_total": station.connector_mix_total},
+                        metadata=metadata,
                     )
                 )
         return contexts

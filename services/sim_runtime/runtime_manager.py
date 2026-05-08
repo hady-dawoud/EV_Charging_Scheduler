@@ -34,6 +34,7 @@ class RuntimeConfig:
     default_loop_interval_seconds: float = 1.0
     default_demand_multiplier: float = 1.0
     topology_scenario_id: str | None = None
+    dynamic_pricing_enabled: bool = True
 
 
 class RuntimeManager:
@@ -102,6 +103,7 @@ class RuntimeManager:
             replay_window_end=window_end,
             forecast_provider=self.forecast_provider,
             topology_scenario=self.topology_scenario,
+            dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
         )
         env.start()
         self.storage.save_runtime_status(
@@ -312,6 +314,7 @@ class RuntimeManager:
                 demand_multiplier=self.config.default_demand_multiplier,
                 forecast_provider=self.forecast_provider,
                 topology_scenario=self.topology_scenario,
+                dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
             )
         return DundeeEnv.from_state_snapshot(
             self.bundle,
@@ -331,6 +334,7 @@ class RuntimeManager:
                 demand_multiplier=self.config.default_demand_multiplier,
                 forecast_provider=self.forecast_provider,
                 topology_scenario=self.topology_scenario,
+                dynamic_pricing_enabled=self.config.dynamic_pricing_enabled,
             )
         return DundeeEnv.from_state_snapshot(
             self.bundle,

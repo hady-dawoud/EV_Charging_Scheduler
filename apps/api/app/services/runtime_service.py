@@ -17,6 +17,13 @@ class RuntimeNotStartedError(RuntimeError):
     pass
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
 @lru_cache(maxsize=1)
 def get_runtime_manager() -> RuntimeManager:
     return RuntimeManager(
@@ -24,6 +31,7 @@ def get_runtime_manager() -> RuntimeManager:
         config=RuntimeConfig(
             recommendation_policy_name=os.getenv("RECOMMENDATION_POLICY_NAME", "weighted_score"),
             topology_scenario_id=os.getenv("TOPOLOGY_SCENARIO_ID") or None,
+            dynamic_pricing_enabled=_env_flag("DYNAMIC_PRICING_ENABLED", True),
         ),
     )
 

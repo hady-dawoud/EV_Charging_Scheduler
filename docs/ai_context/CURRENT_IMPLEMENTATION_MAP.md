@@ -21,7 +21,7 @@ Last verified against repo state: 2026-05-08.
 - `apps/api/app/bootstrap_paths.py`: locates repo root and adds `packages/ev_core/src` plus repo root to `sys.path`.
 - `apps/api/app/routers/recommendations.py`: defines `POST /recommendations`; calls `generate_recommendations`.
 - `apps/api/app/services/recommendations_service.py`: thin wrapper over `inject_live_request`.
-- `apps/api/app/services/runtime_service.py`: cached `RuntimeManager`, runtime-start guard, runtime state/events/recommendation accessors.
+- `apps/api/app/services/runtime_service.py`: cached `RuntimeManager`, runtime-start guard, runtime state/events/recommendation accessors. It now reads `DYNAMIC_PRICING_ENABLED` in addition to `RECOMMENDATION_POLICY_NAME` and optional `TOPOLOGY_SCENARIO_ID`.
 - `apps/api/app/schemas/recommendations.py`: aliases API schemas to `ev_core.contracts.requests.ExternalChargingRequest` and `ev_core.contracts.responses.RecommendationResponse`.
 - `apps/api/app/routers/system.py`: root, health, runtime status/state/events/recent recommendations endpoints.
 - `apps/api/app/routers/stations.py` and `apps/api/app/services/stations_service.py`: mock CRUD station API backed by `apps/api/app/mock_data.py`.
@@ -39,9 +39,9 @@ Last verified against repo state: 2026-05-08.
 ## Runtime Service
 
 - `services/sim_runtime/runtime_manager.py`
-  - `RuntimeConfig`: default replay year, policy, runtime mode, loop interval, demand multiplier.
+  - `RuntimeConfig`: default replay year, policy, runtime mode, loop interval, demand multiplier, optional topology scenario, and `dynamic_pricing_enabled`.
   - `RuntimeManager.__init__`: loads Dundee data bundle, creates `PlaceholderForecastProvider`, `RuntimeStorage`, and `EventBus`.
-  - `RuntimeManager.start`: creates `DundeeEnv`, starts it, persists state, optionally warm-starts.
+  - `RuntimeManager.start`: creates `DundeeEnv`, starts it, persists state, optionally warm-starts, and passes through the dynamic-pricing toggle.
   - `RuntimeManager.tick`: advances environment and persists state.
   - `RuntimeManager.inject_request`: loads env from persisted state, validates/builds `ExternalChargingRequest`, injects it, gets ranked recommendations, saves request/recommendation/state.
   - `RuntimeManager.recommend`: produces recommendations without queuing the request.
@@ -55,6 +55,7 @@ Last verified against repo state: 2026-05-08.
 - `scripts/calibrate_transformer_capacities.py`: computes CP-inventory-based synthetic transformer capacity recommendations and can write calibrated realistic/stress topology scenario JSON files.
 - `scripts/verify_topology_scenario.py`: reports processed/default or optional scenario station-transformer counts, transformer capacities, connected CP kW, capacity warning flags, and validates every station maps to an existing transformer.
 - `scripts/verify_runtime_smoke.py`: starts runtime, injects a live request, verifies persistence, and sweeps recommendation policies.
+- `scripts/verify_dynamic_pricing.py`: runtime-facing pricing smoke check that prints base/dynamic price metadata before and after added transformer stress.
 
 ## EV Core
 
@@ -68,7 +69,7 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/contracts/events.py`
   - `RuntimeEvent`.
 - `packages/ev_core/src/ev_core/env/dundee_env.py`
-  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. It now builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, and tracks connector assignment internally for active sessions. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
+  - `DundeeEnv`: request-driven simulator. It keeps `_build_candidate_contexts` as a compatibility method, delegating candidate construction to `ev_core.recommender.candidates.CandidateBuilder`. It now builds `Station.connectors` from `chargepoint_master.csv` where available, falls back to synthetic connectors otherwise, tracks connector assignment internally for active sessions, and can expose station-aware dynamic pricing metadata while preserving the public response shape. It can accept an optional `TopologyScenario`/`TopologyScenarioProvider`; without one, processed topology behavior is unchanged.
 - `packages/ev_core/src/ev_core/env/entities.py`
   - `Station`, `Transformer`, `SimulationRequest`, `ActiveChargingSession`, `GridContext`, `StationRuntimeState`. `Station` includes optional/default access flags for public, fleet-only, membership-required, follow-up-needed, and excluded sites. `ChargingConnector` now carries optional connector type / CP identity. `ActiveChargingSession` can store internal connector assignment. `SimulationRequest` can carry optional `vehicle_profile_id`, `vehicle_max_ac_kw`, and `vehicle_max_dc_kw`.
 - `packages/ev_core/src/ev_core/env/baselines.py`
@@ -78,7 +79,9 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
 - `packages/ev_core/src/ev_core/recommender/candidates.py`
-  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. It can also consume CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
+  - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent.
+- `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`
+  - `DynamicPricingInput`, `DynamicPricingResult`, and `calculate_dynamic_price(...)`: deterministic transformer-load and congestion overlay used for displayed recommendation cost estimation only.
 - `packages/ev_core/src/ev_core/recommender/eligibility.py`
   - `StationEligibilityFilter`: blocks excluded, non-public, fleet-only, and membership-required stations by default, with request-metadata overrides for non-public/fleet/membership sites. `needs_followup` is informational and does not block recommendations.
 - `packages/ev_core/src/ev_core/recommender/service.py`

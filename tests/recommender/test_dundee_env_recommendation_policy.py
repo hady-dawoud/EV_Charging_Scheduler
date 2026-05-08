@@ -114,6 +114,8 @@ def test_build_candidate_contexts_delegates_to_candidate_builder() -> None:
     assert builder.seen_kwargs["stations_runtime"] == env.stations_runtime
     assert builder.seen_kwargs["station_effective_power_kw"] == env._best_available_connector_power_kw
     assert builder.seen_kwargs["compatible_available_port_count"] == env._compatible_available_port_count
+    assert builder.seen_kwargs["station_price_per_kwh"] == env._current_station_price_per_kwh
+    assert builder.seen_kwargs["station_pricing_metadata"] == env._current_station_pricing_metadata
 
 
 def test_external_vehicle_fields_are_passed_to_simulation_request() -> None:

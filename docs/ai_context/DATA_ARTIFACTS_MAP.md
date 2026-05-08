@@ -141,6 +141,8 @@ Fields observed in `request_replay_2024.csv`:
   - Fields observed: `timestamp`, `date`, `year`, `month`, `weekday_name`, `is_weekend`, `hour`, `quarter_hour_slot`, `tariff_block`, `price_gbp_per_kwh`, `price_p_per_kwh`, `assumption_version`, `assumption_notes`.
   - Loaded by `DundeeSimulationRepository._load_price_table`.
   - Used through `PlaceholderForecastProvider.forecast_price`.
+  - Remains the base/system tariff input even when dynamic recommendation pricing is enabled.
+  - Grid-aware recommendation pricing is an overlay on top of this base tariff; it does not replace the underlying price provider artifact.
 
 ## PV
 

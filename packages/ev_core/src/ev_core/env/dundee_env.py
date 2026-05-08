@@ -1,4 +1,4 @@
-"""Dundee-specific request-driven charging environment."""
+﻿"""Dundee-specific request-driven charging environment."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from ev_core.contracts.responses import (
 )
 from ev_core.data.repositories import DundeeDataBundle
 from ev_core.forecasting.provider import ForecastProvider, ForecastRequest, NullForecastProvider
+from ev_core.pricing.dynamic_pricing import DynamicPricingInput, DynamicPricingResult, calculate_dynamic_price
 from ev_core.recommender.candidates import CandidateBuilder
 from ev_core.recommender.eligibility import StationEligibilityFilter
 from ev_core.recommender.ranker import CandidateContext
@@ -97,6 +98,7 @@ class DundeeEnv(SimulationEnvironment):
         forecast_provider: ForecastProvider | None = None,
         topology_scenario: TopologyScenario | None = None,
         topology_provider: TopologyScenarioProvider | None = None,
+        dynamic_pricing_enabled: bool = True,
     ) -> None:
         self.bundle = bundle
         self.topology_provider = topology_provider or TopologyScenarioProvider(topology_scenario)
@@ -111,6 +113,7 @@ class DundeeEnv(SimulationEnvironment):
         self.station_eligibility_filter = StationEligibilityFilter()
         self.recommendation_service = RecommendationService()
         self.forecast_provider = forecast_provider or NullForecastProvider()
+        self.dynamic_pricing_enabled = bool(dynamic_pricing_enabled)
         self.policy_mode = policy_mode
         self.replay_year = replay_year
         self.runtime_mode = runtime_mode
@@ -192,6 +195,7 @@ class DundeeEnv(SimulationEnvironment):
             ),
             forecast_provider=forecast_provider,
             topology_scenario=topology_scenario,
+            dynamic_pricing_enabled=bool(snapshot.metadata.get("dynamic_pricing_enabled", True)),
         )
         env.restore(snapshot)
         return env
@@ -527,6 +531,7 @@ class DundeeEnv(SimulationEnvironment):
                 "replay_window_start": self.replay_window_start.isoformat(),
                 "replay_window_end": self.replay_window_end.isoformat(),
                 "synthetic_request_sequence": self.synthetic_request_sequence,
+                "dynamic_pricing_enabled": self.dynamic_pricing_enabled,
             },
         )
 
@@ -976,6 +981,8 @@ class DundeeEnv(SimulationEnvironment):
             distance_to_station_km=self._distance_to_station_km,
             estimate_station_wait_minutes=self._estimate_station_wait_minutes,
             current_price_per_kwh=self._current_price_per_kwh,
+            station_price_per_kwh=self._current_station_price_per_kwh,
+            station_pricing_metadata=self._current_station_pricing_metadata,
             current_transformer_headroom=self._current_transformer_headroom,
             is_charger_compatible=self._is_charger_compatible,
             station_eligibility_filter=getattr(self, "station_eligibility_filter", StationEligibilityFilter()),
@@ -1022,12 +1029,59 @@ class DundeeEnv(SimulationEnvironment):
         ev_load = sum(session.assigned_power_kw for session in self.active_sessions.values() if session.transformer_id == transformer_id)
         return float(transformer.capacity_kw - max(context.background_load_kw - context.pv_generation_kw, 0.0) - ev_load)
 
+    def _current_transformer_net_load_kw(self, transformer_id: str) -> float:
+        return float(self._transformer_snapshot(transformer_id).net_load_kw)
+
     def _current_price_per_kwh(self) -> float:
         return float(
             self.forecast_provider.forecast_price(
                 ForecastRequest(series_name="system", timestamps=(self.current_time,), default_value=0.25)
             ).values[0]
         )
+
+    def _current_station_pricing_result(self, station_id: str) -> DynamicPricingResult:
+        station = self.station_index[station_id]
+        station_state = self.stations_runtime[station_id]
+        transformer_state = self._transformer_snapshot(station.transformer_id)
+        base_price = self._current_price_per_kwh()
+        if not self.dynamic_pricing_enabled:
+            capacity_kw = max(float(transformer_state.capacity_kw), 0.0)
+            load_ratio = transformer_state.net_load_kw / capacity_kw if capacity_kw > 0.0 else 0.0
+            headroom_ratio = max(transformer_state.headroom_kw, 0.0) / capacity_kw if capacity_kw > 0.0 else 0.0
+            return DynamicPricingResult(
+                base_price_per_kwh=base_price,
+                dynamic_price_per_kwh=base_price,
+                transformer_multiplier=1.0,
+                congestion_multiplier=1.0,
+                load_ratio=load_ratio,
+                headroom_ratio=headroom_ratio,
+                reason="dynamic_pricing_disabled",
+            )
+        return calculate_dynamic_price(
+            DynamicPricingInput(
+                base_price_per_kwh=base_price,
+                transformer_capacity_kw=transformer_state.capacity_kw,
+                transformer_net_load_kw=transformer_state.net_load_kw,
+                transformer_headroom_kw=transformer_state.headroom_kw,
+                station_queue_length=len(station_state.queue_request_ids),
+                station_utilization=len(station_state.active_session_ids) / max(station.cp_count_total, 1),
+            )
+        )
+
+    def _current_station_price_per_kwh(self, station_id: str) -> float:
+        return float(self._current_station_pricing_result(station_id).dynamic_price_per_kwh)
+
+    def _current_station_pricing_metadata(self, station_id: str) -> dict[str, Any]:
+        result = self._current_station_pricing_result(station_id)
+        return {
+            "pricing_mode": "dynamic_grid_aware" if self.dynamic_pricing_enabled else "base_only",
+            "base_price_per_kwh": round(result.base_price_per_kwh, 4),
+            "transformer_price_multiplier": round(result.transformer_multiplier, 4),
+            "congestion_price_multiplier": round(result.congestion_multiplier, 4),
+            "transformer_load_ratio": round(result.load_ratio, 4),
+            "transformer_headroom_ratio": round(result.headroom_ratio, 4),
+            "pricing_reason": result.reason,
+        }
 
     def _transformer_snapshot(self, transformer_id: str) -> TransformerStateSnapshot:
         transformer = self.transformer_index[transformer_id]

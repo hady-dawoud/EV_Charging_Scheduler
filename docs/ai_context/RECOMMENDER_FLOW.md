@@ -14,7 +14,7 @@ Candidate construction is owned by `packages/ev_core/src/ev_core/recommender/can
 
 - `DundeeEnv.get_ranked_recommendations(request)` calls `_build_candidate_contexts(simulation_request)`.
 - `DundeeEnv._build_candidate_contexts(request, only_station_id=None)` remains as a compatibility method and delegates to `CandidateBuilder`.
-- `CandidateBuilder.build(...)` receives station/runtime state plus callables for distance, wait, price, transformer headroom, charger compatibility, optional CP-aware effective power, and optional compatible-available-port counts.
+- `CandidateBuilder.build(...)` receives station/runtime state plus callables for distance, wait, price, transformer headroom, charger compatibility, optional CP-aware effective power, optional compatible-available-port counts, and optional station-aware pricing/metadata hooks.
 - `CandidateBuilder.build(...)` applies `StationEligibilityFilter` before charger compatibility, duration, distance, or scoring work.
 - `CandidateBuilder.build(...)` loops over the provided stations, currently `self.station_index.values()` from `DundeeEnv`.
 - `DundeeEnv.station_index` may be built from the processed topology or from an optional `TopologyScenarioProvider` overlay. The default runtime still uses processed topology unless a scenario is explicitly configured.
@@ -38,16 +38,33 @@ Candidate fields:
 - `current_queue`
 - `utilization`
 - `charger_compatible`
-- `metadata={"connector_mix_total": station.connector_mix_total}`
+- `metadata={"connector_mix_total": station.connector_mix_total, "price_per_kwh": ...}`
+- optional pricing transparency fields such as `base_price_per_kwh`, transformer/congestion multipliers, load/headroom ratios, and pricing reason.
 
 Supporting methods still supplied by `DundeeEnv`:
 
 - `_distance_to_station_km`: uses location if available, otherwise zone fallback.
 - `_distance_simple`: simple lat/lon approximation using `lat_scale = 111.0`, `lon_scale = 111.0 * 0.56`.
 - `_estimate_station_wait_minutes`: zero if free ports and no queue, otherwise earliest active-session release plus 15 minutes per queued request.
-- `_current_price_per_kwh`: uses `ForecastProvider.forecast_price`.
+- `_current_price_per_kwh`: uses `ForecastProvider.forecast_price` and remains the base/system tariff signal.
+- `_current_station_price_per_kwh`: optional station-aware overlay that adjusts displayed recommendation price by transformer stress and station congestion.
 - `_current_transformer_headroom`: transformer capacity minus net background load minus active EV load.
 - `_is_charger_compatible`: checks requested AC/Rapid/Ultra Rapid/Any against `connector_mix_total`.
+
+## Dynamic Pricing Overlay
+
+- Grid-aware dynamic pricing now lives in `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`.
+- This pricing is a simulation/display overlay only. It is not a real billing tariff, settlement price, or customer payment calculation.
+- Base tariff still comes from `ForecastProvider.forecast_price` through `_current_price_per_kwh()`.
+- `DundeeEnv._current_station_pricing_result(station_id)` combines:
+  - base price
+  - transformer capacity/net load/headroom
+  - station queue length
+  - station utilization
+- High transformer load raises displayed `price_per_kwh`; high headroom can reduce it; queue/utilization add congestion uplift.
+- `estimated_cost_gbp` now reflects this dynamic station-aware recommendation price when `dynamic_pricing_enabled=True`.
+- Public response shape is unchanged. Pricing transparency is carried only through `RecommendationOption.metadata`.
+- The `cheapest` policy naturally reacts to the overlay because it already ranks by `estimated_cost_gbp`.
 
 ## Topology Scenarios
 
@@ -95,6 +112,7 @@ Station access filtering lives in `packages/ev_core/src/ev_core/recommender/elig
 
 - `scripts/verify_station_access.py` loads the real station table and reports total/public/fleet/membership/follow-up/excluded/eligible counts plus blocked reasons.
 - `scripts/verify_runtime_smoke.py` starts the runtime, injects a mobile-style live request, verifies recommendation persistence, and sweeps `weighted_score`, `closest`, `cheapest`, `fastest`, and `overload_aware`.
+- `scripts/verify_dynamic_pricing.py` starts the runtime, prints recommendation pricing metadata, adds artificial transformer stress, and re-checks displayed recommendation prices under the `cheapest` policy.
 - `tests/sim_runtime/test_runtime_smoke.py` covers the same runtime start/recommendation and policy sweep paths when real pandas/numpy are installed.
 
 ## Vehicle-Aware Duration
