@@ -1,0 +1,2 @@
+station_id,is_public,is_fleet_only,requires_membership,needs_followup,exclude_from_recommendations,access_notes,review_status,review_source
+public_station,1,0,yes,no,false,Parsed booleans,assumed,data_note

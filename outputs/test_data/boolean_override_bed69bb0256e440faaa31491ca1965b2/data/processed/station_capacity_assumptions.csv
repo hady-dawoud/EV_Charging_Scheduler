@@ -1,0 +1,4 @@
+station_id,station_capacity_kw_assumed
+public_station,44
+fleet_station,50
+member_station,22

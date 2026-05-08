@@ -1,0 +1,4 @@
+station_id,zone_id,zone_name
+public_station,zone-a,Zone A
+fleet_station,zone-a,Zone A
+member_station,zone-b,Zone B

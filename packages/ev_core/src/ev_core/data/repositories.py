@@ -13,6 +13,8 @@ from typing import Any, Protocol
 import numpy as np
 import pandas as pd
 
+from ev_core.topology.scenarios import TopologyScenario, load_topology_scenario
+
 
 @dataclass(frozen=True)
 class DatasetHandle:
@@ -29,6 +31,7 @@ class DundeeDataPaths:
 
     repo_root: Path
     station_master: Path
+    station_access_overrides: Path
     chargepoint_master: Path
     station_locations_verified: Path
     zones: Path
@@ -43,6 +46,8 @@ class DundeeDataPaths:
     price_table_15min: Path
     pv_profile_15min: Path
     model_ready_csv: Path
+    topology_scenarios_dir: Path
+    default_topology_scenario: Path
 
     @classmethod
     def from_repo_root(cls, repo_root: str | Path) -> "DundeeDataPaths":
@@ -53,6 +58,7 @@ class DundeeDataPaths:
         return cls(
             repo_root=root,
             station_master=processed / "station_master.csv",
+            station_access_overrides=processed / "station_access_overrides.csv",
             chargepoint_master=processed / "chargepoint_master.csv",
             station_locations_verified=processed / "station_locations_verified.csv",
             zones=processed / "zones.csv",
@@ -67,6 +73,8 @@ class DundeeDataPaths:
             price_table_15min=processed / "price_table_15min.csv",
             pv_profile_15min=processed / "pv_profile_15min.csv",
             model_ready_csv=root / "data" / "interim" / "dundee_sessions_model_ready.csv",
+            topology_scenarios_dir=processed / "topology_scenarios",
+            default_topology_scenario=processed / "topology_scenarios" / "dundee_synthetic_v1.json",
         )
 
 
@@ -118,6 +126,32 @@ class FileSystemDatasetRepository:
 
 class DundeeSimulationRepository:
     """Filesystem repository that loads Dundee simulator inputs with safe fallbacks."""
+
+    ACCESS_BOOLEAN_COLUMNS = (
+        "is_public",
+        "is_fleet_only",
+        "requires_membership",
+        "needs_followup",
+        "exclude_from_recommendations",
+    )
+    ACCESS_DEFAULTS = {
+        "is_public": True,
+        "is_fleet_only": False,
+        "requires_membership": False,
+        "needs_followup": False,
+        "exclude_from_recommendations": False,
+    }
+    ACCESS_OVERRIDE_COLUMNS = (
+        "station_id",
+        "is_public",
+        "is_fleet_only",
+        "requires_membership",
+        "needs_followup",
+        "exclude_from_recommendations",
+        "access_notes",
+        "review_status",
+        "review_source",
+    )
 
     def __init__(self, repo_root: str | Path) -> None:
         self.paths = DundeeDataPaths.from_repo_root(repo_root)
@@ -195,7 +229,89 @@ class DundeeSimulationRepository:
         stations["latitude"] = pd.to_numeric(stations["final_latitude"], errors="coerce")
         stations["longitude"] = pd.to_numeric(stations["final_longitude"], errors="coerce")
         stations["station_capacity_kw_assumed"] = pd.to_numeric(stations["station_capacity_kw_assumed"], errors="coerce")
+        stations = self._apply_station_access_overrides(stations)
         return stations.sort_values(["zone_id", "station_name"], kind="stable").reset_index(drop=True)
+
+    def _apply_station_access_overrides(self, stations: pd.DataFrame) -> pd.DataFrame:
+        stations = self._ensure_access_columns(stations.copy())
+        if not self.paths.station_access_overrides.exists():
+            return stations
+
+        overrides = pd.read_csv(self.paths.station_access_overrides, dtype=str).fillna("")
+        missing_columns = [column for column in self.ACCESS_OVERRIDE_COLUMNS if column not in overrides.columns]
+        if missing_columns:
+            raise ValueError(f"station access override file is missing columns: {', '.join(missing_columns)}")
+
+        station_ids = set(stations["station_id"].astype(str))
+        override_ids = set(overrides["station_id"].astype(str))
+        unknown_ids = sorted(override_ids - station_ids)
+        if unknown_ids:
+            raise ValueError(f"station access override file references unknown station_id values: {', '.join(unknown_ids)}")
+
+        overrides = overrides[list(self.ACCESS_OVERRIDE_COLUMNS)].copy()
+        for column in self.ACCESS_BOOLEAN_COLUMNS:
+            overrides[column] = overrides[column].map(lambda value, default=self.ACCESS_DEFAULTS[column]: self._coerce_bool(value, default))
+        overrides = overrides.rename(
+            columns={
+                "review_status": "access_review_status",
+                "review_source": "access_review_source",
+            }
+        )
+        for column in ("access_notes", "access_review_status", "access_review_source"):
+            overrides[column] = overrides[column].map(self._clean_optional_text)
+
+        stations = stations.merge(overrides, on="station_id", how="left", suffixes=("", "_override"))
+        for column in self.ACCESS_BOOLEAN_COLUMNS:
+            override_column = f"{column}_override"
+            stations[column] = stations[override_column].where(stations[override_column].notna(), stations[column])
+            stations = stations.drop(columns=[override_column])
+        for column in ("access_notes", "access_review_status", "access_review_source"):
+            override_column = f"{column}_override"
+            if override_column in stations.columns:
+                stations[column] = stations[override_column].where(stations[override_column].notna(), stations[column])
+                stations = stations.drop(columns=[override_column])
+        return self._ensure_access_columns(stations)
+
+    def _ensure_access_columns(self, stations: pd.DataFrame) -> pd.DataFrame:
+        for column, default in self.ACCESS_DEFAULTS.items():
+            if column not in stations.columns:
+                stations[column] = default
+            stations[column] = stations[column].map(lambda value, default=default: self._coerce_bool(value, default)).astype(object)
+        for column in ("access_notes", "access_review_status", "access_review_source"):
+            if column not in stations.columns:
+                stations[column] = None
+            stations[column] = stations[column].map(self._clean_optional_text)
+        return stations
+
+    @staticmethod
+    def _coerce_bool(value: Any, default: bool) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if isinstance(value, float) and math.isnan(value):
+                return default
+            return bool(value)
+        normalized = str(value).strip().lower()
+        if normalized in {"", "nan", "none", "null"}:
+            return default
+        if normalized in {"1", "true", "t", "yes", "y"}:
+            return True
+        if normalized in {"0", "false", "f", "no", "n"}:
+            return False
+        return default
+
+    @staticmethod
+    def _clean_optional_text(value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        text = str(value).strip()
+        if not text or text.lower() in {"nan", "none", "null"}:
+            return None
+        return text
 
     def get_replay_requests(self, year: int) -> pd.DataFrame:
         """Return the Dundee replay requests for the requested year."""
@@ -205,6 +321,18 @@ class DundeeSimulationRepository:
         if year == 2024:
             return self._load_replay_table(self.paths.request_replay_2024)
         raise ValueError(f"Replay year not supported: {year}")
+
+    def load_topology_scenario(self, scenario_id_or_path: str | Path) -> TopologyScenario:
+        """Load a topology scenario by ID from processed data or by explicit JSON path."""
+
+        scenario_ref = Path(scenario_id_or_path)
+        if scenario_ref.suffix:
+            scenario_path = scenario_ref
+            if not scenario_path.is_absolute():
+                scenario_path = self.paths.repo_root / scenario_path
+        else:
+            scenario_path = self.paths.topology_scenarios_dir / f"{scenario_id_or_path}.json"
+        return load_topology_scenario(scenario_path)
 
     def _load_replay_table(self, path: Path) -> pd.DataFrame:
         try:
@@ -399,7 +527,7 @@ class DundeeSimulationRepository:
     def _load_background_load(self, transformers: pd.DataFrame) -> pd.DataFrame:
         try:
             return pd.read_csv(self.paths.background_load_15min, parse_dates=["timestamp"])
-        except (UnicodeDecodeError, pd.errors.ParserError):
+        except (FileNotFoundError, UnicodeDecodeError, pd.errors.ParserError):
             return self._build_background_load(transformers)
 
     def _load_price_table(self) -> pd.DataFrame:

@@ -1,20 +1,20 @@
 [
   {
-    "request_id": "external_bbe34c7eb9a1",
-    "client_request_id": "demo-mobile-001",
-    "simulated_timestamp": "2024-06-10T01:00:00",
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
     "zone_id": "zone_central_waterfront",
     "top_recommendation": {
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
       "zone_id": "zone_central_waterfront",
-      "transformer_id": "tx_central_market",
-      "score": 0.7479,
-      "distance_km": 0.502,
+      "transformer_id": "tx_central_waterfront",
+      "score": 1.0,
+      "distance_km": 0.243,
       "estimated_wait_minutes": 0,
-      "estimated_duration_minutes": 15,
-      "estimated_cost_gbp": 4.86,
-      "transformer_headroom_kw": 369.644,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
       "current_queue": 0,
       "utilization": 0.0,
       "charger_compatible": true,
@@ -25,45 +25,21 @@
         "low_cost"
       ],
       "metadata": {
-        "connector_mix_total": "ultra_rapid"
+        "connector_mix_total": "ac"
       }
     },
     "alternatives": [
       {
-        "station_id": "princes_street_charging_hub_dundee",
-        "station_name": "Princes Street Charging Hub, Dundee",
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
         "zone_id": "zone_central_waterfront",
         "transformer_id": "tx_central_waterfront",
-        "score": 0.7306,
-        "distance_km": 0.677,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 576.263,
-        "current_queue": 0,
-        "utilization": 0.1111,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "low_cost"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      },
-      {
-        "station_id": "greenmarket_multi_storey_car_park_dundee",
-        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_market",
-        "score": 0.6679,
-        "distance_km": 0.625,
+        "score": 1.0,
+        "distance_km": 0.265,
         "estimated_wait_minutes": 0,
         "estimated_duration_minutes": 60,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 369.644,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
         "current_queue": 0,
         "utilization": 0.0,
         "charger_compatible": true,
@@ -74,278 +50,87 @@
           "low_cost"
         ],
         "metadata": {
-          "connector_mix_total": "ac;rapid"
+          "connector_mix_total": "ac"
         }
       },
       {
-        "station_id": "lochee_charging_hub_aimer_square_dundee",
-        "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-        "zone_id": "zone_west_lochee",
-        "transformer_id": "tx_west_lochee",
-        "score": 0.6661,
-        "distance_km": 2.666,
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.285,
         "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 419.446,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
         "current_queue": 0,
         "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
+          "nearby",
           "low_wait",
           "high_headroom",
-          "low_cost",
-          "charger_match"
+          "low_cost"
         ],
         "metadata": {
-          "connector_mix_total": "ac;rapid"
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
         }
       }
     ],
     "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 7 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.748 with distance 0.50 km, wait 0 min, and headroom 369.6 kW.",
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 1.000 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
     "source_type": "external_live",
     "metadata": {}
   },
   {
-    "request_id": "external_df2f0e43d757",
-    "client_request_id": "demo-mobile-001",
-    "simulated_timestamp": "2024-06-10T01:00:00",
+    "request_id": "terminal-smoke-001",
+    "client_request_id": "terminal-smoke-001",
+    "simulated_timestamp": "2024-06-11T14:45:00",
     "zone_id": "zone_central_waterfront",
     "top_recommendation": {
       "station_id": "greenmarket_150kw_bus_charger",
       "station_name": "Greenmarket 150kW Bus Charger",
       "zone_id": "zone_central_waterfront",
       "transformer_id": "tx_central_market",
-      "score": 0.7479,
-      "distance_km": 0.502,
-      "estimated_wait_minutes": 0,
-      "estimated_duration_minutes": 15,
-      "estimated_cost_gbp": 4.86,
-      "transformer_headroom_kw": 369.644,
-      "current_queue": 0,
-      "utilization": 0.0,
-      "charger_compatible": true,
-      "reason_tags": [
-        "nearby",
-        "low_wait",
-        "high_headroom",
-        "low_cost"
-      ],
-      "metadata": {
-        "connector_mix_total": "ultra_rapid"
-      }
-    },
-    "alternatives": [
-      {
-        "station_id": "princes_street_charging_hub_dundee",
-        "station_name": "Princes Street Charging Hub, Dundee",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_waterfront",
-        "score": 0.7306,
-        "distance_km": 0.677,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 576.263,
-        "current_queue": 0,
-        "utilization": 0.1111,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "low_cost"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      },
-      {
-        "station_id": "greenmarket_multi_storey_car_park_dundee",
-        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_market",
-        "score": 0.6679,
-        "distance_km": 0.625,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 60,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 369.644,
-        "current_queue": 0,
-        "utilization": 0.0,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "low_cost"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      },
-      {
-        "station_id": "lochee_charging_hub_aimer_square_dundee",
-        "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-        "zone_id": "zone_west_lochee",
-        "transformer_id": "tx_west_lochee",
-        "score": 0.6661,
-        "distance_km": 2.666,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 419.446,
-        "current_queue": 0,
-        "utilization": 0.0,
-        "charger_compatible": true,
-        "reason_tags": [
-          "low_wait",
-          "high_headroom",
-          "low_cost",
-          "charger_match"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      }
-    ],
-    "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 7 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.748 with distance 0.50 km, wait 0 min, and headroom 369.6 kW.",
-    "source_type": "external_live",
-    "metadata": {}
-  },
-  {
-    "request_id": "external_65dd34b9d7ce",
-    "client_request_id": "demo-mobile-001",
-    "simulated_timestamp": "2024-06-10T15:15:00",
-    "zone_id": "zone_central_waterfront",
-    "top_recommendation": {
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
-      "zone_id": "zone_central_waterfront",
-      "transformer_id": "tx_central_market",
-      "score": 0.726,
-      "distance_km": 0.502,
-      "estimated_wait_minutes": 0,
-      "estimated_duration_minutes": 15,
-      "estimated_cost_gbp": 6.48,
-      "transformer_headroom_kw": 319.522,
-      "current_queue": 0,
-      "utilization": 0.5,
-      "charger_compatible": true,
-      "reason_tags": [
-        "nearby",
-        "low_wait",
-        "high_headroom",
-        "charger_match"
-      ],
-      "metadata": {
-        "connector_mix_total": "ultra_rapid"
-      }
-    },
-    "alternatives": [
-      {
-        "station_id": "clepington_road_4th_hub",
-        "station_name": "Clepington Road - 4th Hub",
-        "zone_id": "zone_north_inner",
-        "transformer_id": "tx_north_clepington",
-        "score": 0.6487,
-        "distance_km": 2.072,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 30,
-        "estimated_cost_gbp": 6.48,
-        "transformer_headroom_kw": 315.397,
-        "current_queue": 0,
-        "utilization": 0.1667,
-        "charger_compatible": true,
-        "reason_tags": [
-          "low_wait",
-          "high_headroom",
-          "charger_match"
-        ],
-        "metadata": {
-          "connector_mix_total": "rapid;ultra_rapid"
-        }
-      },
-      {
-        "station_id": "greenmarket_multi_storey_car_park_dundee",
-        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_market",
-        "score": 0.646,
-        "distance_km": 0.625,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 60,
-        "estimated_cost_gbp": 6.48,
-        "transformer_headroom_kw": 319.522,
-        "current_queue": 0,
-        "utilization": 0.0,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "charger_match"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      },
-      {
-        "station_id": "princes_street_charging_hub_dundee",
-        "station_name": "Princes Street Charging Hub, Dundee",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_waterfront",
-        "score": 0.6342,
-        "distance_km": 0.677,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
-        "estimated_cost_gbp": 6.48,
-        "transformer_headroom_kw": 263.522,
-        "current_queue": 0,
-        "utilization": 0.7778,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "charger_match"
-        ],
-        "metadata": {
-          "connector_mix_total": "ac;rapid"
-        }
-      }
-    ],
-    "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 7 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.726 with distance 0.50 km, wait 0 min, and headroom 319.5 kW.",
-    "source_type": "external_live",
-    "metadata": {}
-  },
-  {
-    "request_id": "string",
-    "client_request_id": "string",
-    "simulated_timestamp": "2024-06-11T11:30:00",
-    "zone_id": "string",
-    "top_recommendation": {
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
-      "zone_id": "zone_central_waterfront",
-      "transformer_id": "tx_central_market",
-      "score": 0.668,
-      "distance_km": 6269.503,
+      "score": 0.6997,
+      "distance_km": 0.498,
       "estimated_wait_minutes": 0,
       "estimated_duration_minutes": 15,
       "estimated_cost_gbp": 4.8,
-      "transformer_headroom_kw": 335.788,
+      "transformer_headroom_kw": 356.921,
       "current_queue": 0,
-      "utilization": 0.5,
+      "utilization": 0.0,
       "charger_compatible": true,
       "reason_tags": [
+        "nearby",
         "low_wait",
         "high_headroom",
-        "low_cost",
-        "charger_match"
+        "low_cost"
       ],
       "metadata": {
         "connector_mix_total": "ultra_rapid"
@@ -353,18 +138,18 @@
     },
     "alternatives": [
       {
-        "station_id": "queen_street_charging_hub_dundee",
-        "station_name": "Queen Street Charging Hub, Dundee",
-        "zone_id": "zone_east_corridor",
-        "transformer_id": "tx_east_queen_street",
-        "score": 0.6154,
-        "distance_km": 6270.474,
+        "station_id": "clepington_road_4th_hub",
+        "station_name": "Clepington Road - 4th Hub",
+        "zone_id": "zone_north_inner",
+        "transformer_id": "tx_north_clepington",
+        "score": 0.5407,
+        "distance_km": 2.091,
         "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 30,
+        "estimated_duration_minutes": 15,
         "estimated_cost_gbp": 4.8,
-        "transformer_headroom_kw": 308.462,
+        "transformer_headroom_kw": 343.081,
         "current_queue": 0,
-        "utilization": 0.1,
+        "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
           "low_wait",
@@ -373,22 +158,490 @@
           "charger_match"
         ],
         "metadata": {
-          "connector_mix_total": "ac;rapid"
+          "connector_mix_total": "rapid;ultra_rapid"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 2 stations for preference 'closest'. Top option Greenmarket 150kW Bus Charger scored 0.700 with distance 0.50 km, wait 0 min, and headroom 356.9 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
         }
       },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.8046,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7903,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7783,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.726,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.805 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.1724,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.172 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "greenmarket_150kw_bus_charger",
+      "station_name": "Greenmarket 150kW Bus Charger",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_market",
+      "score": 0.5,
+      "distance_km": 0.498,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 15,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 384.181,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ultra_rapid"
+      }
+    },
+    "alternatives": [
       {
         "station_id": "clepington_road_4th_hub",
         "station_name": "Clepington Road - 4th Hub",
         "zone_id": "zone_north_inner",
         "transformer_id": "tx_north_clepington",
-        "score": 0.6091,
-        "distance_km": 6271.892,
+        "score": 0.5,
+        "distance_km": 2.091,
         "estimated_wait_minutes": 0,
         "estimated_duration_minutes": 15,
         "estimated_cost_gbp": 4.8,
-        "transformer_headroom_kw": 188.588,
+        "transformer_headroom_kw": 355.617,
         "current_queue": 0,
-        "utilization": 0.3333,
+        "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
           "low_wait",
@@ -405,20 +658,44 @@
         "station_name": "Greenmarket Multi Storey Car Park, Dundee",
         "zone_id": "zone_central_waterfront",
         "transformer_id": "tx_central_market",
-        "score": 0.6055,
-        "distance_km": 6269.406,
+        "score": 0.3333,
+        "distance_km": 0.638,
         "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 45,
+        "estimated_duration_minutes": 30,
         "estimated_cost_gbp": 4.8,
-        "transformer_headroom_kw": 335.788,
+        "transformer_headroom_kw": 384.181,
         "current_queue": 0,
         "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
+          "nearby",
           "low_wait",
           "high_headroom",
-          "low_cost",
-          "charger_match"
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac;rapid"
+        }
+      },
+      {
+        "station_id": "princes_street_charging_hub_dundee",
+        "station_name": "Princes Street Charging Hub, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.3333,
+        "distance_km": 0.645,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 30,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
         ],
         "metadata": {
           "connector_mix_total": "ac;rapid"
@@ -426,34 +703,574 @@
       }
     ],
     "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 35 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.668 with distance 6269.50 km, wait 0 min, and headroom 335.8 kW.",
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Greenmarket 150kW Bus Charger scored 0.500 with distance 0.50 km, wait 0 min, and headroom 384.2 kW.",
     "source_type": "external_live",
     "metadata": {}
   },
   {
-    "request_id": "string",
-    "client_request_id": "string",
-    "simulated_timestamp": "2024-06-14T05:45:00",
-    "zone_id": "string",
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 1.0,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 1.000 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.8046,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7903,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7783,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.726,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.805 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.1724,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.172 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
     "top_recommendation": {
       "station_id": "greenmarket_150kw_bus_charger",
       "station_name": "Greenmarket 150kW Bus Charger",
       "zone_id": "zone_central_waterfront",
       "transformer_id": "tx_central_market",
-      "score": 0.6849,
-      "distance_km": 6269.503,
+      "score": 0.5,
+      "distance_km": 0.498,
       "estimated_wait_minutes": 0,
       "estimated_duration_minutes": 15,
-      "estimated_cost_gbp": 3.6,
-      "transformer_headroom_kw": 372.63,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 384.181,
       "current_queue": 0,
       "utilization": 0.0,
       "charger_compatible": true,
       "reason_tags": [
+        "nearby",
         "low_wait",
         "high_headroom",
-        "low_cost",
-        "charger_match"
+        "low_cost"
       ],
       "metadata": {
         "connector_mix_total": "ultra_rapid"
@@ -465,12 +1282,12 @@
         "station_name": "Clepington Road - 4th Hub",
         "zone_id": "zone_north_inner",
         "transformer_id": "tx_north_clepington",
-        "score": 0.672,
-        "distance_km": 6271.892,
+        "score": 0.5,
+        "distance_km": 2.091,
         "estimated_wait_minutes": 0,
         "estimated_duration_minutes": 15,
-        "estimated_cost_gbp": 3.6,
-        "transformer_headroom_kw": 340.307,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 355.617,
         "current_queue": 0,
         "utilization": 0.0,
         "charger_compatible": true,
@@ -485,48 +1302,48 @@
         }
       },
       {
-        "station_id": "princes_street_charging_hub_dundee",
-        "station_name": "Princes Street Charging Hub, Dundee",
+        "station_id": "greenmarket_multi_storey_car_park_dundee",
+        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
         "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_waterfront",
-        "score": 0.6647,
-        "distance_km": 6270.424,
+        "transformer_id": "tx_central_market",
+        "score": 0.3333,
+        "distance_km": 0.638,
         "estimated_wait_minutes": 0,
         "estimated_duration_minutes": 30,
-        "estimated_cost_gbp": 3.6,
-        "transformer_headroom_kw": 426.291,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 384.181,
         "current_queue": 0,
-        "utilization": 0.2222,
+        "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
+          "nearby",
           "low_wait",
           "high_headroom",
-          "low_cost",
-          "charger_match"
+          "low_cost"
         ],
         "metadata": {
           "connector_mix_total": "ac;rapid"
         }
       },
       {
-        "station_id": "lochee_charging_hub_aimer_square_dundee",
-        "station_name": "Lochee Charging Hub, Aimer Square, Dundee",
-        "zone_id": "zone_west_lochee",
-        "transformer_id": "tx_west_lochee",
-        "score": 0.6633,
-        "distance_km": 6271.154,
+        "station_id": "princes_street_charging_hub_dundee",
+        "station_name": "Princes Street Charging Hub, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.3333,
+        "distance_km": 0.645,
         "estimated_wait_minutes": 0,
         "estimated_duration_minutes": 30,
-        "estimated_cost_gbp": 3.6,
-        "transformer_headroom_kw": 422.764,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
         "current_queue": 0,
         "utilization": 0.0,
         "charger_compatible": true,
         "reason_tags": [
+          "nearby",
           "low_wait",
           "high_headroom",
-          "low_cost",
-          "charger_match"
+          "low_cost"
         ],
         "metadata": {
           "connector_mix_total": "ac;rapid"
@@ -534,26 +1351,566 @@
       }
     ],
     "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 35 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.685 with distance 6269.50 km, wait 0 min, and headroom 372.6 kW.",
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Greenmarket 150kW Bus Charger scored 0.500 with distance 0.50 km, wait 0 min, and headroom 384.2 kW.",
     "source_type": "external_live",
     "metadata": {}
   },
   {
-    "request_id": "api-live-001",
-    "client_request_id": "mobile-test-001",
-    "simulated_timestamp": "2024-06-15T02:00:00",
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 1.0,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 1.000 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.7893,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7829,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7775,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7539,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.789 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.8046,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7903,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.7783,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.726,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.805 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 0.1724,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.1724,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 0.172 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
     "zone_id": "zone_central_waterfront",
     "top_recommendation": {
       "station_id": "greenmarket_150kw_bus_charger",
       "station_name": "Greenmarket 150kW Bus Charger",
       "zone_id": "zone_central_waterfront",
       "transformer_id": "tx_central_market",
-      "score": 0.7521,
-      "distance_km": 0.502,
+      "score": 0.5,
+      "distance_km": 0.498,
       "estimated_wait_minutes": 0,
       "estimated_duration_minutes": 15,
-      "estimated_cost_gbp": 4.59,
-      "transformer_headroom_kw": 379.073,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 384.181,
       "current_queue": 0,
       "utilization": 0.0,
       "charger_compatible": true,
@@ -567,9 +1924,190 @@
         "connector_mix_total": "ultra_rapid"
       }
     },
-    "alternatives": [],
+    "alternatives": [
+      {
+        "station_id": "clepington_road_4th_hub",
+        "station_name": "Clepington Road - 4th Hub",
+        "zone_id": "zone_north_inner",
+        "transformer_id": "tx_north_clepington",
+        "score": 0.5,
+        "distance_km": 2.091,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 15,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 355.617,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "low_wait",
+          "high_headroom",
+          "low_cost",
+          "charger_match"
+        ],
+        "metadata": {
+          "connector_mix_total": "rapid;ultra_rapid"
+        }
+      },
+      {
+        "station_id": "greenmarket_multi_storey_car_park_dundee",
+        "station_name": "Greenmarket Multi Storey Car Park, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_market",
+        "score": 0.3333,
+        "distance_km": 0.638,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 30,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 384.181,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac;rapid"
+        }
+      },
+      {
+        "station_id": "princes_street_charging_hub_dundee",
+        "station_name": "Princes Street Charging Hub, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 0.3333,
+        "distance_km": 0.645,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 30,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac;rapid"
+        }
+      }
+    ],
     "congestion_note": null,
-    "debug_reasoning_summary": "Ranked 1 stations for preference 'fastest'. Top option Greenmarket 150kW Bus Charger scored 0.752 with distance 0.50 km, wait 0 min, and headroom 379.1 kW.",
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Greenmarket 150kW Bus Charger scored 0.500 with distance 0.50 km, wait 0 min, and headroom 384.2 kW.",
+    "source_type": "external_live",
+    "metadata": {}
+  },
+  {
+    "request_id": "runtime-smoke-request",
+    "client_request_id": "runtime-smoke",
+    "simulated_timestamp": "2024-06-10T12:00:00",
+    "zone_id": "zone_central_waterfront",
+    "top_recommendation": {
+      "station_id": "gellatly_street_car_park_dundee",
+      "station_name": "Gellatly Street Car Park, Dundee",
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_waterfront",
+      "score": 1.0,
+      "distance_km": 0.243,
+      "estimated_wait_minutes": 0,
+      "estimated_duration_minutes": 60,
+      "estimated_cost_gbp": 4.8,
+      "transformer_headroom_kw": 640.302,
+      "current_queue": 0,
+      "utilization": 0.0,
+      "charger_compatible": true,
+      "reason_tags": [
+        "nearby",
+        "low_wait",
+        "high_headroom",
+        "low_cost"
+      ],
+      "metadata": {
+        "connector_mix_total": "ac"
+      }
+    },
+    "alternatives": [
+      {
+        "station_id": "trades_lane_dundee",
+        "station_name": "Trades Lane, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.265,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dock_street_dundee",
+        "station_name": "Dock Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.285,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      },
+      {
+        "station_id": "dundee_house_depot_north_lindsay_street_dundee",
+        "station_name": "Dundee House Depot, North Lindsay Street, Dundee",
+        "zone_id": "zone_central_waterfront",
+        "transformer_id": "tx_central_waterfront",
+        "score": 1.0,
+        "distance_km": 0.377,
+        "estimated_wait_minutes": 0,
+        "estimated_duration_minutes": 60,
+        "estimated_cost_gbp": 4.8,
+        "transformer_headroom_kw": 640.302,
+        "current_queue": 0,
+        "utilization": 0.0,
+        "charger_compatible": true,
+        "reason_tags": [
+          "nearby",
+          "low_wait",
+          "high_headroom",
+          "low_cost"
+        ],
+        "metadata": {
+          "connector_mix_total": "ac"
+        }
+      }
+    ],
+    "congestion_note": null,
+    "debug_reasoning_summary": "Ranked 35 stations for preference 'closest'. Top option Gellatly Street Car Park, Dundee scored 1.000 with distance 0.24 km, wait 0 min, and headroom 640.3 kW.",
     "source_type": "external_live",
     "metadata": {}
   }

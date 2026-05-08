@@ -7,6 +7,8 @@ from typing import Protocol
 
 from ev_core.contracts.responses import RecommendationOption
 
+from .scoring_utils import candidate_to_option, clamp, default_reason_tags
+
 
 @dataclass(frozen=True)
 class CandidateContext:
@@ -79,26 +81,7 @@ class WeightedHeuristicRanker:
         ranked: list[RecommendationOption] = []
         for candidate in payload.candidates:
             score = self._score_candidate(candidate, weights)
-            reason_tags = self._reason_tags(candidate)
-            ranked.append(
-                RecommendationOption(
-                    station_id=candidate.station_id,
-                    station_name=candidate.station_name,
-                    zone_id=candidate.zone_id,
-                    transformer_id=candidate.transformer_id,
-                    score=round(score, 4),
-                    distance_km=round(candidate.distance_km, 3),
-                    estimated_wait_minutes=int(candidate.estimated_wait_minutes),
-                    estimated_duration_minutes=int(candidate.estimated_duration_minutes),
-                    estimated_cost_gbp=round(candidate.estimated_cost_gbp, 3),
-                    transformer_headroom_kw=round(candidate.transformer_headroom_kw, 3),
-                    current_queue=int(candidate.current_queue),
-                    utilization=round(candidate.utilization, 4),
-                    charger_compatible=bool(candidate.charger_compatible),
-                    reason_tags=reason_tags,
-                    metadata=candidate.metadata,
-                )
-            )
+            ranked.append(candidate_to_option(candidate, score=score, reason_tags=self._reason_tags(candidate)))
         return sorted(
             ranked,
             key=lambda option: (-option.score, option.estimated_wait_minutes, option.distance_km, option.estimated_cost_gbp),
@@ -106,7 +89,7 @@ class WeightedHeuristicRanker:
 
     def _score_candidate(self, candidate: CandidateContext, weights: dict[str, float]) -> float:
         compatibility = 1.0 if candidate.charger_compatible else 0.0
-        normalized_headroom = min(max(candidate.transformer_headroom_kw / 500.0, 0.0), 1.0)
+        normalized_headroom = clamp(candidate.transformer_headroom_kw / 500.0, 0.0, 1.0)
         wait_component = 1.0 / (1.0 + (candidate.estimated_wait_minutes / 15.0))
         duration_component = 1.0 / (1.0 + (candidate.estimated_duration_minutes / 15.0))
         distance_component = 1.0 / (1.0 + candidate.distance_km)
@@ -121,18 +104,7 @@ class WeightedHeuristicRanker:
         )
 
     def _reason_tags(self, candidate: CandidateContext) -> list[str]:
-        tags: list[str] = []
-        if candidate.distance_km <= 1.5:
-            tags.append("nearby")
-        if candidate.estimated_wait_minutes <= 15:
-            tags.append("low_wait")
-        if candidate.transformer_headroom_kw >= 100:
-            tags.append("high_headroom")
-        if candidate.estimated_cost_gbp <= 6.0:
-            tags.append("low_cost")
-        if candidate.charger_compatible:
-            tags.append("charger_match")
-        return tags[:4]
+        return default_reason_tags(candidate)
 
 
 __all__ = [

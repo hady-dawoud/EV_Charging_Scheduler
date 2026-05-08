@@ -37,6 +37,7 @@ class RecommendationService:
         source_type: str,
         preference_mode: str,
         candidate_contexts: list[CandidateContext],
+        policy_name: str | None = None,
     ) -> RecommendationResponse:
         """Rank candidate stations and return a standalone response contract."""
 
@@ -49,6 +50,7 @@ class RecommendationService:
             payload,
             candidate_contexts,
             runtime_context={"simulated_timestamp": simulated_timestamp},
+            policy_name=policy_name,
         )
         top_recommendation = ranked[0] if ranked else None
         congestion_note = self._build_congestion_note(ranked)
@@ -91,7 +93,10 @@ class RecommendationService:
         candidate_contexts: list[CandidateContext],
         *,
         runtime_context: dict[str, Any] | None = None,
+        policy_name: str | None = None,
     ) -> list[RecommendationOption]:
+        if policy_name is not None:
+            return self.policy_registry.get(policy_name).rank(payload, candidate_contexts, runtime_context=runtime_context)
         if self.ranker is not None:
             return self.ranker.rank(payload)
         if self.policy is None:

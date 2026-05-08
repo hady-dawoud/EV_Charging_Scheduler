@@ -1,0 +1,270 @@
+{
+  "scenario_id": "dundee_synthetic_v1_stress",
+  "scenario_name": "Dundee Synthetic V1 Stress Capacity",
+  "source": "calibrated_from_chargepoint_inventory",
+  "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings.",
+  "transformers": [
+    {
+      "transformer_id": "tx_central_market",
+      "transformer_name": "Central Market Feeder",
+      "zone_id": "zone_central_waterfront",
+      "capacity_kw": 300.0,
+      "latitude": 56.457607,
+      "longitude": -2.972895,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "dundee_railway_station",
+        "dundee_taybridge_rail_station_south_union_street_dundee",
+        "greenmarket_150kw_bus_charger",
+        "greenmarket_multi_storey_car_park_dundee",
+        "nethergate_dundee",
+        "south_tay_street_car_club_public"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=504.000; max_single_cp_kw=150.000; legacy_capacity_kw=450.000; warning_flags=none.",
+      "calibration": {
+        "current_capacity_kw": 450.0,
+        "connected_cp_kw": 504.0,
+        "max_single_cp_kw": 150.0,
+        "recommended_realistic_capacity_kw": 800.0,
+        "recommended_stress_capacity_kw": 300.0,
+        "connected_load_ratio_current": 1.12,
+        "warning_flags": [],
+        "attached_cp_count": 10,
+        "attached_station_count": 6
+      }
+    },
+    {
+      "transformer_id": "tx_central_waterfront",
+      "transformer_name": "Central Waterfront Feeder",
+      "zone_id": "zone_central_waterfront",
+      "capacity_kw": 500.0,
+      "latitude": 56.462763,
+      "longitude": -2.966193,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "dock_street_dundee",
+        "dundee_house_depot_north_lindsay_street_dundee",
+        "gellatly_street_car_park_dundee",
+        "olympia_hub",
+        "olympia_multi_storey_car_park_dundee",
+        "princes_street_charging_hub_dundee",
+        "trades_lane_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=856.000; max_single_cp_kw=50.000; legacy_capacity_kw=750.000; warning_flags=none.",
+      "calibration": {
+        "current_capacity_kw": 750.0,
+        "connected_cp_kw": 856.0,
+        "max_single_cp_kw": 50.0,
+        "recommended_realistic_capacity_kw": 800.0,
+        "recommended_stress_capacity_kw": 500.0,
+        "connected_load_ratio_current": 1.141333,
+        "warning_flags": [],
+        "attached_cp_count": 30,
+        "attached_station_count": 7
+      }
+    },
+    {
+      "transformer_id": "tx_east_broughty",
+      "transformer_name": "East Broughty Feeder",
+      "zone_id": "zone_east_corridor",
+      "capacity_kw": 150.0,
+      "latitude": 56.480688,
+      "longitude": -2.907506,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "balmerino_road",
+        "dawson_park_broughty_ferry",
+        "douglas_community_library",
+        "whitfield_centre_lothian_crescent_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=110.000; max_single_cp_kw=22.000; legacy_capacity_kw=150.000; warning_flags=capacity_below_300kw_multi_station.",
+      "calibration": {
+        "current_capacity_kw": 150.0,
+        "connected_cp_kw": 110.0,
+        "max_single_cp_kw": 22.0,
+        "recommended_realistic_capacity_kw": 300.0,
+        "recommended_stress_capacity_kw": 150.0,
+        "connected_load_ratio_current": 0.733333,
+        "warning_flags": [
+          "capacity_below_300kw_multi_station"
+        ],
+        "attached_cp_count": 5,
+        "attached_station_count": 4
+      }
+    },
+    {
+      "transformer_id": "tx_east_queen_street",
+      "transformer_name": "East Queen Street Feeder",
+      "zone_id": "zone_east_corridor",
+      "capacity_kw": 300.0,
+      "latitude": 56.474203,
+      "longitude": -2.882527,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "eastern_primary_school",
+        "michelin_scotland_innovation_park",
+        "queen_street_charging_hub_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=454.000; max_single_cp_kw=50.000; legacy_capacity_kw=400.000; warning_flags=none.",
+      "calibration": {
+        "current_capacity_kw": 400.0,
+        "connected_cp_kw": 454.0,
+        "max_single_cp_kw": 50.0,
+        "recommended_realistic_capacity_kw": 500.0,
+        "recommended_stress_capacity_kw": 300.0,
+        "connected_load_ratio_current": 1.135,
+        "warning_flags": [],
+        "attached_cp_count": 13,
+        "attached_station_count": 3
+      }
+    },
+    {
+      "transformer_id": "tx_north_clepington",
+      "transformer_name": "North Clepington Feeder",
+      "zone_id": "zone_north_inner",
+      "capacity_kw": 300.0,
+      "latitude": 56.475064,
+      "longitude": -2.977711,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "alexander_street_dundee",
+        "caird_avenue",
+        "clepington_road_4th_hub",
+        "coldside_nursery"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=444.000; max_single_cp_kw=150.000; legacy_capacity_kw=400.000; warning_flags=none.",
+      "calibration": {
+        "current_capacity_kw": 400.0,
+        "connected_cp_kw": 444.0,
+        "max_single_cp_kw": 150.0,
+        "recommended_realistic_capacity_kw": 800.0,
+        "recommended_stress_capacity_kw": 300.0,
+        "connected_load_ratio_current": 1.11,
+        "warning_flags": [],
+        "attached_cp_count": 8,
+        "attached_station_count": 4
+      }
+    },
+    {
+      "transformer_id": "tx_north_midcraigie",
+      "transformer_name": "North Mid Craigie Feeder",
+      "zone_id": "zone_north_inner",
+      "capacity_kw": 150.0,
+      "latitude": 56.482849,
+      "longitude": -2.951994,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "derby_street",
+        "housing_office_east_midmill_road_dundee",
+        "mill_o_mains_primary_school",
+        "rpc_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=110.000; max_single_cp_kw=22.000; legacy_capacity_kw=150.000; warning_flags=capacity_below_300kw_multi_station.",
+      "calibration": {
+        "current_capacity_kw": 150.0,
+        "connected_cp_kw": 110.0,
+        "max_single_cp_kw": 22.0,
+        "recommended_realistic_capacity_kw": 300.0,
+        "recommended_stress_capacity_kw": 150.0,
+        "connected_load_ratio_current": 0.733333,
+        "warning_flags": [
+          "capacity_below_300kw_multi_station"
+        ],
+        "attached_cp_count": 5,
+        "attached_station_count": 4
+      }
+    },
+    {
+      "transformer_id": "tx_west_camperdown",
+      "transformer_name": "West Camperdown Feeder",
+      "zone_id": "zone_west_lochee",
+      "capacity_kw": 150.0,
+      "latitude": 56.481351,
+      "longitude": -3.031282,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "camperdown_country_park",
+        "dundee_ice_arena_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=144.000; max_single_cp_kw=50.000; legacy_capacity_kw=150.000; warning_flags=capacity_below_300kw_multi_station.",
+      "calibration": {
+        "current_capacity_kw": 150.0,
+        "connected_cp_kw": 144.0,
+        "max_single_cp_kw": 50.0,
+        "recommended_realistic_capacity_kw": 300.0,
+        "recommended_stress_capacity_kw": 150.0,
+        "connected_load_ratio_current": 0.96,
+        "warning_flags": [
+          "capacity_below_300kw_multi_station"
+        ],
+        "attached_cp_count": 4,
+        "attached_station_count": 2
+      }
+    },
+    {
+      "transformer_id": "tx_west_lochee",
+      "transformer_name": "West Lochee Feeder",
+      "zone_id": "zone_west_lochee",
+      "capacity_kw": 300.0,
+      "latitude": 56.469796,
+      "longitude": -3.034251,
+      "capacity_derating_factor": 1.0,
+      "attached_station_ids": [
+        "craigowen_road",
+        "deveron_terrace",
+        "lochee_charging_hub_aimer_square_dundee",
+        "menzieshill_community_centre",
+        "orleans_place_dundee"
+      ],
+      "notes": "Synthetic simulator topology with constrained transformer active-power capacities for overload and headroom stress testing. Not utility-verified transformer kVA ratings. connected_cp_kw=554.000; max_single_cp_kw=50.000; legacy_capacity_kw=500.000; warning_flags=none.",
+      "calibration": {
+        "current_capacity_kw": 500.0,
+        "connected_cp_kw": 554.0,
+        "max_single_cp_kw": 50.0,
+        "recommended_realistic_capacity_kw": 500.0,
+        "recommended_stress_capacity_kw": 300.0,
+        "connected_load_ratio_current": 1.108,
+        "warning_flags": [],
+        "attached_cp_count": 15,
+        "attached_station_count": 5
+      }
+    }
+  ],
+  "station_to_transformer": {
+    "dundee_railway_station": "tx_central_market",
+    "dundee_taybridge_rail_station_south_union_street_dundee": "tx_central_market",
+    "greenmarket_150kw_bus_charger": "tx_central_market",
+    "greenmarket_multi_storey_car_park_dundee": "tx_central_market",
+    "nethergate_dundee": "tx_central_market",
+    "south_tay_street_car_club_public": "tx_central_market",
+    "dock_street_dundee": "tx_central_waterfront",
+    "dundee_house_depot_north_lindsay_street_dundee": "tx_central_waterfront",
+    "gellatly_street_car_park_dundee": "tx_central_waterfront",
+    "olympia_hub": "tx_central_waterfront",
+    "olympia_multi_storey_car_park_dundee": "tx_central_waterfront",
+    "princes_street_charging_hub_dundee": "tx_central_waterfront",
+    "trades_lane_dundee": "tx_central_waterfront",
+    "balmerino_road": "tx_east_broughty",
+    "dawson_park_broughty_ferry": "tx_east_broughty",
+    "douglas_community_library": "tx_east_broughty",
+    "whitfield_centre_lothian_crescent_dundee": "tx_east_broughty",
+    "eastern_primary_school": "tx_east_queen_street",
+    "michelin_scotland_innovation_park": "tx_east_queen_street",
+    "queen_street_charging_hub_dundee": "tx_east_queen_street",
+    "alexander_street_dundee": "tx_north_clepington",
+    "caird_avenue": "tx_north_clepington",
+    "clepington_road_4th_hub": "tx_north_clepington",
+    "coldside_nursery": "tx_north_clepington",
+    "derby_street": "tx_north_midcraigie",
+    "housing_office_east_midmill_road_dundee": "tx_north_midcraigie",
+    "mill_o_mains_primary_school": "tx_north_midcraigie",
+    "rpc_dundee": "tx_north_midcraigie",
+    "camperdown_country_park": "tx_west_camperdown",
+    "dundee_ice_arena_dundee": "tx_west_camperdown",
+    "craigowen_road": "tx_west_lochee",
+    "deveron_terrace": "tx_west_lochee",
+    "lochee_charging_hub_aimer_square_dundee": "tx_west_lochee",
+    "menzieshill_community_centre": "tx_west_lochee",
+    "orleans_place_dundee": "tx_west_lochee"
+  }
+}

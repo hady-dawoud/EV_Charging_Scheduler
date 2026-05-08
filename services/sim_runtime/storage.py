@@ -114,6 +114,7 @@ class RuntimeStorage:
                 "loop_interval_seconds": 0.0,
                 "runtime_mode": "replay",
                 "active_policy": "overload_aware",
+                "recommendation_policy_name": "weighted_score",
                 "demand_multiplier": 1.0,
                 "warm_start_minutes": 0,
             }
