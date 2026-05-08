@@ -6,7 +6,10 @@ from app.routers.recommendations import router as recommendations_router
 from app.routers.stations import router as stations_router
 from app.routers.system import router as system_router
 
-app = FastAPI(title="EV Smart Charging API")
+app = FastAPI(
+    title="EV Smart Charging API",
+    root_path="/api",
+)
 
 allowed_origins = os.getenv(
     "CORS_ORIGINS",
