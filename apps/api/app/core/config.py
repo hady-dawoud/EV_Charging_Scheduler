@@ -21,6 +21,11 @@ class Settings(BaseSettings):
         "ev_user:change_me@localhost:5432/ev_smart_charging"
     )
 
+    jwt_secret_key: str = "change_me_to_a_long_random_secret"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 15
+    jwt_refresh_token_expire_days: int = 30
+
     recommendation_policy_name: str = "weighted_score"
     topology_scenario_id: str | None = None
     dynamic_pricing_enabled: bool = True

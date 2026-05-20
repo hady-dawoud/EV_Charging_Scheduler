@@ -18,6 +18,9 @@ for path in (REPO_ROOT, API_ROOT):
 from app.core.config import get_settings
 from app.db.base import Base
 
+# Import models so Alembic can discover them through Base.metadata.
+from app.models import RefreshToken, User  # noqa: E402,F401
+
 config = context.config
 
 if config.config_file_name is not None:
