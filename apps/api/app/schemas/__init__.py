@@ -1,3 +1,10 @@
+from app.schemas.charging_sessions import (
+    ActiveChargingSessionResponse,
+    ChargingSessionCompleteRequest,
+    ChargingSessionCreate,
+    ChargingSessionRead,
+    ChargingSessionsResponse,
+)
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
@@ -23,6 +30,11 @@ from app.schemas.recommendations import (
 from app.schemas.stations import Station, StationCreate, StationUpdate, StationsResponse
 
 __all__ = [
+    "ChargingSessionsResponse",
+    "ChargingSessionRead",
+    "ChargingSessionCreate",
+    "ChargingSessionCompleteRequest",
+    "ActiveChargingSessionResponse",
     "AuthResponse",
     "ErrorResponse",
     "LoginRequest",
