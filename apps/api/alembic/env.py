@@ -19,7 +19,7 @@ from app.core.config import get_settings
 from app.db.base import Base
 
 # Import models so Alembic can discover them through Base.metadata.
-from app.models import RefreshToken, Station, User  # noqa: E402,F401
+from app.models import RefreshToken, Reservation, Station, User  # noqa: E402,F401
 
 config = context.config
 

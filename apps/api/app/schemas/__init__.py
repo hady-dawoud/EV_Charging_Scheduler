@@ -10,6 +10,12 @@ from app.schemas.auth import (
     UserRead,
 )
 from app.schemas.errors import ErrorResponse
+from app.schemas.reservations import (
+    ReservationCancelResponse,
+    ReservationCreate,
+    ReservationRead,
+    ReservationsResponse,
+)
 from app.schemas.recommendations import (
     RecommendationRequest,
     RecommendationsResponse,
@@ -22,6 +28,10 @@ __all__ = [
     "LoginRequest",
     "LogoutRequest",
     "LogoutResponse",
+    "ReservationCancelResponse",
+    "ReservationCreate",
+    "ReservationRead",
+    "ReservationsResponse",
     "RecommendationRequest",
     "RecommendationsResponse",
     "RefreshTokenRequest",

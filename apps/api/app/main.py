@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.routers.auth import router as auth_router
 from app.routers.recommendations import router as recommendations_router
+from app.routers.reservations import router as reservations_router
 from app.routers.stations import router as stations_router
 from app.routers.system import router as system_router
 
@@ -24,5 +25,6 @@ app.add_middleware(
 
 app.include_router(system_router)
 app.include_router(auth_router)
+app.include_router(reservations_router)
 app.include_router(stations_router)
 app.include_router(recommendations_router)
