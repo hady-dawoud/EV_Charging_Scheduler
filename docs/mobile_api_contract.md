@@ -1,10 +1,11 @@
-# Mobile API Contract - EV Smart Charging App
+# Mobile API Contract — EV Smart Charging App
 
 ## 1. Purpose
 
-This document defines the API contract used by the production Android mobile app.
+This document defines the backend API contract used by the production Android mobile app.
 
 Mobile stack:
+
 - React Native CLI
 - TypeScript
 - React Navigation
@@ -15,313 +16,291 @@ Mobile stack:
 - Signed Android release APK
 
 Backend stack:
+
 - FastAPI
 - PostgreSQL
 - JWT access token + refresh token
-- Existing EV simulator runtime / recommender integration
+- EV simulator runtime / recommender integration
 
 Rule:
-The mobile app talks only to the FastAPI backend. It must not talk directly to PostgreSQL or directly to the simulator runtime.
+
+The mobile app talks only to the FastAPI backend. It must not connect directly to PostgreSQL and must not call the simulator runtime directly.
 
 ---
 
 ## 2. Base URLs
 
-Local Android emulator:
+### Android emulator
 
-    http://10.0.2.2:8000
+```text
+http://10.0.2.2:8000
+```
 
-Local physical Android phone:
+### Physical Android phone on same network
 
-    http://<your-computer-lan-ip>:8000
+```text
+http://<your-computer-lan-ip>:8000
+```
 
-Deployed backend:
+### Deployed backend
 
-    http://smartevcharging.uaenorth.cloudapp.azure.com/api
+```text
+http://smartevcharging.uaenorth.cloudapp.azure.com/api
+```
 
-The deployed backend uses the /api reverse-proxy prefix.
+The deployed backend uses the `/api` reverse-proxy prefix.
 
----
-
-## 3. Endpoint status legend
-
-EXISTS_NOW:
-Endpoint already exists.
-
-NEEDS_BUILD:
-Endpoint must be implemented.
-
-NEEDS_DB:
-Endpoint needs PostgreSQL persistence.
+In local FastAPI/TestClient tests, routes are called without `/api`.
 
 ---
 
-## 4. Existing system endpoints
+## 3. Implemented mobile backend endpoints
 
-### 4.1 Health check
+### Auth
 
-Endpoint:
+```text
+POST /auth/register
+POST /auth/login
+POST /auth/refresh
+POST /auth/logout
+GET  /auth/me
+```
 
-    GET /health
+### Stations
 
-Status:
+```text
+GET    /stations
+GET    /stations/{station_id}
+POST   /stations
+PUT    /stations/{station_id}
+DELETE /stations/{station_id}
+```
 
-    EXISTS_NOW
+### Recommendations
 
-Purpose:
-Used by the mobile app to check backend and runtime availability.
+```text
+POST /recommendations
+POST /mobile/recommendations
+```
 
-Expected response shape:
+### Reservations
 
-    {
-      "status": "ok",
-      "runtime_started": true,
-      "loop_running": true,
-      "runtime_mode": "hybrid",
-      "active_policy": "overload_aware",
-      "simulated_timestamp": "2024-06-10T14:30:00"
-    }
+```text
+POST  /reservations
+GET   /reservations/me
+PATCH /reservations/{reservation_id}/cancel
+```
 
-Mobile behavior:
-- If the backend is unreachable, show backend unavailable.
-- If runtime_started is false, show recommendation runtime unavailable.
-- Do not crash.
-- Do not keep retrying aggressively.
+### Charging sessions
 
----
-
-### 4.2 Runtime status
-
-Endpoint:
-
-    GET /runtime/status
-
-Status:
-
-    EXISTS_NOW
-
-Purpose:
-Optional app/debug status display.
-
-Mobile behavior:
-- Not required for normal user flow.
-- Useful for a hidden debug/status screen.
+```text
+POST  /sessions
+GET   /sessions/me
+GET   /sessions/active
+PATCH /sessions/{session_id}/complete
+```
 
 ---
 
-### 4.3 Runtime state
+## 4. Auth contract
 
-Endpoint:
+Auth uses JWT access tokens and persisted refresh tokens.
 
-    GET /runtime/state
+Mobile storage rules:
 
-Status:
-
-    EXISTS_NOW
-
-Mobile behavior:
-- Optional.
-- Do not expose simulator internals in normal user UI.
+- Store refresh token in `react-native-keychain`.
+- Keep access token in memory through Zustand.
+- Do not store tokens in AsyncStorage.
+- Do not persist access token in plain local storage.
+- Clear tokens on logout or failed refresh.
 
 ---
 
-### 4.4 Runtime events
+### 4.1 Register
 
-Endpoint:
-
-    GET /runtime/events?limit=50
-
-Status:
-
-    EXISTS_NOW
-
-Mobile behavior:
-- Optional debug/admin usage only.
-
----
-
-### 4.5 Recent runtime recommendations
-
-Endpoint:
-
-    GET /runtime/recommendations/recent?limit=20
-
-Status:
-
-    EXISTS_NOW
-
-Mobile behavior:
-- Optional debug/admin usage only.
-
----
-
-## 5. Auth endpoints
-
-These do not exist yet.
-
-### 5.1 Register
-
-Endpoint:
-
-    POST /auth/register
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /auth/register
+```
 
 Request:
 
-    {
-      "full_name": "Alex Mercer",
-      "email": "alex.mercer@example.com",
-      "password": "password123"
-    }
+```json
+{
+  "full_name": "Alex Mercer",
+  "email": "alex.mercer@example.com",
+  "password": "password123"
+}
+```
 
 Response:
 
-    {
-      "user": {
-        "id": "uuid",
-        "full_name": "Alex Mercer",
-        "email": "alex.mercer@example.com"
-      },
-      "access_token": "jwt_access_token",
-      "refresh_token": "jwt_refresh_token",
-      "token_type": "bearer"
-    }
+```json
+{
+  "user": {
+    "id": "uuid",
+    "full_name": "Alex Mercer",
+    "email": "alex.mercer@example.com"
+  },
+  "access_token": "jwt_access_token",
+  "refresh_token": "jwt_refresh_token",
+  "token_type": "bearer"
+}
+```
 
-Rules:
-- Email must be unique.
-- Password must be hashed.
-- Raw password must never be stored.
-- Raw password must never be returned.
+Expected statuses:
+
+```text
+201 Created
+409 Email already registered
+422 Validation error
+```
 
 ---
 
-### 5.2 Login
+### 4.2 Login
 
-Endpoint:
-
-    POST /auth/login
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /auth/login
+```
 
 Request:
 
-    {
-      "email": "alex.mercer@example.com",
-      "password": "password123"
-    }
+```json
+{
+  "email": "alex.mercer@example.com",
+  "password": "password123",
+  "device_id": "android-device-id"
+}
+```
 
 Response:
 
-    {
-      "user": {
-        "id": "uuid",
-        "full_name": "Alex Mercer",
-        "email": "alex.mercer@example.com"
-      },
-      "access_token": "jwt_access_token",
-      "refresh_token": "jwt_refresh_token",
-      "token_type": "bearer"
-    }
+```json
+{
+  "user": {
+    "id": "uuid",
+    "full_name": "Alex Mercer",
+    "email": "alex.mercer@example.com"
+  },
+  "access_token": "jwt_access_token",
+  "refresh_token": "jwt_refresh_token",
+  "token_type": "bearer"
+}
+```
 
-Mobile behavior:
-- Store refresh token using react-native-keychain.
-- Keep access token in memory.
-- Navigate to authenticated app stack.
+Expected statuses:
+
+```text
+200 OK
+401 Invalid email or password
+403 Inactive user
+422 Validation error
+```
 
 ---
 
-### 5.3 Refresh token
+### 4.3 Refresh token
 
-Endpoint:
-
-    POST /auth/refresh
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /auth/refresh
+```
 
 Request:
 
-    {
-      "refresh_token": "jwt_refresh_token"
-    }
+```json
+{
+  "refresh_token": "jwt_refresh_token",
+  "device_id": "android-device-id"
+}
+```
 
 Response:
 
-    {
-      "access_token": "new_jwt_access_token",
-      "refresh_token": "new_or_existing_refresh_token",
-      "token_type": "bearer"
-    }
+```json
+{
+  "access_token": "new_jwt_access_token",
+  "refresh_token": "new_jwt_refresh_token",
+  "token_type": "bearer"
+}
+```
+
+Backend behavior:
+
+- Refresh tokens are rotated.
+- Old refresh token is revoked after refresh.
+- Refresh tokens are stored hashed in PostgreSQL.
 
 Mobile behavior:
-- Called on app startup from Splash.
-- Called once after receiving 401.
-- If refresh fails, clear Keychain and route to Login.
+
+- Call during app startup.
+- Call once after a `401`.
+- Retry the original request once after successful refresh.
+- If refresh fails, clear auth state and route to Login.
 
 ---
 
-### 5.4 Current user
+### 4.4 Current user
 
-Endpoint:
-
-    GET /auth/me
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+GET /auth/me
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Response:
 
-    {
-      "id": "uuid",
-      "full_name": "Alex Mercer",
-      "email": "alex.mercer@example.com"
-    }
+```json
+{
+  "id": "uuid",
+  "full_name": "Alex Mercer",
+  "email": "alex.mercer@example.com"
+}
+```
+
+Expected statuses:
+
+```text
+200 OK
+401 Missing or invalid bearer token
+403 Inactive user
+```
 
 ---
 
-### 5.5 Logout
+### 4.5 Logout
 
-Endpoint:
-
-    POST /auth/logout
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /auth/logout
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Request:
 
-    {
-      "refresh_token": "jwt_refresh_token"
-    }
+```json
+{
+  "refresh_token": "jwt_refresh_token"
+}
+```
 
 Response:
 
-    {
-      "success": true
-    }
+```json
+{
+  "success": true
+}
+```
 
 Mobile behavior:
+
 - Revoke refresh token on backend.
 - Clear Keychain.
 - Clear Zustand auth state.
@@ -330,608 +309,900 @@ Mobile behavior:
 
 ---
 
-## 6. Station endpoints
+## 5. Stations contract
 
-### 6.1 List stations
+Stations are persisted in PostgreSQL.
 
-Endpoint:
+Important:
 
-    GET /stations
+- Station IDs are strings.
+- Do not use numeric station IDs.
+- `station_id` values match recommender output.
 
-Status:
+Example station IDs:
 
-    EXISTS_NOW
-    NEEDS_DB
+```text
+greenmarket_150kw_bus_charger
+princes_street_charging_hub_dundee
+clepington_road_4th_hub
+```
 
-Current limitation:
-The current backend station service uses in-memory mock station data.
+---
 
-Target response:
+### 5.1 List stations
 
+```text
+GET /stations
+```
+
+Query params:
+
+```text
+zone_id?: string
+available_only?: boolean
+public_only?: boolean
+include_excluded?: boolean
+```
+
+Example:
+
+```text
+GET /stations?available_only=true&public_only=true
+```
+
+Response:
+
+```json
+{
+  "stations": [
     {
-      "stations": [
-        {
-          "station_id": "greenmarket_150kw_bus_charger",
-          "station_name": "Greenmarket 150kW Bus Charger",
-          "latitude": 56.462,
-          "longitude": -2.9707,
-          "zone_id": "zone_central_waterfront",
-          "transformer_id": "tx_central_market",
-          "available_ports": 3,
-          "cp_count_total": 4,
-          "connector_mix_total": "ultra_rapid",
-          "station_capacity_kw_assumed": 150.0,
-          "price_per_kwh": 0.32,
-          "status": "open"
-        }
-      ]
+      "station_id": "greenmarket_150kw_bus_charger",
+      "station_name": "Greenmarket 150kW Bus Charger",
+      "postcode": null,
+      "latitude": 56.462,
+      "longitude": -2.9707,
+      "zone_id": "zone_central_waterfront",
+      "transformer_id": "tx_central_market",
+      "cp_count_total": 1,
+      "connector_mix_total": "ultra_rapid",
+      "station_max_power_kw_proxy": 150.0,
+      "station_capacity_kw_assumed": 260.0,
+      "is_public": true,
+      "is_fleet_only": false,
+      "requires_membership": false,
+      "exclude_from_recommendations": false,
+      "access_notes": null,
+      "location_source": "osm_road_match",
+      "location_confidence": "medium",
+      "needs_followup": false,
+      "sessions_total": 100,
+      "energy_total_kwh": 5000.0
     }
+  ]
+}
+```
 
 Mobile usage:
-- Station map pins.
+
+- Map pins.
 - Station list.
 - Station details.
 - Recommendation fallback lookup.
 
 ---
 
-### 6.2 Get station by ID
+### 5.2 Get station by ID
 
-Endpoint:
+```text
+GET /stations/{station_id}
+```
 
-    GET /stations/{station_id}
+Example:
 
-Status:
+```text
+GET /stations/greenmarket_150kw_bus_charger
+```
 
-    EXISTS_NOW
-    NEEDS_DB
+Expected statuses:
 
-Target response:
-
-    {
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
-      "latitude": 56.462,
-      "longitude": -2.9707,
-      "zone_id": "zone_central_waterfront",
-      "transformer_id": "tx_central_market",
-      "available_ports": 3,
-      "cp_count_total": 4,
-      "connector_mix_total": "ultra_rapid",
-      "station_capacity_kw_assumed": 150.0,
-      "price_per_kwh": 0.32,
-      "status": "open"
-    }
+```text
+200 OK
+404 Station not found
+```
 
 ---
 
-## 7. Recommendation endpoint
+## 6. Recommendation contract
 
-### 7.1 Create recommendation request
+There are two recommendation endpoints:
 
-Endpoint:
+```text
+POST /recommendations
+POST /mobile/recommendations
+```
 
-    POST /recommendations
+Use `/mobile/recommendations` in the React Native app.
 
-Status:
-
-    EXISTS_NOW
-
-Purpose:
-The mobile app sends a charging request. The backend injects it into the EV simulator runtime and returns ranked station recommendations.
-
-Do not calculate recommendations in the mobile app.
-
-Request source of truth:
-
-    ExternalChargingRequest
-
-Required request fields:
-- client_request_id
-- request_timestamp
-- latest_finish_ts
-- preference_mode
-- charger_type
-- source_type
-
-Recommended mobile request fields:
-- current_latitude
-- current_longitude
-- target_soc
-- current_soc
-- battery_kwh
-- requested_energy_kwh
-- zone_id
-- metadata.channel
-
-Request example:
-
-    {
-      "client_request_id": "mobile-1710000000000",
-      "request_timestamp": "2026-05-20T14:00:00Z",
-      "current_latitude": 56.462,
-      "current_longitude": -2.9707,
-      "target_soc": 80,
-      "current_soc": 45,
-      "battery_kwh": 82,
-      "vehicle_profile_id": null,
-      "vehicle_max_ac_kw": null,
-      "vehicle_max_dc_kw": null,
-      "requested_energy_kwh": 28.7,
-      "preference_mode": "cheapest",
-      "charger_type": "Any",
-      "latest_finish_ts": "2026-05-20T16:00:00Z",
-      "source_type": "external_live",
-      "request_id": "mobile-live-1710000000000",
-      "zone_id": "zone_central_waterfront",
-      "metadata": {
-        "channel": "mobile-app"
-      }
-    }
-
-Valid preference_mode values:
-- closest
-- cheapest
-- fastest
-
-Valid source_type values:
-- replay_background
-- synthetic_background
-- external_live
-
-Valid charger_type values:
-- Any
-- AC
-- DC
-- Rapid
-- UltraRapid
-- ultra_rapid
-
-Response source of truth:
-
-    RecommendationResponse
-
-Response example:
-
-    {
-      "request_id": "runtime-request-id",
-      "client_request_id": "mobile-1710000000000",
-      "simulated_timestamp": "2024-06-10T14:30:00",
-      "zone_id": "zone_central_waterfront",
-      "top_recommendation": {
-        "station_id": "greenmarket_150kw_bus_charger",
-        "station_name": "Greenmarket 150kW Bus Charger",
-        "zone_id": "zone_central_waterfront",
-        "transformer_id": "tx_central_market",
-        "score": 0.7521,
-        "distance_km": 0.502,
-        "estimated_wait_minutes": 0,
-        "estimated_duration_minutes": 15,
-        "estimated_cost_gbp": 4.86,
-        "transformer_headroom_kw": 379.073,
-        "current_queue": 0,
-        "utilization": 0.0,
-        "charger_compatible": true,
-        "reason_tags": [
-          "nearby",
-          "low_wait",
-          "high_headroom",
-          "low_cost"
-        ],
-        "metadata": {
-          "connector_mix_total": "ultra_rapid"
-        }
-      },
-      "alternatives": [],
-      "congestion_note": null,
-      "debug_reasoning_summary": "",
-      "source_type": "external_live",
-      "metadata": {}
-    }
-
-Mobile behavior:
-- Call POST /recommendations only once per user request.
-- Do not automatically retry POST /recommendations.
-- Preserve client_request_id.
-- On 409, show runtime unavailable.
-- On 422, show validation error.
-- On 500, show backend error.
-
-Important:
-POST /recommendations should not be automatically retried because retrying can inject duplicate live requests into the simulator runtime.
+Keep `/recommendations` as the raw runtime contract endpoint.
 
 ---
 
-## 8. Reservation endpoints
+### 6.1 Mobile recommendation endpoint
 
-These do not exist yet.
-
-### 8.1 Create reservation
-
-Endpoint:
-
-    POST /reservations
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /mobile/recommendations
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
+
+Purpose:
+
+Accept a mobile-friendly charging request, translate it to the simulator runtime contract, and return ranked station recommendations.
 
 Request:
 
-    {
-      "client_request_id": "mobile-1710000000000",
-      "request_id": "runtime-request-id",
-      "station_id": "greenmarket_150kw_bus_charger",
-      "recommendation_rank": 1,
-      "reserved_start_at": "2026-05-20T14:30:00Z"
-    }
+```json
+{
+  "client_request_id": "optional-client-request-id",
+  "latitude": 56.462,
+  "longitude": -2.970,
+  "battery_level": 35,
+  "target_battery_level": 80,
+  "battery_kwh": 60,
+  "vehicle_profile_id": null,
+  "vehicle_max_ac_kw": 11,
+  "vehicle_max_dc_kw": 150,
+  "requested_energy_kwh": null,
+  "preference_mode": "fastest",
+  "connector_type": "rapid",
+  "latest_finish_minutes_from_now": 90,
+  "zone_id": null,
+  "metadata": {
+    "source_screen": "recommendation_form"
+  }
+}
+```
+
+Fields:
+
+```text
+client_request_id optional
+latitude optional
+longitude optional
+battery_level optional, 0..100
+target_battery_level optional, 0..100
+battery_kwh optional, default 60
+vehicle_max_ac_kw optional, default 11
+vehicle_max_dc_kw optional, default 150
+requested_energy_kwh optional
+preference_mode closest | cheapest | fastest
+connector_type string, default Any
+latest_finish_minutes_from_now default 90
+zone_id optional
+metadata optional object
+```
+
+Backend behavior:
+
+- Requires JWT auth.
+- Generates `client_request_id` if missing.
+- Generates `request_timestamp`.
+- Generates `latest_finish_ts`.
+- Injects authenticated user ID into metadata.
+- Calls simulator runtime.
+- Returns runtime `RecommendationResponse`.
 
 Response:
 
+```json
+{
+  "request_id": "external_abc123",
+  "client_request_id": "mobile_uuid_suffix",
+  "simulated_timestamp": "2024-06-21T11:30:00",
+  "zone_id": "zone_central_waterfront",
+  "top_recommendation": {
+    "station_id": "princes_street_charging_hub_dundee",
+    "station_name": "Princes Street Charging Hub, Dundee",
+    "zone_id": "zone_central_waterfront",
+    "transformer_id": "tx_central_waterfront",
+    "score": 0.7469,
+    "distance_km": 0.645,
+    "estimated_wait_minutes": 0,
+    "estimated_duration_minutes": 30,
+    "estimated_cost_gbp": 17.326,
+    "transformer_headroom_kw": 515.753,
+    "current_queue": 0,
+    "utilization": 0.2222,
+    "charger_compatible": true,
+    "reason_tags": [
+      "nearby",
+      "low_wait",
+      "high_headroom",
+      "charger_match"
+    ],
+    "metadata": {
+      "connector_mix_total": "ac;rapid",
+      "selected_connector_type": "rapid",
+      "selected_connector_power_kw": 50.0,
+      "selected_connector_id": "APT51425",
+      "effective_power_kw": 50.0,
+      "price_per_kwh": 0.6417
+    }
+  },
+  "alternatives": [],
+  "congestion_note": null,
+  "debug_reasoning_summary": "",
+  "source_type": "external_live",
+  "metadata": {}
+}
+```
+
+Mobile behavior:
+
+- Use `top_recommendation` as primary card.
+- Use `alternatives` as alternative cards.
+- Store `request_id`, `client_request_id`, selected `station_id`, and selected rank for reservation.
+- Do not calculate recommendations locally.
+- Do not automatically retry this POST request.
+
+Important retry rule:
+
+Do not automatically retry recommendation POST requests because they inject live requests into the simulator runtime.
+
+Expected statuses:
+
+```text
+200 OK
+401 Missing or invalid access token
+409 Runtime not started
+422 Validation error
+500 Backend error
+```
+
+---
+
+### 6.2 Raw runtime recommendation endpoint
+
+```text
+POST /recommendations
+```
+
+Purpose:
+
+Raw simulator integration endpoint. Not recommended for the mobile app UI.
+
+Request source of truth:
+
+```text
+ExternalChargingRequest
+```
+
+Required fields:
+
+```text
+client_request_id
+request_timestamp
+latest_finish_ts
+```
+
+Useful optional fields:
+
+```text
+current_latitude
+current_longitude
+target_soc
+current_soc
+battery_kwh
+vehicle_profile_id
+vehicle_max_ac_kw
+vehicle_max_dc_kw
+requested_energy_kwh
+preference_mode
+charger_type
+source_type
+request_id
+zone_id
+metadata
+```
+
+Valid preference modes:
+
+```text
+closest
+cheapest
+fastest
+```
+
+Response source of truth:
+
+```text
+RecommendationResponse
+```
+
+---
+
+## 7. Reservations contract
+
+Reservations are authenticated and persisted in PostgreSQL.
+
+---
+
+### 7.1 Create reservation
+
+```text
+POST /reservations
+```
+
+Headers:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+Request:
+
+```json
+{
+  "client_request_id": "mobile-client-request-id",
+  "request_id": "runtime-request-id",
+  "station_id": "greenmarket_150kw_bus_charger",
+  "recommendation_rank": 1,
+  "reserved_start_at": "2026-06-01T10:00:00Z",
+  "reserved_until": null
+}
+```
+
+Rules:
+
+- `station_id` must exist in PostgreSQL.
+- `reserved_until` is optional.
+- If `reserved_until` is missing, backend defaults to 15 minutes after `reserved_start_at`.
+
+Response:
+
+```json
+{
+  "reservation_id": "uuid",
+  "status": "confirmed",
+  "station_id": "greenmarket_150kw_bus_charger",
+  "station_name": "Greenmarket 150kW Bus Charger",
+  "client_request_id": "mobile-client-request-id",
+  "request_id": "runtime-request-id",
+  "recommendation_rank": 1,
+  "reserved_start_at": "2026-06-01T10:00:00Z",
+  "reserved_until": "2026-06-01T10:15:00Z",
+  "cancelled_at": null,
+  "created_at": "2026-05-22T12:00:00Z"
+}
+```
+
+Expected statuses:
+
+```text
+201 Created
+401 Unauthorized
+404 Station not found
+422 Validation error
+```
+
+---
+
+### 7.2 List my reservations
+
+```text
+GET /reservations/me
+```
+
+Headers:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+Response:
+
+```json
+{
+  "reservations": [
     {
       "reservation_id": "uuid",
       "status": "confirmed",
       "station_id": "greenmarket_150kw_bus_charger",
       "station_name": "Greenmarket 150kW Bus Charger",
-      "reserved_start_at": "2026-05-20T14:30:00Z",
-      "reserved_until": "2026-05-20T14:45:00Z",
-      "created_at": "2026-05-20T14:02:00Z"
+      "client_request_id": "mobile-client-request-id",
+      "request_id": "runtime-request-id",
+      "recommendation_rank": 1,
+      "reserved_start_at": "2026-06-01T10:00:00Z",
+      "reserved_until": "2026-06-01T10:15:00Z",
+      "cancelled_at": null,
+      "created_at": "2026-05-22T12:00:00Z"
     }
+  ]
+}
+```
 
-Mobile behavior:
-- Create reservation only after user selects a recommendation.
-- Show confirmation only after backend confirms.
-- Do not use in-memory-only reservation state.
+Expected statuses:
+
+```text
+200 OK
+401 Unauthorized
+```
 
 ---
 
-### 8.2 List my reservations
+### 7.3 Cancel reservation
 
-Endpoint:
-
-    GET /reservations/me
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+PATCH /reservations/{reservation_id}/cancel
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Response:
 
-    {
-      "reservations": [
-        {
-          "reservation_id": "uuid",
-          "status": "confirmed",
-          "station_id": "greenmarket_150kw_bus_charger",
-          "station_name": "Greenmarket 150kW Bus Charger",
-          "reserved_start_at": "2026-05-20T14:30:00Z",
-          "reserved_until": "2026-05-20T14:45:00Z"
-        }
-      ]
-    }
+```json
+{
+  "reservation_id": "uuid",
+  "status": "cancelled"
+}
+```
+
+Expected statuses:
+
+```text
+200 OK
+401 Unauthorized
+404 Reservation not found
+409 Already cancelled
+```
 
 ---
 
-### 8.3 Cancel reservation
+## 8. Charging sessions contract
 
-Endpoint:
-
-    PATCH /reservations/{reservation_id}/cancel
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
-
-Headers:
-
-    Authorization: Bearer <access_token>
-
-Response:
-
-    {
-      "reservation_id": "uuid",
-      "status": "cancelled"
-    }
+Charging sessions are authenticated and persisted in PostgreSQL.
 
 ---
 
-## 9. Charging session endpoints
+### 8.1 Start session
 
-These do not exist yet.
-
-### 9.1 Start session
-
-Endpoint:
-
-    POST /sessions/start
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+POST /sessions
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Request:
 
-    {
-      "reservation_id": "uuid"
-    }
+```json
+{
+  "station_id": "greenmarket_150kw_bus_charger",
+  "reservation_id": "optional-reservation-uuid",
+  "client_request_id": "mobile-client-request-id",
+  "request_id": "runtime-request-id",
+  "started_at": "2026-06-01T10:00:00Z",
+  "connector_type": "rapid",
+  "charger_power_kw": 150
+}
+```
+
+Rules:
+
+- `station_id` must exist.
+- `reservation_id` is optional.
+- If `reservation_id` is provided, it must belong to the authenticated user.
+- If `started_at` is missing, backend uses current server time.
 
 Response:
 
-    {
-      "session_id": "uuid",
-      "reservation_id": "uuid",
-      "station_id": "greenmarket_150kw_bus_charger",
-      "status": "active",
-      "started_at": "2026-05-20T14:30:00Z"
-    }
+```json
+{
+  "session_id": "uuid",
+  "status": "active",
+  "station_id": "greenmarket_150kw_bus_charger",
+  "station_name": "Greenmarket 150kW Bus Charger",
+  "reservation_id": "optional-reservation-uuid",
+  "client_request_id": "mobile-client-request-id",
+  "request_id": "runtime-request-id",
+  "started_at": "2026-06-01T10:00:00Z",
+  "ended_at": null,
+  "energy_kwh": 0,
+  "cost_total": null,
+  "connector_type": "rapid",
+  "charger_power_kw": 150,
+  "created_at": "2026-05-22T12:00:00Z"
+}
+```
+
+Expected statuses:
+
+```text
+201 Created
+401 Unauthorized
+404 Station or reservation not found
+422 Validation error
+```
 
 ---
 
-### 9.2 Get active session
+### 8.2 Get active session
 
-Endpoint:
-
-    GET /sessions/active
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+GET /sessions/active
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Response when active:
 
-    {
-      "session_id": "uuid",
-      "reservation_id": "uuid",
-      "station_id": "greenmarket_150kw_bus_charger",
-      "station_name": "Greenmarket 150kW Bus Charger",
-      "status": "active",
-      "started_at": "2026-05-20T14:30:00Z",
-      "estimated_end_at": "2026-05-20T14:45:00Z"
-    }
+```json
+{
+  "session": {
+    "session_id": "uuid",
+    "status": "active",
+    "station_id": "greenmarket_150kw_bus_charger",
+    "station_name": "Greenmarket 150kW Bus Charger",
+    "reservation_id": "optional-reservation-uuid",
+    "client_request_id": "mobile-client-request-id",
+    "request_id": "runtime-request-id",
+    "started_at": "2026-06-01T10:00:00Z",
+    "ended_at": null,
+    "energy_kwh": 0,
+    "cost_total": null,
+    "connector_type": "rapid",
+    "charger_power_kw": 150,
+    "created_at": "2026-05-22T12:00:00Z"
+  }
+}
+```
 
-Response when no active session:
+Response when none:
 
-    {
-      "session": null
-    }
+```json
+{
+  "session": null
+}
+```
 
 ---
 
-### 9.3 End session
+### 8.3 List my sessions
 
-Endpoint:
+```text
+GET /sessions/me
+```
 
-    POST /sessions/{session_id}/end
+Optional query:
 
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+status=active
+status=completed
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
 
 Response:
 
+```json
+{
+  "sessions": [
     {
       "session_id": "uuid",
       "status": "completed",
-      "started_at": "2026-05-20T14:30:00Z",
-      "ended_at": "2026-05-20T14:47:00Z",
-      "energy_kwh": 28.7,
-      "cost_gbp": 4.86
+      "station_id": "greenmarket_150kw_bus_charger",
+      "station_name": "Greenmarket 150kW Bus Charger",
+      "reservation_id": "optional-reservation-uuid",
+      "client_request_id": "mobile-client-request-id",
+      "request_id": "runtime-request-id",
+      "started_at": "2026-06-01T10:00:00Z",
+      "ended_at": "2026-06-01T10:30:00Z",
+      "energy_kwh": 18.5,
+      "cost_total": 9.25,
+      "connector_type": "rapid",
+      "charger_power_kw": 150,
+      "created_at": "2026-05-22T12:00:00Z"
     }
+  ]
+}
+```
 
 ---
 
-### 9.4 List my sessions
+### 8.4 Complete session
 
-Endpoint:
-
-    GET /sessions/me
-
-Status:
-
-    NEEDS_BUILD
-    NEEDS_DB
+```text
+PATCH /sessions/{session_id}/complete
+```
 
 Headers:
 
-    Authorization: Bearer <access_token>
+```text
+Authorization: Bearer <access_token>
+```
+
+Request:
+
+```json
+{
+  "ended_at": "2026-06-01T10:30:00Z",
+  "energy_kwh": 18.5,
+  "cost_total": 9.25
+}
+```
 
 Response:
 
-    {
-      "sessions": [
-        {
-          "session_id": "uuid",
-          "station_id": "greenmarket_150kw_bus_charger",
-          "station_name": "Greenmarket 150kW Bus Charger",
-          "status": "completed",
-          "started_at": "2026-05-20T14:30:00Z",
-          "ended_at": "2026-05-20T14:47:00Z",
-          "energy_kwh": 28.7,
-          "cost_gbp": 4.86
-        }
-      ]
-    }
+```json
+{
+  "session_id": "uuid",
+  "status": "completed",
+  "station_id": "greenmarket_150kw_bus_charger",
+  "station_name": "Greenmarket 150kW Bus Charger",
+  "reservation_id": "optional-reservation-uuid",
+  "client_request_id": "mobile-client-request-id",
+  "request_id": "runtime-request-id",
+  "started_at": "2026-06-01T10:00:00Z",
+  "ended_at": "2026-06-01T10:30:00Z",
+  "energy_kwh": 18.5,
+  "cost_total": 9.25,
+  "connector_type": "rapid",
+  "charger_power_kw": 150,
+  "created_at": "2026-05-22T12:00:00Z"
+}
+```
+
+Expected statuses:
+
+```text
+200 OK
+401 Unauthorized
+404 Session not found
+409 Already completed
+422 Validation error
+```
 
 ---
 
-## 10. Standard error handling
+## 9. Standard error handling
 
-### 10.1 Validation error
+### 9.1 Validation error
 
-HTTP status:
+```text
+422
+```
 
-    422
-
-Mobile behavior:
-Show field-level validation message where possible.
+Use field-level errors where possible.
 
 Common causes:
-- invalid SOC range
-- target SOC lower than current SOC
-- invalid charger type
-- invalid latitude/longitude
-- latest finish time before request timestamp
+
+- Invalid email
+- Short password
+- Invalid SOC range
+- Missing station ID
+- Bad UUID
+- Invalid date-time
+- Unknown extra fields
 
 ---
 
-### 10.2 Unauthorized
+### 9.2 Unauthorized
 
-HTTP status:
-
-    401
+```text
+401
+```
 
 Mobile behavior:
+
 - Try refresh token once.
-- Retry original request once.
-- If refresh fails, logout and route to Login.
+- Retry original request once if refresh succeeds.
+- If refresh fails, clear Keychain and route to Login.
 
 ---
 
-### 10.3 Runtime not started
+### 9.3 Forbidden
 
-HTTP status:
+```text
+403
+```
 
-    409
-
-Current backend behavior:
-Used when simulator runtime is unavailable.
-
-Mobile message:
-
-    Recommendation runtime is currently unavailable. Please try again after the backend runtime starts.
+Used for inactive users.
 
 ---
 
-### 10.4 Not found
+### 9.4 Not found
 
-HTTP status:
+```text
+404
+```
 
-    404
+Used for missing station, reservation, or session.
+
+---
+
+### 9.5 Conflict
+
+```text
+409
+```
+
+Used for:
+
+- Duplicate registration email
+- Duplicate station create
+- Already-cancelled reservation
+- Already-completed session
+- Runtime unavailable
+
+---
+
+### 9.6 Server error
+
+```text
+500
+```
 
 Mobile behavior:
-Show not-found state and refetch relevant list.
 
----
-
-### 10.5 Server error
-
-HTTP status:
-
-    500
-
-Mobile behavior:
 Show generic backend error. Do not expose internal stack traces.
 
 ---
 
-## 11. Mobile implementation rules
+## 10. Mobile implementation rules
 
-### 11.1 Server state
+### 10.1 TanStack Query server state
 
 Use TanStack Query for:
+
+- auth profile
 - stations
 - station details
 - recommendations
 - reservations
 - sessions
-- profile
 
-### 11.2 App state
+Recommended mutation retry policy:
 
-Use Zustand for:
-- auth status
-- current in-memory access token
-- charging request draft
-- selected recommendation
-- map filters
-- theme/demo preferences
-
-### 11.3 Secure storage
-
-Use react-native-keychain for:
-- refresh token
-
-Do not store tokens in:
-- AsyncStorage
-- plain Zustand persistence
-- source code
-- committed env files
-
-### 11.4 Recommendation retry rule
-
-Do not automatically retry:
-
-    POST /recommendations
-
-Reason:
-A retry can inject duplicate live requests into the simulator runtime.
+- Auth mutations: no automatic retries.
+- Recommendation mutations: no automatic retries.
+- Reservation mutations: no automatic retries unless user explicitly taps again.
+- Session mutations: no automatic retries unless idempotency is added later.
+- GET queries may retry carefully.
 
 ---
 
-## 12. Current vs target backend summary
+### 10.2 Zustand app state
 
-Exists now:
-- GET /
-- GET /health
-- GET /runtime/status
-- GET /runtime/state
-- GET /runtime/events
-- GET /runtime/recommendations/recent
-- GET /stations
-- GET /stations/{station_id}
-- POST /stations
-- PUT /stations/{station_id}
-- DELETE /stations/{station_id}
-- POST /recommendations
+Use Zustand for:
 
-Needs build:
-- POST /auth/register
-- POST /auth/login
-- POST /auth/refresh
-- POST /auth/logout
-- GET /auth/me
-- POST /reservations
-- GET /reservations/me
-- PATCH /reservations/{reservation_id}/cancel
-- POST /sessions/start
-- GET /sessions/active
-- POST /sessions/{session_id}/end
-- GET /sessions/me
+- auth status
+- in-memory access token
+- selected recommendation
+- charging request draft
+- active map filters
+- UI/demo preferences
 
-Needs DB replacement:
-- stations
-- users
-- refresh_tokens
+Do not use Zustand as the only source of truth for:
+
 - reservations
-- charging_sessions
-- charging_requests
-- recommendation_results
+- sessions
+- station catalog
+- auth refresh token
+
+---
+
+### 10.3 Secure storage
+
+Use `react-native-keychain` for:
+
+- refresh token
+
+Do not store tokens in:
+
+- AsyncStorage
+- source code
+- committed env files
+- plain Zustand persistence
+
+---
+
+## 11. End-to-end mobile flow
+
+### 11.1 Startup
+
+```text
+Read refresh token from Keychain
+POST /auth/refresh
+GET /auth/me
+Load authenticated app
+```
+
+If refresh fails:
+
+```text
+Clear Keychain
+Clear auth state
+Show Login
+```
+
+---
+
+### 11.2 Main recommendation flow
+
+```text
+POST /mobile/recommendations
+Display top_recommendation + alternatives
+User selects recommendation
+POST /reservations
+Show reservation confirmation
+POST /sessions when charging starts
+PATCH /sessions/{session_id}/complete when charging ends
+```
+
+Important:
+
+Save these fields from the selected recommendation:
+
+```text
+request_id
+client_request_id
+station_id
+recommendation_rank
+station_name
+estimated_cost_gbp
+estimated_duration_minutes
+selected_connector_type from metadata when available
+selected_connector_power_kw from metadata when available
+```
+
+---
+
+## 12. Backend implementation status
+
+Implemented:
+
+```text
+JWT auth
+refresh token persistence and revocation
+PostgreSQL users
+PostgreSQL stations
+station seed script
+mobile recommendation wrapper
+raw runtime recommendation endpoint
+authenticated reservations
+authenticated charging sessions
+```
+
+Still optional/future:
+
+```text
+charging_requests persistence
+recommendation_results persistence
+vehicle profiles
+payment records
+admin-only station mutation protection
+role-based access control
+idempotency keys for mutations
+```
 
 ---
 
@@ -940,13 +1211,16 @@ Needs DB replacement:
 The mobile app is a user-facing product.
 
 It should:
-- send charging requests
+
+- send authenticated charging requests
 - display backend-generated recommendations
 - reserve selected station options
 - show active and past sessions
 - manage profile/auth state
+- use PostgreSQL-backed backend state
 
 It should not:
+
 - expose simulator internals directly
 - calculate recommendations locally
 - connect directly to PostgreSQL
