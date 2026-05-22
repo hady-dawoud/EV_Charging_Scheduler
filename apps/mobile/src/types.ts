@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export interface User {
   id: string;
   name: string;
@@ -108,11 +110,17 @@ export type ReservationRecord = {
   status: 'reserved' | 'past';
 };
 
+export type MainTabsParamList = {
+  Home: undefined;
+  Sessions: undefined;
+  Profile: undefined;
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Signup: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
   Results: { result: ApiRecommendationsResponse };

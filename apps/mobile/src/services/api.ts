@@ -5,7 +5,7 @@ import {
   MobileRecommendationRequest,
 } from '../types';
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
 
 const LOCAL_API_BASE_URL =
   Platform.OS === 'android'

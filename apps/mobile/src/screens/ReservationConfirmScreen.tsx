@@ -94,7 +94,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.navBtn, webStyles.neonGlowSmall]}
-            onPress={() => navigation.navigate('Main' as never, { screen: 'Sessions' } as never)}
+            onPress={() => navigation.navigate('Main', { screen: 'Sessions' })}
             activeOpacity={0.85}
           >
             <MapPin color="#000" size={20} />
@@ -103,7 +103,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
 
           <TouchableOpacity
             style={styles.homeBtn}
-            onPress={() => navigation.navigate('Main' as never, { screen: 'Home' } as never)}
+            onPress={() => navigation.navigate('Main', { screen: 'Home' })}
             activeOpacity={0.85}
           >
             <Text style={styles.homeBtnText}>Back to Home</Text>
