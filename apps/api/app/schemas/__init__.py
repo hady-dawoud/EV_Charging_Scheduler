@@ -17,6 +17,7 @@ from app.schemas.auth import (
     UserRead,
 )
 from app.schemas.errors import ErrorResponse
+from app.schemas.mobile_recommendations import MobileRecommendationRequest
 from app.schemas.reservations import (
     ReservationCancelResponse,
     ReservationCreate,
@@ -40,6 +41,7 @@ __all__ = [
     "LoginRequest",
     "LogoutRequest",
     "LogoutResponse",
+    "MobileRecommendationRequest",
     "ReservationCancelResponse",
     "ReservationCreate",
     "ReservationRead",
