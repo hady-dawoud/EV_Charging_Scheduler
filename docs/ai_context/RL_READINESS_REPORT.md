@@ -25,6 +25,25 @@ PR2 now adds the fixed-seed RL preparation layer without adding training:
 
 This PR still does not add Gymnasium, Stable-Baselines3, MaskablePPO, MARL, or long-running training code.
 
+## PR3 Status
+
+PR3 now adds the first Gymnasium-compatible RL environment skeleton:
+
+- `ev_core.rl.env.DundeeStationSelectionEnv`
+- `ev_core.rl.observations.ObservationBuilder`
+- `ev_core.rl.action_mask.build_station_action_mask(...)`
+- `ev_core.rl.rewards.StationSelectionReward`
+
+Scope and constraints:
+
+- single-agent station selection only
+- masked discrete actions over a deterministic station list
+- fixed-size flat observation vector
+- first-pass reward contract
+- decision-level skeleton for now
+
+This PR still does not add MaskablePPO training, Stable-Baselines3, `sb3-contrib`, MARL, or PettingZoo.
+
 ## Current Implementation Status
 
 The current system is RL-adjacent but still deterministic at decision time.
@@ -61,7 +80,8 @@ Recommended immediate next implementation PR:
 Status update:
 
 - This PR2 has now done that first harness/sampler step.
-- The next PR should add the Gymnasium single-agent masked environment skeleton only, still without long training.
+- PR3 has now added that Gymnasium single-agent masked environment skeleton.
+- The next PR should add MaskablePPO training and baseline-evaluation scripts.
 
 ## Why Masked RL, Not Plain DQN
 
@@ -147,6 +167,13 @@ Step semantics:
 - apply selected station if valid
 - advance the simulator until the next decision point or terminal state
 
+PR3 implementation note:
+
+- the first environment version is decision-level rather than fully closed-loop
+- it reuses `DundeeEnv` candidate generation and feasibility logic
+- it advances request-by-request and computes reward from the chosen feasible candidate
+- full session/queue mutation can be layered in later without replacing the action/observation skeleton
+
 ## Baselines To Compare
 
 - `random_valid`
@@ -211,6 +238,38 @@ PR2 baseline evaluation is intentionally lightweight and request-centric.
 - It does not yet run a full closed-loop multi-step allocation rollout across all baselines.
 
 This is enough to freeze seed splits, scenario generation, baseline names, and metric contracts before the Gymnasium environment PR.
+
+Status update:
+
+- PR3 now adds that Gymnasium environment skeleton.
+- The evaluator remains useful for request-centric baseline comparisons, while the new env freezes the masked observation/action/reward contract for training integration.
+
+## PR3 Environment Skeleton
+
+Observation contract:
+
+- flat `float32` vector
+- global request/time features first
+- per-station features appended in deterministic station order
+- valid-action mask included in per-station features
+
+Action contract:
+
+- `Discrete(num_stations)`
+- one action index per deterministic station id
+- `action_masks()` / `valid_action_mask()` expose feasible station actions only
+
+Reward contract:
+
+- positive served reward
+- stronger penalty for invalid actions
+- missed-request penalty when no feasible candidate exists
+- small penalties for cost, distance, wait, duration, and low headroom
+
+Routing note:
+
+- `simple_distance` remains the default RL routing provider
+- OSMnx remains optional and is not part of the default PR3 environment path
 
 ## Monte Carlo Scenario Generation Plan
 

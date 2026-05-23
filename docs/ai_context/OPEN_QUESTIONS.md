@@ -62,7 +62,8 @@
 - Is the current RL baseline evaluation fully closed-loop?
   - Current truth: no. PR2 baseline evaluation is request-centric and uses the existing recommendation path under fixed-seed scenarios.
   - Current truth: this is enough to lock contracts, seed splits, scenario metadata, and baseline names before Gymnasium work begins.
-  - Still open: a true stepwise closed-loop evaluator that uses the future masked RL environment semantics.
+  - Current truth: PR3 now adds a Gymnasium-compatible masked environment skeleton, but it is still decision-level rather than fully closed-loop queue/session mutation.
+  - Still open: a true stepwise closed-loop evaluator that uses the same masked environment semantics while mutating runtime sessions and queues.
 
 - Is demand scaling now formalized enough for RL preparation?
   - Current truth: yes for first-step scenario generation. PR2 uses demand realism guidance from the repo data, including the current 35-station / 90-chargepoint topology and the fact that historical average demand is lighter than normal utilization.
@@ -75,11 +76,18 @@
   - Current truth: background load is optional for EV-arrival forecasting, but it is required for true grid-headroom forecasting because transformer headroom depends on non-EV load too.
   - Still open: the exact observation schema for forecast features and whether single-agent RL and future MARL agents should consume the same forecast channels.
 
+- Is the PR3 observation/action/reward contract final?
+  - Current truth: no. PR3 freezes a first stable version so training integration can begin.
+  - Current truth: the env is single-agent, station-selection, masked discrete action, and fixed-size flat vector observation.
+  - Current truth: `simple_distance` remains the default RL routing provider and OSMnx stays optional.
+  - Still open: observation normalization, feature scaling policy, richer per-station features, and reward tuning after first MaskablePPO experiments.
+
 ## Routing
 
 - Is OSMnx useful enough to keep for evaluation or future RL routing realism?
   - Current truth: OSMnx support remains optional and default runtime routing is still `simple_distance`.
   - Current truth: PR2 keeps `simple_distance` as the first RL default and does not make OSMnx part of scenario defaults.
+  - Current truth: PR3 keeps `simple_distance` as the default environment routing path for the Gymnasium skeleton.
   - Current truth: real Dundee verification and usefulness-evaluation scripts now exist for the locally built GraphML path.
   - Current truth: if OSMnx is unavailable, the graph is missing, nearest-node snapping fails, or no route exists, runtime can still fall back safely.
   - Still open: whether sampled Dundee success rate, fallback rate, and distance realism are strong enough to justify using OSMnx in later RL evaluation/training loops.

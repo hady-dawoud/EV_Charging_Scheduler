@@ -126,6 +126,10 @@ Last verified against repo state: 2026-05-08.
   - `scenarios.py`: `RLScenarioSampler` plus `generate_requests_for_scenario(...)`, keeping `simple_distance` as the default RL routing provider and leaving OSMnx optional.
   - `baselines.py`: `RandomValidPolicy`, which selects only from already-feasible recommendation options.
   - `evaluation.py`: `BaselinePolicyEvaluator`, a lightweight request-centric baseline harness for `weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`, and `random_valid`.
+  - `env.py`: `DundeeStationSelectionEnv`, a Gymnasium-compatible masked single-agent station-selection skeleton. It is currently decision-level: it reuses `DundeeEnv` candidate generation, exposes one request at a time, computes reward from the chosen candidate, and advances to the next request without full closed-loop queue/session mutation yet.
+  - `observations.py`: `ObservationBuilder` and `ObservationSpec` for the first fixed-size flat observation vector. Global request/time features are followed by per-station distance/wait/duration/cost/headroom/queue/utilization/compatibility/mask features in deterministic station order.
+  - `action_mask.py`: station-level boolean action mask builder driven by feasible Dundee candidate contexts.
+  - `rewards.py`: `StationSelectionReward` and RL-side `RewardBreakdown` for the first stable served/invalid/missed plus cost-distance-wait-duration-headroom reward contract.
   - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; no forecasting model is implemented yet.
   - `metrics.py`: helper functions for aggregating deterministic evaluation outputs.
 - `scripts/generate_synthetic_live_requests.py`
@@ -136,6 +140,8 @@ Last verified against repo state: 2026-05-08.
   - CLI summary for station/chargepoint counts, request-rate estimates, and target normal/busy/stress episode sizing.
 - `scripts/verify_rl_scenario_sampler.py`
   - CLI smoke check for PR2 scenario sampling, request generation, and one lightweight deterministic baseline evaluation.
+- `scripts/verify_rl_env_skeleton.py`
+  - CLI smoke check for PR3 Gymnasium environment reset/step behavior, observation shape, valid-action count, first-step reward, and short valid-action rollout.
 - `scripts/build_dundee_osmnx_graph.py`
   - Internet-requiring helper script that builds `data/processed/routing/dundee_drive.graphml` from `Dundee, Scotland, United Kingdom` with OSMnx `network_type="drive"`.
 - `scripts/verify_osmnx_routing_provider.py`
@@ -163,6 +169,10 @@ Last verified against repo state: 2026-05-08.
 - `tests/rl/test_scenario_sampler.py`: fixed-seed split determinism, request-count bands, and scenario request metadata coverage.
 - `tests/rl/test_rl_evaluation_contracts.py`: evaluation contract serialization, forecast placeholder defaults, and lightweight baseline evaluation smoke coverage.
 - `tests/rl/test_random_valid_baseline.py`: `random_valid` feasible-option-only and deterministic selection coverage.
+- `tests/rl/test_action_mask.py`: feasible-candidate to station-mask mapping coverage.
+- `tests/rl/test_observation_builder.py`: deterministic vector size, seed repeatability, and finite-value coverage for the PR3 observation builder.
+- `tests/rl/test_rewards.py`: served vs invalid reward ordering and penalty sensitivity coverage.
+- `tests/rl/test_station_selection_env.py`: Gymnasium import/reset/step/mask/termination coverage for the PR3 environment skeleton.
 - `tests/routing/test_simple_distance_provider.py`: default provider and legacy-distance behavior.
 - `tests/routing/test_osmnx_provider.py`: missing-graph fallback, fail-closed behavior, import safety without OSMnx, fake-graph route calculation, duration fallback, and safe `DundeeEnv` provider injection.
 - `tests/pricing/test_dundee_tariffs.py`: charger-class tariff classification and same-multiplier price ordering.
