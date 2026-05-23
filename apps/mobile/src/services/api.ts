@@ -22,7 +22,13 @@ const LOCAL_API_BASE_URL =
     ? 'http://10.0.2.2:8000'
     : 'http://127.0.0.1:8000';
 
+const WEB_API_BASE_URL =
+  typeof import.meta !== 'undefined'
+    ? import.meta.env.VITE_API_BASE_URL
+    : undefined;
+
 const API_BASE_URL =
+  WEB_API_BASE_URL ||
   process.env.EXPO_PUBLIC_API_BASE_URL ||
   (Platform.OS === 'web'
     ? 'http://localhost:8000'
