@@ -164,6 +164,32 @@ export type CreateReservationRequest = {
   score?: number | null;
 };
 
+
+export type ApiChargingSession = {
+  session_id: string;
+  status: 'active' | 'completed' | string;
+  station_id: string;
+  station_name: string;
+  reservation_id: string | null;
+  client_request_id: string | null;
+  request_id: string | null;
+  started_at: string;
+  ended_at: string | null;
+  energy_kwh: number;
+  cost_total: number | null;
+  connector_type: string | null;
+  charger_power_kw: number | null;
+  created_at: string;
+};
+
+export type ApiChargingSessionsResponse = {
+  sessions: ApiChargingSession[];
+};
+
+export type ApiActiveChargingSessionResponse = {
+  session: ApiChargingSession | null;
+};
+
 export type ReservationRecord = {
   id: string;
   station: UiStationRecommendation;

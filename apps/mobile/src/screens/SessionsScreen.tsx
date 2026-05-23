@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { History, Zap, Clock, PoundSterling } from 'lucide-react-native';
+import { History, Zap, Clock, PoundSterling, CheckCircle } from 'lucide-react-native';
 
 import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
-import type { ApiReservation } from '../types';
+import type { ApiChargingSession, ApiReservation } from '../types';
 
 const isWeb = Platform.OS === 'web';
 
@@ -27,7 +27,12 @@ const formatMinutes = (minutes: number | null | undefined) => {
   return `${Math.round(minutes)} min`;
 };
 
-const formatReservationTime = (iso: string) => {
+const formatKwh = (kwh: number | null | undefined) => {
+  if (kwh == null) return 'Energy pending';
+  return `${kwh.toFixed(1)} kWh`;
+};
+
+const formatDateTime = (iso: string) => {
   const dt = new Date(iso);
   return dt.toLocaleString(undefined, {
     weekday: 'short',
@@ -44,21 +49,37 @@ const estimateFromReservation = (reservation: ApiReservation) => ({
   chargerLabel: reservation.charger_label ?? 'Reserved',
 });
 
+const durationFromSession = (session: ApiChargingSession) => {
+  const start = new Date(session.started_at).getTime();
+  const end = session.ended_at ? new Date(session.ended_at).getTime() : Date.now();
+  const minutes = Math.max(0, Math.round((end - start) / 60000));
+  return `${minutes} min`;
+};
+
 export default function SessionsScreen() {
   const [reservations, setReservations] = useState<ApiReservation[]>([]);
+  const [sessions, setSessions] = useState<ApiChargingSession[]>([]);
+  const [activeSession, setActiveSession] = useState<ApiChargingSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadReservations = useCallback(async () => {
+  const loadDashboard = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await api.getMyReservations();
-      setReservations(result);
+      const [reservationResult, sessionResult, activeResult] = await Promise.all([
+        api.getMyReservations(),
+        api.getMyChargingSessions(),
+        api.getActiveChargingSession(),
+      ]);
+
+      setReservations(reservationResult);
+      setSessions(sessionResult);
+      setActiveSession(activeResult);
     } catch (e) {
       console.error(e);
-      setError('Could not load reservations.');
+      setError('Could not load sessions.');
     } finally {
       setIsLoading(false);
     }
@@ -66,20 +87,55 @@ export default function SessionsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadReservations();
-    }, [loadReservations])
+      void loadDashboard();
+    }, [loadDashboard])
   );
 
-  const currentReservations = reservations.filter(
+  const sessionsByReservationId = useMemo(() => {
+    const map = new Map<string, ApiChargingSession>();
+
+    sessions.forEach((session) => {
+      if (session.reservation_id) {
+        map.set(session.reservation_id, session);
+      }
+    });
+
+    return map;
+  }, [sessions]);
+
+  const reservationsById = useMemo(() => {
+    const map = new Map<string, ApiReservation>();
+
+    reservations.forEach((reservation) => {
+      map.set(reservation.reservation_id, reservation);
+    });
+
+    return map;
+  }, [reservations]);
+
+  const confirmedReservations = reservations.filter(
     (reservation) => reservation.status !== 'cancelled' && !reservation.cancelled_at
   );
 
-  const pastReservations = reservations.filter(
-    (reservation) => reservation.status === 'cancelled' || Boolean(reservation.cancelled_at)
+  const waitingReservations = confirmedReservations.filter(
+    (reservation) => !sessionsByReservationId.has(reservation.reservation_id)
   );
 
-  const latestReservation = currentReservations[0] ?? null;
-  const olderReservations = currentReservations.slice(1);
+  const activeSessions = useMemo(() => {
+    const byId = new Map<string, ApiChargingSession>();
+
+    if (activeSession) {
+      byId.set(activeSession.session_id, activeSession);
+    }
+
+    sessions
+      .filter((session) => session.status === 'active')
+      .forEach((session) => byId.set(session.session_id, session));
+
+    return [...byId.values()];
+  }, [activeSession, sessions]);
+
+  const completedSessions = sessions.filter((session) => session.status === 'completed');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -102,25 +158,49 @@ export default function SessionsScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>RESERVED OPTIONS</Text>
 
-              {latestReservation ? (
-                <ReservationCard reservation={latestReservation} featured />
+              {waitingReservations.length > 0 ? (
+                waitingReservations.map((reservation) => (
+                  <ReservationCard key={reservation.reservation_id} reservation={reservation} />
+                ))
               ) : (
                 <View style={styles.emptyCard}>
-                  <Text style={styles.emptyText}>No reserved option yet.</Text>
+                  <Text style={styles.emptyText}>No reservation waiting for charger confirmation.</Text>
                 </View>
               )}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>PAST RESERVED OPTIONS</Text>
+              <Text style={styles.sectionLabel}>ACTIVE CHARGING</Text>
 
-              {[...olderReservations, ...pastReservations].length > 0 ? (
-                [...olderReservations, ...pastReservations].map((reservation) => (
-                  <ReservationCard key={reservation.reservation_id} reservation={reservation} />
+              {activeSessions.length > 0 ? (
+                activeSessions.map((session) => (
+                  <ChargingSessionCard
+                    key={session.session_id}
+                    session={session}
+                    reservation={session.reservation_id ? reservationsById.get(session.reservation_id) : null}
+                  />
                 ))
               ) : (
                 <View style={styles.emptyCard}>
-                  <Text style={styles.emptyText}>No past reserved options yet.</Text>
+                  <Text style={styles.emptyText}>No active charging session.</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>COMPLETED CHARGING</Text>
+
+              {completedSessions.length > 0 ? (
+                completedSessions.map((session) => (
+                  <ChargingSessionCard
+                    key={session.session_id}
+                    session={session}
+                    reservation={session.reservation_id ? reservationsById.get(session.reservation_id) : null}
+                  />
+                ))
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyText}>No completed charging sessions yet.</Text>
                 </View>
               )}
             </View>
@@ -133,75 +213,92 @@ export default function SessionsScreen() {
 
 type ReservationCardProps = {
   reservation: ApiReservation;
-  featured?: boolean;
 };
 
-function ReservationCard({ reservation, featured = false }: ReservationCardProps) {
+function ReservationCard({ reservation }: ReservationCardProps) {
   const estimate = estimateFromReservation(reservation);
 
-  if (featured) {
-    return (
-      <View style={[styles.upcomingCard, webStyles.glass]}>
-        <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
-        <View style={styles.upcomingHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.upcomingName}>{reservation.station_name}</Text>
-            <Text style={styles.upcomingDate}>
-              {formatReservationTime(reservation.reserved_start_at)}
-            </Text>
-          </View>
-          <View style={styles.reservedBadge}>
-            <Text style={styles.reservedText}>{reservation.status}</Text>
-          </View>
+  return (
+    <View style={[styles.upcomingCard, webStyles.glass]}>
+      <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
+      <View style={styles.upcomingHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.upcomingName}>{reservation.station_name}</Text>
+          <Text style={styles.upcomingDate}>
+            {formatDateTime(reservation.reserved_start_at)}
+          </Text>
         </View>
-
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <PoundSterling color={theme.colors.textMuted} size={15} />
-            <Text style={styles.metaText}>
-              {formatCurrency(estimate.estimatedCostGbp)}
-            </Text>
-          </View>
-
-          <View style={styles.metaItem}>
-            <Clock color={theme.colors.textMuted} size={15} />
-            <Text style={styles.metaText}>
-              {formatMinutes(estimate.estimatedDurationMinutes)}
-            </Text>
-          </View>
-
-          <View style={styles.metaItem}>
-            <Zap color={theme.colors.textMuted} size={15} />
-            <Text style={styles.metaText}>{estimate.chargerLabel}</Text>
-          </View>
+        <View style={styles.reservedBadge}>
+          <Text style={styles.reservedText}>Waiting</Text>
         </View>
       </View>
-    );
-  }
+
+      <Text style={styles.statusHint}>
+        Waiting for charger-side start confirmation. The session will appear automatically when charging begins.
+      </Text>
+
+      <View style={styles.metaRow}>
+        <View style={styles.metaItem}>
+          <PoundSterling color={theme.colors.textMuted} size={15} />
+          <Text style={styles.metaText}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+        </View>
+
+        <View style={styles.metaItem}>
+          <Clock color={theme.colors.textMuted} size={15} />
+          <Text style={styles.metaText}>{formatMinutes(estimate.estimatedDurationMinutes)}</Text>
+        </View>
+
+        <View style={styles.metaItem}>
+          <Zap color={theme.colors.textMuted} size={15} />
+          <Text style={styles.metaText}>{estimate.chargerLabel}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+type ChargingSessionCardProps = {
+  session: ApiChargingSession;
+  reservation?: ApiReservation | null;
+};
+
+function ChargingSessionCard({ session, reservation }: ChargingSessionCardProps) {
+  const isActive = session.status === 'active';
 
   return (
-    <View style={styles.pastCard}>
+    <View style={isActive ? [styles.upcomingCard, webStyles.glass] : styles.pastCard}>
       <View style={styles.pastHeader}>
-        <Text style={styles.pastName}>{reservation.station_name}</Text>
-        <Text style={styles.pastCost}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+        <Text style={isActive ? styles.upcomingName : styles.pastName}>{session.station_name}</Text>
+        <Text style={styles.pastCost}>{formatCurrency(session.cost_total ?? reservation?.estimated_cost_gbp)}</Text>
       </View>
+
+      {isActive ? (
+        <Text style={styles.statusHint}>
+          Charging is active. Completion will be recorded automatically when charger-side stop confirmation is received.
+        </Text>
+      ) : null}
 
       <View style={styles.pastMeta}>
         <Text style={styles.pastDate}>
-          {formatReservationTime(reservation.reserved_start_at)}
+          {isActive ? `Started ${formatDateTime(session.started_at)}` : formatDateTime(session.started_at)}
         </Text>
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
             <Clock color={theme.colors.textMuted} size={12} />
-            <Text style={styles.pastMetaText}>
-              {formatMinutes(estimate.estimatedDurationMinutes)}
-            </Text>
+            <Text style={styles.pastMetaText}>{durationFromSession(session)}</Text>
           </View>
 
           <View style={styles.metaItem}>
             <Zap color={theme.colors.textMuted} size={12} />
-            <Text style={styles.pastMetaText}>{estimate.chargerLabel}</Text>
+            <Text style={styles.pastMetaText}>
+              {session.connector_type ?? reservation?.charger_label ?? 'Charging'}
+            </Text>
+          </View>
+
+          <View style={styles.metaItem}>
+            <CheckCircle color={theme.colors.textMuted} size={12} />
+            <Text style={styles.pastMetaText}>{formatKwh(session.energy_kwh)}</Text>
           </View>
         </View>
       </View>
@@ -228,6 +325,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,255,0,0.25)',
     padding: theme.spacing.lg,
     overflow: 'hidden',
+    marginBottom: theme.spacing.sm,
   },
   cardGlow: {
     position: 'absolute',
@@ -244,8 +342,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: theme.spacing.md,
   },
-  upcomingName: { color: theme.colors.text, fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
+  upcomingName: { color: theme.colors.text, fontSize: 17, fontWeight: 'bold', marginBottom: 2, flex: 1 },
   upcomingDate: { color: theme.colors.primary, fontSize: 12, fontWeight: '500' },
+  statusHint: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: theme.spacing.md,
+  },
   reservedBadge: {
     backgroundColor: 'rgba(0,255,0,0.15)',
     paddingHorizontal: 10,
@@ -267,8 +371,8 @@ const styles = StyleSheet.create({
   pastHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing.md, marginBottom: 6 },
   pastName: { flex: 1, color: theme.colors.text, fontSize: 14, fontWeight: 'bold' },
   pastCost: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold' },
-  pastMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.spacing.md },
-  pastDate: { color: theme.colors.textMuted, fontSize: 11, flex: 1 },
+  pastMeta: { gap: theme.spacing.sm },
+  pastDate: { color: theme.colors.textMuted, fontSize: 11 },
   pastMetaText: { color: theme.colors.textMuted, fontSize: 11 },
   emptyCard: {
     backgroundColor: 'rgba(255,255,255,0.03)',

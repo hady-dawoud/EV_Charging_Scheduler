@@ -1,7 +1,10 @@
 import { Platform } from 'react-native';
 
-import { mockSessions, mockVehicle } from '../data/mockData';
+import { mockVehicle } from '../data/mockData';
 import type {
+  ApiActiveChargingSessionResponse,
+  ApiChargingSession,
+  ApiChargingSessionsResponse,
   ApiRecommendationsResponse,
   ApiReservationsResponse,
   ApiReservation,
@@ -13,8 +16,6 @@ import type {
   RegisterRequest,
   User,
 } from '../types';
-
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
 
 const LOCAL_API_BASE_URL =
   Platform.OS === 'android'
@@ -226,10 +227,30 @@ export const api = {
     });
   },
 
-  getSessions: async () => {
-    await delay(800);
-    return mockSessions;
+  getSessions: async (): Promise<ApiChargingSession[]> => {
+    const response = await requestJson<ApiChargingSessionsResponse>('/sessions/me', {
+      method: 'GET',
+    });
+
+    return response.sessions;
   },
+
+  getMyChargingSessions: async (): Promise<ApiChargingSession[]> => {
+    const response = await requestJson<ApiChargingSessionsResponse>('/sessions/me', {
+      method: 'GET',
+    });
+
+    return response.sessions;
+  },
+
+  getActiveChargingSession: async (): Promise<ApiChargingSession | null> => {
+    const response = await requestJson<ApiActiveChargingSessionResponse>('/sessions/active', {
+      method: 'GET',
+    });
+
+    return response.session;
+  },
+
 
   createReservation: async (
     payload: CreateReservationRequest
@@ -247,4 +268,5 @@ export const api = {
 
     return response.reservations;
   },
+
 };
