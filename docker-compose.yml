@@ -53,7 +53,7 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONPATH=/app:/app/packages/ev_core/src
-      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000
+      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
       - DATABASE_URL=postgresql+psycopg://ev_user:change_me@postgres:5432/ev_smart_charging
       - RECOMMENDATION_POLICY_NAME=weighted_score
       - DYNAMIC_PRICING_ENABLED=true
