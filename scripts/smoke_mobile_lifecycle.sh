@@ -6,16 +6,22 @@ CHARGER_EVENT_SECRET="${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}"
 STATION_ID="${STATION_ID:-gellatly_street_car_park_dundee}"
 PASSWORD="${PASSWORD:-password123}"
 EMAIL="smoke.mobile.$(date +%s)@example.com"
+PYTHON_BIN="${PYTHON_BIN:-$(command -v python3 || command -v python || true)}"
+
+if [ -z "$PYTHON_BIN" ]; then
+  echo "python3/python not found"
+  exit 1
+fi
 
 json_get() {
-  python -c "import json,sys; data=json.load(sys.stdin); cur=data
+  "$PYTHON_BIN" -c "import json,sys; data=json.load(sys.stdin); cur=data
 for part in sys.argv[1].split('.'):
     cur=cur[part]
 print(cur)" "$1"
 }
 
 iso_plus_minutes() {
-  python - "$1" <<'PY'
+  "$PYTHON_BIN" - "$1" <<'PY'
 from datetime import datetime, timedelta, timezone
 import sys
 
@@ -98,7 +104,7 @@ SESSIONS_RESPONSE="$(
     -H "Authorization: Bearer $ACCESS_TOKEN"
 )"
 
-SESSIONS_JSON="$SESSIONS_RESPONSE" SESSION_ID="$SESSION_ID" python - <<'PY'
+SESSIONS_JSON="$SESSIONS_RESPONSE" SESSION_ID="$SESSION_ID" "$PYTHON_BIN" - <<'PY'
 import json
 import os
 
