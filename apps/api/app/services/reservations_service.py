@@ -58,6 +58,11 @@ def build_reservation_read(
         reserved_start_at=reservation.reserved_start_at,
         reserved_until=reservation.reserved_until,
         cancelled_at=reservation.cancelled_at,
+        estimated_cost_gbp=reservation.estimated_cost_gbp,
+        estimated_duration_minutes=reservation.estimated_duration_minutes,
+        charger_label=reservation.charger_label,
+        distance_km=reservation.distance_km,
+        score=reservation.score,
         created_at=reservation.created_at,
     )
 
@@ -89,6 +94,11 @@ def create_reservation(
         status="confirmed",
         reserved_start_at=reserved_start_at,
         reserved_until=reserved_until,
+        estimated_cost_gbp=request.estimated_cost_gbp,
+        estimated_duration_minutes=request.estimated_duration_minutes,
+        charger_label=request.charger_label,
+        distance_km=request.distance_km,
+        score=request.score,
     )
 
     created = create_reservation_record(db, reservation)

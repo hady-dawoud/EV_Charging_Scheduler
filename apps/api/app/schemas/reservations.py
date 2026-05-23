@@ -12,6 +12,11 @@ class ReservationCreate(BaseModel):
     recommendation_rank: int | None = Field(default=None, ge=1)
     reserved_start_at: datetime
     reserved_until: datetime | None = None
+    estimated_cost_gbp: float | None = Field(default=None, ge=0)
+    estimated_duration_minutes: float | None = Field(default=None, ge=0)
+    charger_label: str | None = Field(default=None, max_length=100)
+    distance_km: float | None = Field(default=None, ge=0)
+    score: float | None = None
 
 
 class ReservationRead(BaseModel):
@@ -25,6 +30,11 @@ class ReservationRead(BaseModel):
     reserved_start_at: datetime
     reserved_until: datetime
     cancelled_at: datetime | None = None
+    estimated_cost_gbp: float | None = None
+    estimated_duration_minutes: float | None = None
+    charger_label: str | None = None
+    distance_km: float | None = None
+    score: float | None = None
     created_at: datetime
 
 

@@ -5,13 +5,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
-import { ReservationRecord, RootStackParamList } from '../types';
-import { upsertReservationFromStation } from '../data/reservationStore';
+import type { ApiReservation, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReservationConfirm'>;
 
@@ -31,30 +33,74 @@ const formatReservationTime = (iso: string) => {
 
 export default function ReservationConfirmScreen({ navigation, route }: Props) {
   const { station } = route.params;
-  const [reservation, setReservation] = useState<ReservationRecord | null>(null);
+  const [reservation, setReservation] = useState<ApiReservation | null>(null);
+  const [isCreating, setIsCreating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = upsertReservationFromStation(station);
-    setReservation(saved);
-  }, [station]);
+    let isMounted = true;
+
+    const createReservation = async () => {
+      setIsCreating(true);
+      setError(null);
+
+      try {
+        const now = new Date();
+        const reservedUntil = new Date(now.getTime() + 15 * 60 * 1000);
+
+        const created = await api.createReservation({
+          client_request_id: null,
+          request_id: null,
+          station_id: station.id,
+          recommendation_rank: 1,
+          reserved_start_at: now.toISOString(),
+          reserved_until: reservedUntil.toISOString(),
+          estimated_cost_gbp: station.estimatedCostGbp,
+          estimated_duration_minutes: station.estimatedDurationMinutes,
+          charger_label: station.chargerLabel,
+          distance_km: station.distanceKm,
+          score: station.score,
+        });
+
+        if (isMounted) {
+          setReservation(created);
+        }
+      } catch (e) {
+        console.error(e);
+        if (isMounted) {
+          setError('Could not create reservation. Try again from the recommendation screen.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsCreating(false);
+        }
+      }
+    };
+
+    void createReservation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [station.id]);
 
   const details = useMemo(() => {
-    if (!reservation) return [];
+    const reservedAtIso = reservation?.reserved_start_at ?? new Date().toISOString();
 
     return [
-      { label: 'Station', value: reservation.station.name },
-      { label: 'Reserved At', value: formatReservationTime(reservation.reservedAtIso) },
+      { label: 'Station', value: reservation?.station_name ?? station.name },
+      { label: 'Reserved At', value: formatReservationTime(reservedAtIso) },
       {
         label: 'Est. Duration',
-        value: formatMinutes(reservation.station.estimatedDurationMinutes),
+        value: formatMinutes(station.estimatedDurationMinutes),
       },
       {
         label: 'Est. Cost',
-        value: formatCurrency(reservation.station.estimatedCostGbp),
+        value: formatCurrency(station.estimatedCostGbp),
         highlight: true,
       },
     ];
-  }, [reservation]);
+  }, [reservation, station]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -68,11 +114,21 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
 
         <View style={styles.successSection}>
           <View style={styles.checkCircle}>
-            <CheckCircle color={theme.colors.primary} size={40} />
+            {isCreating ? (
+              <ActivityIndicator color={theme.colors.primary} />
+            ) : (
+              <CheckCircle color={error ? '#ef4444' : theme.colors.primary} size={40} />
+            )}
           </View>
-          <Text style={styles.successTitle}>Reservation Confirmed</Text>
+          <Text style={styles.successTitle}>
+            {isCreating
+              ? 'Creating Reservation'
+              : error
+                ? 'Reservation Failed'
+                : 'Reservation Confirmed'}
+          </Text>
           <Text style={styles.successSub}>
-            Your spot at {reservation?.station.name ?? station.name} has been secured.
+            {error ?? `Your spot at ${reservation?.station_name ?? station.name} has been secured.`}
           </Text>
         </View>
 
@@ -93,8 +149,9 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.navBtn, webStyles.neonGlowSmall]}
+            style={[styles.navBtn, webStyles.neonGlowSmall, isCreating && styles.disabledBtn]}
             onPress={() => navigation.navigate('Main', { screen: 'Sessions' })}
+            disabled={isCreating}
             activeOpacity={0.85}
           >
             <MapPin color="#000" size={20} />
@@ -176,6 +233,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
+  },
+  disabledBtn: {
+    opacity: 0.6,
   },
   navBtnText: { color: '#000', fontSize: 18, fontWeight: 'bold' },
   homeBtn: {

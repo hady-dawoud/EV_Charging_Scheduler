@@ -126,6 +126,44 @@ export type UiStationRecommendation = {
   reasonTags: string[];
 };
 
+
+export type ApiReservation = {
+  reservation_id: string;
+  status: 'confirmed' | 'cancelled' | string;
+  station_id: string;
+  station_name: string;
+  client_request_id: string | null;
+  request_id: string | null;
+  recommendation_rank: number | null;
+  reserved_start_at: string;
+  reserved_until: string;
+  cancelled_at: string | null;
+  estimated_cost_gbp: number | null;
+  estimated_duration_minutes: number | null;
+  charger_label: string | null;
+  distance_km: number | null;
+  score: number | null;
+  created_at: string;
+};
+
+export type ApiReservationsResponse = {
+  reservations: ApiReservation[];
+};
+
+export type CreateReservationRequest = {
+  client_request_id: string | null;
+  request_id: string | null;
+  station_id: string;
+  recommendation_rank: number;
+  reserved_start_at: string;
+  reserved_until?: string | null;
+  estimated_cost_gbp?: number | null;
+  estimated_duration_minutes?: number | null;
+  charger_label?: string | null;
+  distance_km?: number | null;
+  score?: number | null;
+};
+
 export type ReservationRecord = {
   id: string;
   station: UiStationRecommendation;

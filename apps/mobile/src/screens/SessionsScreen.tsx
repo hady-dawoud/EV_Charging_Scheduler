@@ -5,18 +5,27 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { History, Zap, Clock, PoundSterling } from 'lucide-react-native';
+
+import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
-import { ReservationRecord } from '../types';
-import { getCurrentReservation, getPastReservations } from '../data/reservationStore';
+import type { ApiReservation } from '../types';
 
 const isWeb = Platform.OS === 'web';
 
-const formatCurrency = (gbp: number) => `£${gbp.toFixed(2)}`;
-const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
+const formatCurrency = (gbp: number | null | undefined) => {
+  if (gbp == null) return 'Cost pending';
+  return `£${gbp.toFixed(2)}`;
+};
+
+const formatMinutes = (minutes: number | null | undefined) => {
+  if (minutes == null) return 'Duration pending';
+  return `${Math.round(minutes)} min`;
+};
 
 const formatReservationTime = (iso: string) => {
   const dt = new Date(iso);
@@ -29,20 +38,48 @@ const formatReservationTime = (iso: string) => {
   });
 };
 
-export default function SessionsScreen() {
-  const [currentReservation, setCurrentReservation] = useState<ReservationRecord | null>(null);
-  const [pastReservations, setPastReservations] = useState<ReservationRecord[]>([]);
+const estimateFromReservation = (reservation: ApiReservation) => ({
+  estimatedCostGbp: reservation.estimated_cost_gbp,
+  estimatedDurationMinutes: reservation.estimated_duration_minutes,
+  chargerLabel: reservation.charger_label ?? 'Reserved',
+});
 
-  const loadReservations = useCallback(() => {
-    setCurrentReservation(getCurrentReservation());
-    setPastReservations(getPastReservations());
+export default function SessionsScreen() {
+  const [reservations, setReservations] = useState<ApiReservation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadReservations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await api.getMyReservations();
+      setReservations(result);
+    } catch (e) {
+      console.error(e);
+      setError('Could not load reservations.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadReservations();
+      void loadReservations();
     }, [loadReservations])
   );
+
+  const currentReservations = reservations.filter(
+    (reservation) => reservation.status !== 'cancelled' && !reservation.cancelled_at
+  );
+
+  const pastReservations = reservations.filter(
+    (reservation) => reservation.status === 'cancelled' || Boolean(reservation.cancelled_at)
+  );
+
+  const latestReservation = currentReservations[0] ?? null;
+  const olderReservations = currentReservations.slice(1);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -52,98 +89,123 @@ export default function SessionsScreen() {
           <Text style={styles.pageTitle}>My Sessions</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>RESERVED OPTIONS</Text>
+        {isLoading ? (
+          <View style={styles.emptyCard}>
+            <ActivityIndicator color={theme.colors.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>{error}</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>RESERVED OPTIONS</Text>
 
-          {currentReservation ? (
-            <View style={[styles.upcomingCard, webStyles.glass]}>
-              <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
-              <View style={styles.upcomingHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.upcomingName}>{currentReservation.station.name}</Text>
-                  <Text style={styles.upcomingDate}>
-                    {formatReservationTime(currentReservation.reservedAtIso)}
-                  </Text>
+              {latestReservation ? (
+                <ReservationCard reservation={latestReservation} featured />
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyText}>No reserved option yet.</Text>
                 </View>
-                <View style={styles.reservedBadge}>
-                  <Text style={styles.reservedText}>Reserved</Text>
-                </View>
-              </View>
-
-              <View style={styles.metaRow}>
-                <View style={styles.metaItem}>
-                  <PoundSterling color={theme.colors.textMuted} size={15} />
-                  <Text style={styles.metaText}>
-                    {formatCurrency(currentReservation.station.estimatedCostGbp)}
-                  </Text>
-                </View>
-
-                <View style={styles.metaItem}>
-                  <Clock color={theme.colors.textMuted} size={15} />
-                  <Text style={styles.metaText}>
-                    {formatMinutes(currentReservation.station.estimatedDurationMinutes)}
-                  </Text>
-                </View>
-
-                <View style={styles.metaItem}>
-                  <Zap color={theme.colors.textMuted} size={15} />
-                  <Text style={styles.metaText}>
-                    {currentReservation.station.chargerLabel}
-                  </Text>
-                </View>
-              </View>
+              )}
             </View>
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No reserved option yet.</Text>
-            </View>
-          )}
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PAST RESERVED OPTIONS</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>PAST RESERVED OPTIONS</Text>
 
-          {pastReservations.length > 0 ? (
-            pastReservations.map((reservation) => (
-              <View key={reservation.id} style={styles.pastCard}>
-                <View style={styles.pastHeader}>
-                  <Text style={styles.pastName}>{reservation.station.name}</Text>
-                  <Text style={styles.pastCost}>
-                    {formatCurrency(reservation.station.estimatedCostGbp)}
-                  </Text>
+              {[...olderReservations, ...pastReservations].length > 0 ? (
+                [...olderReservations, ...pastReservations].map((reservation) => (
+                  <ReservationCard key={reservation.reservation_id} reservation={reservation} />
+                ))
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyText}>No past reserved options yet.</Text>
                 </View>
-
-                <View style={styles.pastMeta}>
-                  <Text style={styles.pastDate}>
-                    {formatReservationTime(reservation.reservedAtIso)}
-                  </Text>
-
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaItem}>
-                      <Clock color={theme.colors.textMuted} size={12} />
-                      <Text style={styles.pastMetaText}>
-                        {formatMinutes(reservation.station.estimatedDurationMinutes)}
-                      </Text>
-                    </View>
-
-                    <View style={styles.metaItem}>
-                      <Zap color={theme.colors.textMuted} size={12} />
-                      <Text style={styles.pastMetaText}>
-                        {reservation.station.chargerLabel}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No past reserved options yet.</Text>
+              )}
             </View>
-          )}
-        </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+type ReservationCardProps = {
+  reservation: ApiReservation;
+  featured?: boolean;
+};
+
+function ReservationCard({ reservation, featured = false }: ReservationCardProps) {
+  const estimate = estimateFromReservation(reservation);
+
+  if (featured) {
+    return (
+      <View style={[styles.upcomingCard, webStyles.glass]}>
+        <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
+        <View style={styles.upcomingHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.upcomingName}>{reservation.station_name}</Text>
+            <Text style={styles.upcomingDate}>
+              {formatReservationTime(reservation.reserved_start_at)}
+            </Text>
+          </View>
+          <View style={styles.reservedBadge}>
+            <Text style={styles.reservedText}>{reservation.status}</Text>
+          </View>
+        </View>
+
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <PoundSterling color={theme.colors.textMuted} size={15} />
+            <Text style={styles.metaText}>
+              {formatCurrency(estimate.estimatedCostGbp)}
+            </Text>
+          </View>
+
+          <View style={styles.metaItem}>
+            <Clock color={theme.colors.textMuted} size={15} />
+            <Text style={styles.metaText}>
+              {formatMinutes(estimate.estimatedDurationMinutes)}
+            </Text>
+          </View>
+
+          <View style={styles.metaItem}>
+            <Zap color={theme.colors.textMuted} size={15} />
+            <Text style={styles.metaText}>{estimate.chargerLabel}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.pastCard}>
+      <View style={styles.pastHeader}>
+        <Text style={styles.pastName}>{reservation.station_name}</Text>
+        <Text style={styles.pastCost}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+      </View>
+
+      <View style={styles.pastMeta}>
+        <Text style={styles.pastDate}>
+          {formatReservationTime(reservation.reserved_start_at)}
+        </Text>
+
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <Clock color={theme.colors.textMuted} size={12} />
+            <Text style={styles.pastMetaText}>
+              {formatMinutes(estimate.estimatedDurationMinutes)}
+            </Text>
+          </View>
+
+          <View style={styles.metaItem}>
+            <Zap color={theme.colors.textMuted} size={12} />
+            <Text style={styles.pastMetaText}>{estimate.chargerLabel}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -190,7 +252,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
   },
-  reservedText: { color: theme.colors.primary, fontSize: 11, fontWeight: 'bold' },
+  reservedText: { color: theme.colors.primary, fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
   metaRow: { flexDirection: 'row', gap: theme.spacing.lg, flexWrap: 'wrap' },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { color: '#d1d5db', fontSize: 13 },

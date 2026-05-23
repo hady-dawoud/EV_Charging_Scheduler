@@ -3,10 +3,13 @@ import { Platform } from 'react-native';
 import { mockSessions, mockVehicle } from '../data/mockData';
 import type {
   ApiRecommendationsResponse,
+  ApiReservationsResponse,
+  ApiReservation,
   AuthResponse,
   AuthTokens,
   LoginRequest,
   MobileRecommendationRequest,
+  CreateReservationRequest,
   RegisterRequest,
   User,
 } from '../types';
@@ -228,8 +231,20 @@ export const api = {
     return mockSessions;
   },
 
-  reserveStation: async (_stationId: string) => {
-    await delay(1500);
-    return { success: true, reservationId: Math.random().toString(36).substring(2, 9) };
+  createReservation: async (
+    payload: CreateReservationRequest
+  ): Promise<ApiReservation> => {
+    return requestJson<ApiReservation>('/reservations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getMyReservations: async (): Promise<ApiReservation[]> => {
+    const response = await requestJson<ApiReservationsResponse>('/reservations/me', {
+      method: 'GET',
+    });
+
+    return response.reservations;
   },
 };

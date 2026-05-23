@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,6 +62,26 @@ class Reservation(TimestampMixin, Base):
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
+        nullable=True,
+    )
+    estimated_cost_gbp: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+    estimated_duration_minutes: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+    charger_label: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    distance_km: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+    score: Mapped[float | None] = mapped_column(
+        Float,
         nullable=True,
     )
 
