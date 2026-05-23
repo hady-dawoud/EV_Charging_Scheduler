@@ -119,10 +119,23 @@ Last verified against repo state: 2026-05-08.
   - `ForecastProvider`, `NullForecastProvider`, `PlaceholderForecastProvider`.
 - `packages/ev_core/src/ev_core/generation/synthetic_live.py`
   - `SyntheticLiveRequestGenerator`: creates fresh mobile/API-style `ExternalChargingRequest` objects with `source_type="external_live"`, synthetic-live metadata, Dundee historical priors, station/zone anchor sampling, jittered origins, and default vehicle profile fields. It does not depend on `DundeeEnv` and does not replace replay or `synthetic_background`.
+- `packages/ev_core/src/ev_core/analysis/rl_demand_realism.py`
+  - `build_demand_realism_summary(...)`, `build_utilization_bands(...)`, and `suggest_episode_request_ranges(...)`: repo-backed RL demand sizing helpers used to estimate request-count ranges and confirm that historical demand is lighter than normal utilization for the current 35-station / 90-chargepoint topology.
+- `packages/ev_core/src/ev_core/rl/*`
+  - `contracts.py`: `ScenarioSeedSplit`, `RLEpisodeScenario`, and `EvaluationMetrics` frozen dataclasses for fixed-seed RL preparation.
+  - `scenarios.py`: `RLScenarioSampler` plus `generate_requests_for_scenario(...)`, keeping `simple_distance` as the default RL routing provider and leaving OSMnx optional.
+  - `baselines.py`: `RandomValidPolicy`, which selects only from already-feasible recommendation options.
+  - `evaluation.py`: `BaselinePolicyEvaluator`, a lightweight request-centric baseline harness for `weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`, and `random_valid`.
+  - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; no forecasting model is implemented yet.
+  - `metrics.py`: helper functions for aggregating deterministic evaluation outputs.
 - `scripts/generate_synthetic_live_requests.py`
   - CLI for writing synthetic-live request JSONL to `outputs/runtime/synthetic_live_requests.jsonl`.
 - `scripts/verify_synthetic_live_requests.py`
   - CLI smoke check that generates synthetic-live requests and verifies runtime recommendations.
+- `scripts/analyze_rl_demand_realism.py`
+  - CLI summary for station/chargepoint counts, request-rate estimates, and target normal/busy/stress episode sizing.
+- `scripts/verify_rl_scenario_sampler.py`
+  - CLI smoke check for PR2 scenario sampling, request generation, and one lightweight deterministic baseline evaluation.
 - `scripts/build_dundee_osmnx_graph.py`
   - Internet-requiring helper script that builds `data/processed/routing/dundee_drive.graphml` from `Dundee, Scotland, United Kingdom` with OSMnx `network_type="drive"`.
 - `scripts/verify_osmnx_routing_provider.py`
@@ -146,6 +159,10 @@ Last verified against repo state: 2026-05-08.
 - `tests/topology/test_calibrated_topology_scenarios.py`: calibrated scenario loading, station/transformer consistency, realistic capacity checks against CP inventory, and runtime startup with realistic/stress scenarios.
 - `tests/sim_runtime/test_topology_scenario_runtime.py`: `DundeeEnv` and runtime-manager scenario integration while preserving default topology behavior.
 - `tests/generation/test_synthetic_live_generator.py`: contract validity, determinism, SOC/energy consistency, vehicle fields, location/preference/charger validity, and batch generation coverage.
+- `tests/rl/test_demand_realism_analysis.py`: RL demand-realism summaries and episode-sizing helper coverage.
+- `tests/rl/test_scenario_sampler.py`: fixed-seed split determinism, request-count bands, and scenario request metadata coverage.
+- `tests/rl/test_rl_evaluation_contracts.py`: evaluation contract serialization, forecast placeholder defaults, and lightweight baseline evaluation smoke coverage.
+- `tests/rl/test_random_valid_baseline.py`: `random_valid` feasible-option-only and deterministic selection coverage.
 - `tests/routing/test_simple_distance_provider.py`: default provider and legacy-distance behavior.
 - `tests/routing/test_osmnx_provider.py`: missing-graph fallback, fail-closed behavior, import safety without OSMnx, fake-graph route calculation, duration fallback, and safe `DundeeEnv` provider injection.
 - `tests/pricing/test_dundee_tariffs.py`: charger-class tariff classification and same-multiplier price ordering.

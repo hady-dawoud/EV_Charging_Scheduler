@@ -45,7 +45,8 @@
 - How should synthetic-live scenarios evolve?
   - Current truth: `SyntheticLiveRequestGenerator` creates valid `ExternalChargingRequest` objects with `source_type="external_live"` and synthetic-live metadata.
   - Current truth: it uses Dundee historical priors, station/zone distributions, and default vehicle profiles without replaying old sessions.
-  - Still open: scenario-level demand controls, route-aware origin sampling, richer vehicle-profile priors, and evaluation-set versioning.
+  - Current truth: PR2 now adds `RLScenarioSampler` and `generate_requests_for_scenario(...)` around the synthetic-live generator with fixed train/validation/test seed ranges and explicit normal/busy/stress scenario contracts.
+  - Still open: route-aware origin sampling, richer vehicle-profile priors, scenario catalogs beyond the current defaults, and evaluation-set versioning.
 
 ## Dynamic Pricing
 
@@ -56,10 +57,29 @@
   - Current truth: no connection, parking, overstay, or reservation fees are applied.
   - Still open: calibration against stress scenarios, queue sensitivity tuning, and whether future policy/MARL work should consume the same signal directly.
 
+## RL Preparation
+
+- Is the current RL baseline evaluation fully closed-loop?
+  - Current truth: no. PR2 baseline evaluation is request-centric and uses the existing recommendation path under fixed-seed scenarios.
+  - Current truth: this is enough to lock contracts, seed splits, scenario metadata, and baseline names before Gymnasium work begins.
+  - Still open: a true stepwise closed-loop evaluator that uses the future masked RL environment semantics.
+
+- Is demand scaling now formalized enough for RL preparation?
+  - Current truth: yes for first-step scenario generation. PR2 uses demand realism guidance from the repo data, including the current 35-station / 90-chargepoint topology and the fact that historical average demand is lighter than normal utilization.
+  - Current truth: demand multipliers now have explicit curriculum bands: normal `1.5x-3.0x`, busy `3.0x-5.0x`, stress `5.0x+` as a minority slice.
+  - Still open: whether those multiplier bands need recalibration after the Gymnasium environment and evaluation harness are running closed-loop.
+
+- How should forecasting plug into RL?
+  - Current truth: PR2 adds a `ForecastFeatureSnapshot` placeholder with default `source="none"`.
+  - Current truth: no forecasting model is implemented in this PR.
+  - Current truth: background load is optional for EV-arrival forecasting, but it is required for true grid-headroom forecasting because transformer headroom depends on non-EV load too.
+  - Still open: the exact observation schema for forecast features and whether single-agent RL and future MARL agents should consume the same forecast channels.
+
 ## Routing
 
 - Is OSMnx useful enough to keep for evaluation or future RL routing realism?
   - Current truth: OSMnx support remains optional and default runtime routing is still `simple_distance`.
+  - Current truth: PR2 keeps `simple_distance` as the first RL default and does not make OSMnx part of scenario defaults.
   - Current truth: real Dundee verification and usefulness-evaluation scripts now exist for the locally built GraphML path.
   - Current truth: if OSMnx is unavailable, the graph is missing, nearest-node snapping fails, or no route exists, runtime can still fall back safely.
   - Still open: whether sampled Dundee success rate, fallback rate, and distance realism are strong enough to justify using OSMnx in later RL evaluation/training loops.
