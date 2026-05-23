@@ -13,8 +13,22 @@ const extensions = [
   '.json',
 ];
 
+const apiBaseUrl =
+  process.env.VITE_API_BASE_URL ||
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  '';
+
+const isDev = process.env.NODE_ENV !== 'production';
+
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+    __DEV__: JSON.stringify(isDev),
+    DEV: JSON.stringify(isDev),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.EXPO_PUBLIC_API_BASE_URL': JSON.stringify(apiBaseUrl),
+  },
   resolve: {
     alias: [
       {
@@ -37,12 +51,6 @@ export default defineConfig({
       },
       jsx: 'automatic',
     },
-  },
-  define: {
-    global: 'globalThis',
-    __DEV__: JSON.stringify(true),
-    DEV: JSON.stringify(true),
-    'process.env.NODE_ENV': JSON.stringify('development'),
   },
   server: {
     port: 5173,
