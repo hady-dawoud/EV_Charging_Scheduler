@@ -227,14 +227,6 @@ export const api = {
     });
   },
 
-  getSessions: async (): Promise<ApiChargingSession[]> => {
-    const response = await requestJson<ApiChargingSessionsResponse>('/sessions/me', {
-      method: 'GET',
-    });
-
-    return response.sessions;
-  },
-
   getMyChargingSessions: async (): Promise<ApiChargingSession[]> => {
     const response = await requestJson<ApiChargingSessionsResponse>('/sessions/me', {
       method: 'GET',

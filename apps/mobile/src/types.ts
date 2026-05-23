@@ -57,16 +57,6 @@ export interface ChargingStation {
   waitingTime: string;
 }
 
-export interface Session {
-  id: string;
-  stationName: string;
-  date: string;
-  cost: string;
-  energyAdded: string;
-  duration: string;
-  status: 'completed' | 'active' | 'upcoming';
-}
-
 export type RecommendationPreferenceMode = 'cheapest' | 'fastest' | 'closest';
 export type RecommendationChargerType = 'any' | 'ac' | 'dc';
 
