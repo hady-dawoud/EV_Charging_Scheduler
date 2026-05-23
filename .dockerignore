@@ -25,3 +25,19 @@ data/processed/background_load_15min.csv
 
 .DS_Store
 Thumbs.db
+
+# React Native Android generated build files
+apps/mobile/android/.gradle
+apps/mobile/android/build
+apps/mobile/android/app/build
+apps/mobile/android/app/.cxx
+apps/mobile/android/app/.externalNativeBuild
+apps/mobile/android/local.properties
+
+# Vite cache/build
+apps/mobile/node_modules/.vite
+apps/mobile/.vite
+
+# Not needed inside API image
+notebooks
+docs

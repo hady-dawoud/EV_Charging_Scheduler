@@ -11,17 +11,39 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
 import { theme, webStyles } from '../theme';
+import { api } from '../services/api';
+import { authStorage } from '../services/authStorage';
+import { useAuthStore } from '../stores/authStore';
 
 export default function SignupScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [fullName, setFullName] = useState('Alex Mercer');
+  const [email, setEmail] = useState('alex.mercer@example.com');
+  const [password, setPassword] = useState('password123');
+  const [error, setError] = useState<string | null>(null);
+  const setSession = useAuthStore((state) => state.setSession);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setError(null);
+
+    try {
+      const session = await api.register({
+        full_name: fullName.trim(),
+        email: email.trim(),
+        password,
+      });
+
+      await authStorage.saveRefreshToken(session.refreshToken);
+      setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    }, 1500);
+    } catch (e) {
+      console.error(e);
+      setError('Could not create account. Try another email or check the password.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,6 +65,8 @@ export default function SignupScreen({ navigation }: any) {
               style={styles.input}
               placeholder="Full Name"
               placeholderTextColor={theme.colors.textMuted}
+              value={fullName}
+              onChangeText={setFullName}
             />
           </View>
 
@@ -54,6 +78,8 @@ export default function SignupScreen({ navigation }: any) {
               placeholderTextColor={theme.colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
             />
           </View>
 
@@ -64,6 +90,8 @@ export default function SignupScreen({ navigation }: any) {
               placeholder="Password"
               placeholderTextColor={theme.colors.textMuted}
               secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
               {showPassword ? (
@@ -74,6 +102,8 @@ export default function SignupScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </View>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <TouchableOpacity
           style={styles.primaryBtn}
@@ -152,6 +182,11 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     padding: theme.spacing.xs,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginBottom: theme.spacing.md,
   },
   primaryBtn: {
     backgroundColor: theme.colors.primary,

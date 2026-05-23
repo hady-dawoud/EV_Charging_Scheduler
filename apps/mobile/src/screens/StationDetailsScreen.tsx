@@ -123,9 +123,9 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surface },
-  mapBg: { ...StyleSheet.absoluteFillObject },
+  mapBg: { ...StyleSheet.absoluteFill },
   mapImage: { width: '100%', height: '100%', opacity: 0.4 },
-  mapOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,11,13,0.3)' },
+  mapOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,11,13,0.3)' },
   markerWrapper: {
     position: 'absolute',
     top: '33%',

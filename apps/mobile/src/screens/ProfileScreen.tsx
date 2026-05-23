@@ -8,7 +8,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Settings, Bell, Shield, LogOut, Car, ChevronRight } from 'lucide-react-native';
-import { mockUser, mockVehicle } from '../data/mockData';
+import { mockVehicle } from '../data/mockData';
+import { api } from '../services/api';
+import { authStorage } from '../services/authStorage';
+import { useAuthStore } from '../stores/authStore';
 import { theme, webStyles } from '../theme';
 
 const menuItems = [
@@ -18,6 +21,25 @@ const menuItems = [
 ];
 
 export default function ProfileScreen({ navigation }: any) {
+  const user = useAuthStore((state) => state.user);
+  const clearSession = useAuthStore((state) => state.clearSession);
+
+  const handleLogout = async () => {
+    const refreshToken = await authStorage.getRefreshToken();
+
+    try {
+      if (refreshToken) {
+        await api.logout(refreshToken);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await authStorage.clearRefreshToken();
+      clearSession();
+      navigation.replace('Splash');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
@@ -31,8 +53,8 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           </View>
           <View>
-            <Text style={styles.userName}>{mockUser.name}</Text>
-            <Text style={styles.userEmail}>{mockUser.email}</Text>
+            <Text style={styles.userName}>{user?.name ?? 'EV Driver'}</Text>
+            <Text style={styles.userEmail}>{user?.email ?? 'Not signed in'}</Text>
           </View>
         </View>
 
@@ -70,7 +92,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Logout */}
         <TouchableOpacity
           style={styles.logoutBtn}
-          onPress={() => navigation.replace('Splash')}
+          onPress={handleLogout}
           activeOpacity={0.85}
         >
           <LogOut color="#ef4444" size={20} />

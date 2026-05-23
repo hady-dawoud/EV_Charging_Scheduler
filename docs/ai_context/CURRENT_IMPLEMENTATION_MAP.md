@@ -27,6 +27,7 @@ Last verified against repo state: 2026-05-08.
 - `apps/api/app/routers/stations.py` and `apps/api/app/services/stations_service.py`: mock CRUD station API backed by `apps/api/app/mock_data.py`.
 
 ## Mobile
+- Mobile reservations and charging-session history are backend-backed through `/reservations`, `/sessions`, and internal `/charger-events` lifecycle endpoints.
 
 - `apps/mobile/src/screens/ChargingRequestScreen.tsx`: collects `targetSoc`, `preferenceMode`, and `chargerType`.
 - `apps/mobile/src/screens/LoadingRecommendationsScreen.tsx`: calls `api.getRecommendations(request)`, navigates to results on success.
@@ -34,7 +35,6 @@ Last verified against repo state: 2026-05-08.
 - `apps/mobile/env.d.ts`: declares optional `process.env.EXPO_PUBLIC_API_BASE_URL` for TypeScript.
 - `apps/mobile/src/types.ts`: defines mobile request/response types matching the current API response shape.
 - `apps/mobile/src/screens/ResultsScreen.tsx`: maps `top_recommendation` and `alternatives` into UI cards.
-- `apps/mobile/src/data/reservationStore.ts`: in-memory reservation state; not persisted through FastAPI.
 
 ## Runtime Service
 
