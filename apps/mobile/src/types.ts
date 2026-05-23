@@ -6,6 +6,29 @@ export interface User {
   email: string;
 }
 
+
+export type LoginRequest = {
+  email: string;
+  password: string;
+  device_id: string;
+};
+
+export type RegisterRequest = {
+  full_name: string;
+  email: string;
+  password: string;
+};
+
+export type AuthTokens = {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+};
+
+export type AuthResponse = AuthTokens & {
+  user: User;
+};
+
 export interface Vehicle {
   id: string;
   make: string;
