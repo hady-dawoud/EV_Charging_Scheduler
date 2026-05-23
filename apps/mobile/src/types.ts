@@ -129,7 +129,7 @@ export type UiStationRecommendation = {
 
 export type ApiReservation = {
   reservation_id: string;
-  status: 'confirmed' | 'cancelled' | string;
+  status: 'confirmed' | 'active' | 'completed' | 'cancelled' | 'expired' | string;
   station_id: string;
   station_name: string;
   client_request_id: string | null;
@@ -167,7 +167,7 @@ export type CreateReservationRequest = {
 
 export type ApiChargingSession = {
   session_id: string;
-  status: 'active' | 'completed' | string;
+  status: 'active' | 'completed' | 'stale_active' | string;
   station_id: string;
   station_name: string;
   reservation_id: string | null;

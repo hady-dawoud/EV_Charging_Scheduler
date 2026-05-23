@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { History, Zap, Clock, PoundSterling, CheckCircle } from 'lucide-react-native';
+import { History, Zap, Clock, PoundSterling, CheckCircle, AlertTriangle } from 'lucide-react-native';
 
 import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
@@ -113,12 +113,18 @@ export default function SessionsScreen() {
     return map;
   }, [reservations]);
 
-  const confirmedReservations = reservations.filter(
-    (reservation) => reservation.status !== 'cancelled' && !reservation.cancelled_at
+  const waitingReservations = reservations.filter(
+    (reservation) =>
+      reservation.status === 'confirmed' &&
+      !reservation.cancelled_at &&
+      !sessionsByReservationId.has(reservation.reservation_id)
   );
 
-  const waitingReservations = confirmedReservations.filter(
-    (reservation) => !sessionsByReservationId.has(reservation.reservation_id)
+  const closedReservations = reservations.filter(
+    (reservation) =>
+      reservation.status === 'expired' ||
+      reservation.status === 'cancelled' ||
+      Boolean(reservation.cancelled_at)
   );
 
   const activeSessions = useMemo(() => {
@@ -135,6 +141,7 @@ export default function SessionsScreen() {
     return [...byId.values()];
   }, [activeSession, sessions]);
 
+  const staleSessions = sessions.filter((session) => session.status === 'stale_active');
   const completedSessions = sessions.filter((session) => session.status === 'completed');
 
   return (
@@ -183,6 +190,32 @@ export default function SessionsScreen() {
               ) : (
                 <View style={styles.emptyCard}>
                   <Text style={styles.emptyText}>No active charging session.</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>ATTENTION NEEDED</Text>
+
+              {staleSessions.length > 0 || closedReservations.length > 0 ? (
+                <>
+                  {staleSessions.map((session) => (
+                    <ChargingSessionCard
+                      key={session.session_id}
+                      session={session}
+                      reservation={session.reservation_id ? reservationsById.get(session.reservation_id) : null}
+                    />
+                  ))}
+                  {closedReservations.map((reservation) => (
+                    <ClosedReservationCard
+                      key={reservation.reservation_id}
+                      reservation={reservation}
+                    />
+                  ))}
+                </>
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyText}>No expired reservations or stale sessions.</Text>
                 </View>
               )}
             </View>
@@ -237,21 +270,59 @@ function ReservationCard({ reservation }: ReservationCardProps) {
         Waiting for charger-side start confirmation. The session will appear automatically when charging begins.
       </Text>
 
-      <View style={styles.metaRow}>
-        <View style={styles.metaItem}>
-          <PoundSterling color={theme.colors.textMuted} size={15} />
-          <Text style={styles.metaText}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
-        </View>
+      <ReservationMeta reservation={reservation} />
+    </View>
+  );
+}
 
-        <View style={styles.metaItem}>
-          <Clock color={theme.colors.textMuted} size={15} />
-          <Text style={styles.metaText}>{formatMinutes(estimate.estimatedDurationMinutes)}</Text>
+function ClosedReservationCard({ reservation }: ReservationCardProps) {
+  return (
+    <View style={styles.pastCard}>
+      <View style={styles.pastHeader}>
+        <Text style={styles.pastName}>{reservation.station_name}</Text>
+        <View style={styles.warningBadge}>
+          <AlertTriangle color="#f59e0b" size={12} />
+          <Text style={styles.warningText}>{reservation.status}</Text>
         </View>
+      </View>
 
-        <View style={styles.metaItem}>
-          <Zap color={theme.colors.textMuted} size={15} />
-          <Text style={styles.metaText}>{estimate.chargerLabel}</Text>
-        </View>
+      <Text style={styles.statusHint}>
+        {reservation.status === 'expired'
+          ? 'Reservation expired because no charger-side start confirmation arrived in time.'
+          : 'Reservation is no longer active.'}
+      </Text>
+
+      <ReservationMeta reservation={reservation} small />
+    </View>
+  );
+}
+
+function ReservationMeta({
+  reservation,
+  small = false,
+}: {
+  reservation: ApiReservation;
+  small?: boolean;
+}) {
+  const estimate = estimateFromReservation(reservation);
+  const textStyle = small ? styles.pastMetaText : styles.metaText;
+  const iconSize = small ? 12 : 15;
+
+  return (
+    <View style={styles.metaRow}>
+      <View style={styles.metaItem}>
+        <PoundSterling color={theme.colors.textMuted} size={iconSize} />
+        <Text style={textStyle}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+      </View>
+
+      <View style={styles.metaItem}>
+        <Clock color={theme.colors.textMuted} size={iconSize} />
+        <Text style={textStyle}>{formatMinutes(estimate.estimatedDurationMinutes)}</Text>
+      </View>
+
+      <View style={styles.metaItem}>
+        <Zap color={theme.colors.textMuted} size={iconSize} />
+        <Text style={textStyle}>{estimate.chargerLabel}</Text>
       </View>
     </View>
   );
@@ -264,6 +335,7 @@ type ChargingSessionCardProps = {
 
 function ChargingSessionCard({ session, reservation }: ChargingSessionCardProps) {
   const isActive = session.status === 'active';
+  const isStale = session.status === 'stale_active';
 
   return (
     <View style={isActive ? [styles.upcomingCard, webStyles.glass] : styles.pastCard}>
@@ -275,6 +347,12 @@ function ChargingSessionCard({ session, reservation }: ChargingSessionCardProps)
       {isActive ? (
         <Text style={styles.statusHint}>
           Charging is active. Completion will be recorded automatically when charger-side stop confirmation is received.
+        </Text>
+      ) : null}
+
+      {isStale ? (
+        <Text style={styles.statusHint}>
+          Charger-side stop confirmation has not arrived. This session needs provider/admin review.
         </Text>
       ) : null}
 
@@ -357,6 +435,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   reservedText: { color: theme.colors.primary, fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
+  warningBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(245,158,11,0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  warningText: { color: '#f59e0b', fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
   metaRow: { flexDirection: 'row', gap: theme.spacing.lg, flexWrap: 'wrap' },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { color: '#d1d5db', fontSize: 13 },

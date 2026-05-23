@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -39,11 +39,45 @@ class ChargingSessionAlreadyCompletedError(ValueError):
     pass
 
 
+DEFAULT_STALE_ACTIVE_SESSION_MINUTES = 180
+STALE_ACTIVE_SESSION_GRACE_MINUTES = 30
+
+
 def _ensure_timezone(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
 
     return value
+
+
+def reconcile_stale_active_sessions_for_user(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+) -> None:
+    active_sessions = list_charging_session_records_for_user(
+        db,
+        user_id=user_id,
+        status="active",
+    )
+    now = datetime.now(timezone.utc)
+
+    for session in active_sessions:
+        estimated_minutes = (
+            session.reservation.estimated_duration_minutes
+            if session.reservation is not None
+            else None
+        )
+        max_minutes = (
+            estimated_minutes + STALE_ACTIVE_SESSION_GRACE_MINUTES
+            if estimated_minutes is not None
+            else DEFAULT_STALE_ACTIVE_SESSION_MINUTES
+        )
+        started_at = _ensure_timezone(session.started_at)
+
+        if now > started_at + timedelta(minutes=max_minutes):
+            session.status = "stale_active"
+            save_charging_session_record(db, session)
 
 
 def build_charging_session_read(
@@ -128,6 +162,11 @@ def list_my_charging_sessions(
     current_user: User,
     status: str | None = None,
 ) -> list[ChargingSessionRead]:
+    reconcile_stale_active_sessions_for_user(
+        db,
+        user_id=current_user.id,
+    )
+
     sessions = list_charging_session_records_for_user(
         db,
         user_id=current_user.id,
@@ -145,6 +184,11 @@ def get_active_charging_session(
     *,
     current_user: User,
 ) -> ChargingSessionRead | None:
+    reconcile_stale_active_sessions_for_user(
+        db,
+        user_id=current_user.id,
+    )
+
     session = get_active_charging_session_record_for_user(
         db,
         user_id=current_user.id,

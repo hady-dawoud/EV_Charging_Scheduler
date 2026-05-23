@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -40,11 +40,21 @@ class ChargerEventSessionAlreadyCompletedError(ValueError):
     pass
 
 
+RESERVATION_EXPIRY_GRACE_MINUTES = 10
+
+
 def _ensure_timezone(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
 
     return value
+
+
+def _reservation_is_expired(reserved_until: datetime) -> bool:
+    now = datetime.now(timezone.utc)
+    return now > _ensure_timezone(reserved_until) + timedelta(
+        minutes=RESERVATION_EXPIRY_GRACE_MINUTES
+    )
 
 
 def start_session_from_charger_event(
@@ -67,6 +77,17 @@ def start_session_from_charger_event(
 
     if reservation.status == "cancelled":
         raise ChargerEventReservationCancelledError("Reservation is cancelled")
+
+    if reservation.status == "expired":
+        raise ChargerEventReservationCancelledError("Reservation is expired")
+
+    if reservation.status == "completed":
+        raise ChargerEventReservationCancelledError("Reservation is already completed")
+
+    if reservation.status == "confirmed" and _reservation_is_expired(reservation.reserved_until):
+        reservation.status = "expired"
+        save_reservation_record(db, reservation)
+        raise ChargerEventReservationCancelledError("Reservation is expired")
 
     existing_active = get_active_charging_session_record_for_reservation(
         db,

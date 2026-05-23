@@ -33,11 +33,33 @@ class ReservationAlreadyCancelledError(ValueError):
     pass
 
 
+RESERVATION_EXPIRY_GRACE_MINUTES = 10
+
+
 def _ensure_timezone(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
 
     return value
+
+
+def reconcile_expired_reservations(
+    db: Session,
+    reservations: list[ReservationModel],
+) -> list[ReservationModel]:
+    now = datetime.now(timezone.utc)
+
+    for reservation in reservations:
+        reserved_until = _ensure_timezone(reservation.reserved_until)
+
+        if (
+            reservation.status == "confirmed"
+            and now > reserved_until + timedelta(minutes=RESERVATION_EXPIRY_GRACE_MINUTES)
+        ):
+            reservation.status = "expired"
+            save_reservation_record(db, reservation)
+
+    return reservations
 
 
 def build_reservation_read(
@@ -115,6 +137,8 @@ def list_my_reservations(
         db,
         user_id=current_user.id,
     )
+
+    reservations = reconcile_expired_reservations(db, reservations)
 
     return [
         build_reservation_read(db, reservation)
