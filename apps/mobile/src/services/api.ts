@@ -23,9 +23,10 @@ const LOCAL_API_BASE_URL =
     : 'http://127.0.0.1:8000';
 
 const API_BASE_URL =
-  Platform.OS === 'web'
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (Platform.OS === 'web'
     ? 'http://localhost:8000'
-    : LOCAL_API_BASE_URL;
+    : LOCAL_API_BASE_URL);
 
 let accessTokenMemory: string | null = null;
 

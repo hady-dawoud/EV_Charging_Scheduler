@@ -55,11 +55,12 @@ services:
       - PYTHONPATH=/app:/app/packages/ev_core/src
       - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
       - DATABASE_URL=postgresql+psycopg://ev_user:change_me@postgres:5432/ev_smart_charging
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_to_a_long_random_secret}
       - RECOMMENDATION_POLICY_NAME=weighted_score
       - DYNAMIC_PRICING_ENABLED=true
       - ROUTING_PROVIDER_NAME=simple_distance
       - OSMNX_GRAPH_PATH=data/processed/routing/dundee_drive.graphml
-      - CHARGER_EVENT_SECRET=change_me_charger_event_secret
+      - CHARGER_EVENT_SECRET=${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}
     depends_on:
       postgres:
         condition: service_healthy
