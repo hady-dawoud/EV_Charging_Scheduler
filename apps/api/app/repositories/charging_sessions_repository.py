@@ -74,3 +74,33 @@ def save_charging_session_record(
     db.commit()
     db.refresh(session)
     return session
+
+
+def get_charging_session_record_by_id(
+    db: Session,
+    *,
+    session_id: uuid.UUID,
+) -> ChargingSession | None:
+    statement = select(ChargingSession).where(
+        ChargingSession.session_id == session_id,
+    )
+
+    return db.execute(statement).scalar_one_or_none()
+
+
+def get_active_charging_session_record_for_reservation(
+    db: Session,
+    *,
+    reservation_id: uuid.UUID,
+) -> ChargingSession | None:
+    statement = (
+        select(ChargingSession)
+        .where(
+            ChargingSession.reservation_id == reservation_id,
+            ChargingSession.status == "active",
+        )
+        .order_by(ChargingSession.started_at.desc())
+        .limit(1)
+    )
+
+    return db.execute(statement).scalar_one_or_none()

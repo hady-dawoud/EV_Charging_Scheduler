@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.routers.auth import router as auth_router
+from app.routers.charger_events import router as charger_events_router
 from app.routers.mobile_recommendations import router as mobile_recommendations_router
 from app.routers.charging_sessions import router as charging_sessions_router
 from app.routers.recommendations import router as recommendations_router
@@ -29,6 +30,7 @@ app.include_router(system_router)
 app.include_router(auth_router)
 app.include_router(mobile_recommendations_router)
 app.include_router(charging_sessions_router)
+app.include_router(charger_events_router)
 app.include_router(reservations_router)
 app.include_router(stations_router)
 app.include_router(recommendations_router)

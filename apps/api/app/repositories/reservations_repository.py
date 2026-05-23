@@ -54,3 +54,15 @@ def save_reservation_record(
     db.commit()
     db.refresh(reservation)
     return reservation
+
+
+def get_reservation_record_by_id(
+    db: Session,
+    *,
+    reservation_id: uuid.UUID,
+) -> Reservation | None:
+    statement = select(Reservation).where(
+        Reservation.reservation_id == reservation_id,
+    )
+
+    return db.execute(statement).scalar_one_or_none()

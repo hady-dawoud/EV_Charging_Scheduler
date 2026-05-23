@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 15
     jwt_refresh_token_expire_days: int = 30
 
+    charger_event_secret: str = "change_me_charger_event_secret"
+
     recommendation_policy_name: str = "weighted_score"
     topology_scenario_id: str | None = None
     dynamic_pricing_enabled: bool = True

@@ -59,6 +59,7 @@ services:
       - DYNAMIC_PRICING_ENABLED=true
       - ROUTING_PROVIDER_NAME=simple_distance
       - OSMNX_GRAPH_PATH=data/processed/routing/dundee_drive.graphml
+      - CHARGER_EVENT_SECRET=change_me_charger_event_secret
     depends_on:
       postgres:
         condition: service_healthy
