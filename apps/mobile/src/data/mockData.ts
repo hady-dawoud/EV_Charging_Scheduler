@@ -1,4 +1,4 @@
-import { User, Vehicle, ChargingStation, Session } from '../types';
+import { User, Vehicle, ChargingStation } from '../types';
 
 export const mockUser: User = {
   id: 'u1',
@@ -78,35 +78,5 @@ export const mockStations: ChargingStation[] = [
     status: 'open',
     address: 'Suez Road',
     waitingTime: '0 min',
-  },
-];
-
-export const mockSessions: Session[] = [
-  {
-    id: 's1',
-    stationName: 'ChillOut - Ring Road',
-    date: 'Today, 14:30',
-    cost: 'EGP 249.38',
-    energyAdded: '31.1 kWh',
-    duration: '12 min',
-    status: 'upcoming',
-  },
-  {
-    id: 's2',
-    stationName: 'City Stars Mall',
-    date: 'Oct 12, 2023',
-    cost: 'EGP 120.00',
-    energyAdded: '20.0 kWh',
-    duration: '45 min',
-    status: 'completed',
-  },
-  {
-    id: 's3',
-    stationName: 'TotalEnergies Maadi',
-    date: 'Oct 10, 2023',
-    cost: 'EGP 85.50',
-    energyAdded: '15.5 kWh',
-    duration: '1h 20m',
-    status: 'completed',
   },
 ];

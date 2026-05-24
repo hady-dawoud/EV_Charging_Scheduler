@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,14 @@ import {
   Animated,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Zap } from 'lucide-react-native';
 import { theme, webStyles } from '../theme';
+import { api } from '../services/api';
+import { authStorage } from '../services/authStorage';
+import { useAuthStore } from '../stores/authStore';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -20,20 +24,14 @@ export default function SplashScreen({ navigation }: any) {
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const buttonsAnim = useRef(new Animated.Value(40)).current;
   const buttonsOpacity = useRef(new Animated.Value(0)).current;
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const setSession = useAuthStore((state) => state.setSession);
+  const clearSession = useAuthStore((state) => state.clearSession);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    let isMounted = true;
+
+    const showButtons = () => {
       Animated.parallel([
         Animated.timing(buttonsAnim, {
           toValue: 0,
@@ -46,8 +44,57 @@ export default function SplashScreen({ navigation }: any) {
           useNativeDriver: true,
         }),
       ]).start();
+    };
+
+    const bootstrapSession = async () => {
+      try {
+        const refreshToken = await authStorage.getRefreshToken();
+
+        if (!refreshToken) {
+          clearSession();
+          return;
+        }
+
+        const tokens = await api.refresh(refreshToken, 'mobile-app');
+        await authStorage.saveRefreshToken(tokens.refreshToken);
+
+        const user = await api.getMe(tokens.accessToken);
+        setSession(user, tokens.accessToken);
+
+        if (isMounted) {
+          navigation.replace('Main');
+        }
+      } catch (e) {
+        console.error(e);
+        await authStorage.clearRefreshToken();
+        clearSession();
+      } finally {
+        if (isMounted) {
+          setIsCheckingSession(false);
+          showButtons();
+        }
+      }
+    };
+
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      void bootstrapSession();
     });
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [buttonsAnim, buttonsOpacity, clearSession, navigation, opacityAnim, scaleAnim, setSession]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,9 +116,12 @@ export default function SplashScreen({ navigation }: any) {
         </Text>
       </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.buttons,
+      {isCheckingSession ? (
+        <ActivityIndicator color={theme.colors.primary} />
+      ) : (
+        <Animated.View
+          style={[
+            styles.buttons,
           {
             opacity: buttonsOpacity,
             transform: [{ translateY: buttonsAnim }],
@@ -94,14 +144,9 @@ export default function SplashScreen({ navigation }: any) {
           <Text style={styles.secondaryBtnText}>Create Account</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.ghostBtn}
-          onPress={() => navigation.navigate('Main')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.ghostBtnText}>Continue as Guest</Text>
-        </TouchableOpacity>
-      </Animated.View>
+
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }

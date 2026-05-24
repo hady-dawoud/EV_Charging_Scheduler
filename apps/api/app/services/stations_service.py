@@ -1,72 +1,87 @@
-from app.mock_data import stations
+from __future__ import annotations
+
+from sqlalchemy.orm import Session
+
+from app.models.station import Station as StationModel
+from app.repositories.stations_repository import (
+    create_station_record,
+    delete_station_record,
+    get_station_record_by_id,
+    list_station_records,
+)
 from app.schemas.stations import Station, StationCreate, StationUpdate
 
 
+class StationAlreadyExistsError(ValueError):
+    pass
+
+
+def to_station_schema(station: StationModel) -> Station:
+    return Station.model_validate(station)
+
+
 def list_stations(
-    location: str | None = None,
+    db: Session,
+    *,
+    zone_id: str | None = None,
     available_only: bool = False,
+    public_only: bool = True,
+    include_excluded: bool = False,
 ) -> list[Station]:
-    results = [Station(**station) for station in stations]
-
-    if location:
-        results = [
-            station
-            for station in results
-            if station.location.lower() == location.lower()
-        ]
-
-    if available_only:
-        results = [
-            station
-            for station in results
-            if station.available_ports > 0
-        ]
-
-    return results
+    return [
+        to_station_schema(station)
+        for station in list_station_records(
+            db,
+            zone_id=zone_id,
+            available_only=available_only,
+            public_only=public_only,
+            include_excluded=include_excluded,
+        )
+    ]
 
 
-def get_station_by_id(station_id: int) -> Station | None:
-    for station in stations:
-        if station["id"] == station_id:
-            return Station(**station)
-    return None
+def get_station_by_id(db: Session, station_id: str) -> Station | None:
+    station = get_station_record_by_id(db, station_id)
+
+    if station is None:
+        return None
+
+    return to_station_schema(station)
 
 
-def create_station(station_in: StationCreate) -> Station:
-    next_id = max((station["id"] for station in stations), default=0) + 1
+def create_station(db: Session, station_in: StationCreate) -> Station:
+    existing = get_station_record_by_id(db, station_in.station_id)
 
-    new_station = Station(
-        id=next_id,
-        name=station_in.name,
-        location=station_in.location,
-        available_ports=station_in.available_ports,
-        price_per_kwh=station_in.price_per_kwh,
-    )
+    if existing is not None:
+        raise StationAlreadyExistsError("Station already exists")
 
-    stations.append(new_station.model_dump())
-    return new_station
+    station = StationModel(**station_in.model_dump())
+    created = create_station_record(db, station)
+
+    return to_station_schema(created)
 
 
-def update_station(station_id: int, station_in: StationUpdate) -> Station | None:
-    for index, station in enumerate(stations):
-        if station["id"] == station_id:
-            updated_station = Station(
-                id=station_id,
-                name=station_in.name,
-                location=station_in.location,
-                available_ports=station_in.available_ports,
-                price_per_kwh=station_in.price_per_kwh,
-            )
-            stations[index] = updated_station.model_dump()
-            return updated_station
+def update_station(
+    db: Session,
+    station_id: str,
+    station_in: StationUpdate,
+) -> Station | None:
+    station = get_station_record_by_id(db, station_id)
 
-    return None
+    if station is None:
+        return None
+
+    updates = station_in.model_dump(exclude_unset=True)
+
+    for key, value in updates.items():
+        setattr(station, key, value)
+
+    db.add(station)
+    db.commit()
+    db.refresh(station)
+
+    return to_station_schema(station)
 
 
-def delete_station(station_id: int) -> bool:
-    for index, station in enumerate(stations):
-        if station["id"] == station_id:
-            del stations[index]
-            return True
-
-    return False
+def delete_station(db: Session, station_id: str) -> bool:
+    return delete_station_record(db, station_id)

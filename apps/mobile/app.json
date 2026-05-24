@@ -1,21 +1,4 @@
 {
-  "expo": {
-    "name": "ev-smart-charging-app",
-    "slug": "ev-smart-charging",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#0A0B0D"
-    },
-    "ios": {
-      "supportsTablet": false
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#0A0B0D"
-      }
-    },
-    "web": {}
-  }
+  "name": "EvSmartChargingMobile",
+  "displayName": "EV Smart Charging"
 }

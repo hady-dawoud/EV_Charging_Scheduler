@@ -11,18 +11,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
+import { authStorage } from '../services/authStorage';
+import { useAuthStore } from '../stores/authStore';
 
 export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('alex.mercer@example.com');
+  const [password, setPassword] = useState('password123');
+  const [error, setError] = useState<string | null>(null);
+  const setSession = useAuthStore((state) => state.setSession);
 
   const handleLogin = async () => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      await api.login();
+      const session = await api.login({
+        email: email.trim(),
+        password,
+        device_id: 'mobile-app',
+      });
+
+      await authStorage.saveRefreshToken(session.refreshToken);
+      setSession(session.user, session.accessToken);
       navigation.replace('Main');
     } catch (e) {
       console.error(e);
+      setError('Invalid email or password.');
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +62,8 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.input}
             placeholder="Email address"
             placeholderTextColor={theme.colors.textMuted}
-            defaultValue="alex.mercer@example.com"
+            value={email}
+            onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -59,7 +76,8 @@ export default function LoginScreen({ navigation }: any) {
             placeholder="Password"
             placeholderTextColor={theme.colors.textMuted}
             secureTextEntry={!showPassword}
-            defaultValue="password123"
+            value={password}
+            onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
             {showPassword ? (
@@ -69,6 +87,8 @@ export default function LoginScreen({ navigation }: any) {
             )}
           </TouchableOpacity>
         </View>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <TouchableOpacity style={styles.forgotRow}>
           <Text style={styles.forgotText}>Forgot password?</Text>
@@ -170,6 +190,11 @@ const styles = StyleSheet.create({
   },
   forgotRow: {
     alignSelf: 'flex-end',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    marginBottom: theme.spacing.sm,
   },
   forgotText: {
     color: theme.colors.primary,

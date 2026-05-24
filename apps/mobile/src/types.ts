@@ -1,8 +1,33 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export interface User {
   id: string;
   name: string;
   email: string;
 }
+
+
+export type LoginRequest = {
+  email: string;
+  password: string;
+  device_id: string;
+};
+
+export type RegisterRequest = {
+  full_name: string;
+  email: string;
+  password: string;
+};
+
+export type AuthTokens = {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+};
+
+export type AuthResponse = AuthTokens & {
+  user: User;
+};
 
 export interface Vehicle {
   id: string;
@@ -30,16 +55,6 @@ export interface ChargingStation {
   status: 'open' | 'closed';
   address: string;
   waitingTime: string;
-}
-
-export interface Session {
-  id: string;
-  stationName: string;
-  date: string;
-  cost: string;
-  energyAdded: string;
-  duration: string;
-  status: 'completed' | 'active' | 'upcoming';
 }
 
 export type RecommendationPreferenceMode = 'cheapest' | 'fastest' | 'closest';
@@ -101,6 +116,70 @@ export type UiStationRecommendation = {
   reasonTags: string[];
 };
 
+
+export type ApiReservation = {
+  reservation_id: string;
+  status: 'confirmed' | 'active' | 'completed' | 'cancelled' | 'expired' | string;
+  station_id: string;
+  station_name: string;
+  client_request_id: string | null;
+  request_id: string | null;
+  recommendation_rank: number | null;
+  reserved_start_at: string;
+  reserved_until: string;
+  cancelled_at: string | null;
+  estimated_cost_gbp: number | null;
+  estimated_duration_minutes: number | null;
+  charger_label: string | null;
+  distance_km: number | null;
+  score: number | null;
+  created_at: string;
+};
+
+export type ApiReservationsResponse = {
+  reservations: ApiReservation[];
+};
+
+export type CreateReservationRequest = {
+  client_request_id: string | null;
+  request_id: string | null;
+  station_id: string;
+  recommendation_rank: number;
+  reserved_start_at: string;
+  reserved_until?: string | null;
+  estimated_cost_gbp?: number | null;
+  estimated_duration_minutes?: number | null;
+  charger_label?: string | null;
+  distance_km?: number | null;
+  score?: number | null;
+};
+
+
+export type ApiChargingSession = {
+  session_id: string;
+  status: 'active' | 'completed' | 'stale_active' | string;
+  station_id: string;
+  station_name: string;
+  reservation_id: string | null;
+  client_request_id: string | null;
+  request_id: string | null;
+  started_at: string;
+  ended_at: string | null;
+  energy_kwh: number;
+  cost_total: number | null;
+  connector_type: string | null;
+  charger_power_kw: number | null;
+  created_at: string;
+};
+
+export type ApiChargingSessionsResponse = {
+  sessions: ApiChargingSession[];
+};
+
+export type ApiActiveChargingSessionResponse = {
+  session: ApiChargingSession | null;
+};
+
 export type ReservationRecord = {
   id: string;
   station: UiStationRecommendation;
@@ -108,11 +187,17 @@ export type ReservationRecord = {
   status: 'reserved' | 'past';
 };
 
+export type MainTabsParamList = {
+  Home: undefined;
+  Sessions: undefined;
+  Profile: undefined;
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Signup: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
   Results: { result: ApiRecommendationsResponse };

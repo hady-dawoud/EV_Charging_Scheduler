@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { StatusBar, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
 
 import { theme } from './src/theme';
+import type { RootStackParamList } from './src/types';
 import MainTabs from './src/components/MainTabs';
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -15,7 +15,7 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import StationDetailsScreen from './src/screens/StationDetailsScreen';
 import ReservationConfirmScreen from './src/screens/ReservationConfirmScreen';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
@@ -33,7 +33,7 @@ export default function App() {
           },
         }}
       >
-        <StatusBar style="light" />
+        <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
         <Stack.Navigator
           initialRouteName="Splash"
           screenOptions={{ headerShown: false, animation: 'fade' }}
@@ -57,8 +57,5 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    ...(Platform.OS === 'web'
-      ? { height: '100vh' as any, overflow: 'hidden' as any }
-      : {}),
   },
 });

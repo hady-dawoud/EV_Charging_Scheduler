@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16
+    container_name: ev_postgres
+    environment:
+      POSTGRES_DB: ev_smart_charging
+      POSTGRES_USER: ev_user
+      POSTGRES_PASSWORD: change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ev_user -d ev_smart_charging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   runtime:
     build:
       context: .
@@ -35,9 +53,19 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONPATH=/app:/app/packages/ev_core/src
-      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000
+      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+      - DATABASE_URL=postgresql+psycopg://ev_user:change_me@postgres:5432/ev_smart_charging
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_to_a_long_random_secret}
+      - RECOMMENDATION_POLICY_NAME=weighted_score
+      - DYNAMIC_PRICING_ENABLED=true
+      - ROUTING_PROVIDER_NAME=simple_distance
+      - OSMNX_GRAPH_PATH=data/processed/routing/dundee_drive.graphml
+      - CHARGER_EVENT_SECRET=${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}
     depends_on:
-      - runtime
+      postgres:
+        condition: service_healthy
+      runtime:
+        condition: service_started
     restart: unless-stopped
 
   dashboard:
@@ -62,9 +90,13 @@ services:
       dockerfile: Dockerfile.mobile
       args:
         EXPO_PUBLIC_API_BASE_URL: http://smartevcharging.uaenorth.cloudapp.azure.com/api
+        VITE_API_BASE_URL: http://smartevcharging.uaenorth.cloudapp.azure.com/api
     container_name: ev_mobile
     ports:
       - "3000:80"
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  postgres_data:
