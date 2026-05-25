@@ -145,14 +145,22 @@
 ## MARL
 
 - What MARL framework/checkpoint format should be used?
-  - Not verified. No current MARL checkpoint loading path was found.
-  - Need decision among likely options such as RLlib, PettingZoo/SuperSuit, CleanRL-style PyTorch modules, Stable-Baselines-style single-agent wrappers, or a custom PyTorch policy.
+  - Current scope: do not add MARL before the single-agent learned-policy path is proven.
+  - Intended plug-in architecture is policy-based: offline training -> checkpoint outside git -> checkpoint-backed policy class -> `PolicyRegistry` registration -> `RecommendationService` selection -> deterministic fallback if checkpoint is missing.
+  - First learned model should be single-agent MaskablePPO. MARL comes later after the single-agent path has stable evaluation and fallback behavior.
+  - Still open: final MARL framework/checkpoint format. Likely options remain RLlib, PettingZoo/SuperSuit, CleanRL-style PyTorch modules, Stable-Baselines-style wrappers where applicable, or a custom PyTorch policy.
 
 - What is the observation/action contract for MARL inference?
-  - Not verified.
+  - Not verified for MARL.
+  - RL/MARL should consume repo-built candidate/runtime features and return rankings or station selections through the recommender policy interface, not change API/mobile contracts.
   - Vehicle profile support has started, but MARL still needs stable candidate features, runtime context, action semantics, charging-curve treatment, and fallback behavior before adding checkpoint inference.
 
 - Should MARL rank all candidates or choose a station directly?
   - Current runtime separates candidate ranking from allocation policy selection during simulation.
-  - Need architectural decision before training/inference integration.
+  - For the first single-agent MaskablePPO path, use the masked station-selection contract from PR3 and adapt the selected station into the recommender policy path.
+  - Need architectural decision before MARL training/inference integration.
+
+- Can offline training happen outside this repo workspace?
+  - Yes, on Colab/Kaggle or similar, if it installs and imports this repo code and trains against the repo environment/scenario sampler.
+  - Checkpoints and large run artifacts should stay outside git; only lightweight loader/config/evaluation code should be committed later.
 

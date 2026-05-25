@@ -1,6 +1,8 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from ev_core.contracts.requests import normalize_preference_mode
 
 
 class MobileRecommendationRequest(BaseModel):
@@ -21,3 +23,8 @@ class MobileRecommendationRequest(BaseModel):
     latest_finish_minutes_from_now: int = Field(default=90, ge=5, le=1440)
     zone_id: str | None = Field(default=None, max_length=255)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("preference_mode", mode="before")
+    @classmethod
+    def normalize_preference_mode_value(cls, value: str) -> str:
+        return normalize_preference_mode(value)

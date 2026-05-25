@@ -83,6 +83,25 @@ Status update:
 - PR3 has now added that Gymnasium single-agent masked environment skeleton.
 - The next PR should add MaskablePPO training and baseline-evaluation scripts.
 
+## Runtime Recommender Plug-In Architecture
+
+Learned inference should be added as a recommender policy, not as a replacement for API/mobile/dashboard contracts.
+
+Target path:
+
+```text
+offline training
+-> checkpoint saved outside git
+-> RL/MARL policy class loads checkpoint
+-> policy registered in PolicyRegistry
+-> RecommendationService can select it like other policies
+-> fallback to deterministic policy if checkpoint missing
+```
+
+The first checkpoint-backed policy should be single-agent MaskablePPO. MARL should come later, after single-agent training/evaluation/fallback behavior is stable. The future policy should consume the same candidate contexts built by `DundeeEnv`/`CandidateBuilder` and return the same `RecommendationOption` / `RecommendationResponse` shape already used by the app.
+
+Offline training can run on Colab/Kaggle if it installs this repo and imports the repo environment/scenario sampler directly. Checkpoints and large run outputs should remain outside git; later PRs should commit only the lightweight loader, registry wiring, config, and evaluation scripts.
+
 ## Why Masked RL, Not Plain DQN
 
 The action space is naturally “choose a station” for each decision point, so a discrete action formulation is appropriate. The problem is that many stations are invalid at any given time.

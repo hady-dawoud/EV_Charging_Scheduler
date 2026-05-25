@@ -17,7 +17,17 @@ SourceType = Literal["replay_background", "synthetic_background", "external_live
 MAX_BATTERY_KWH = 250.0
 MAX_VEHICLE_AC_KW = 50.0
 MAX_VEHICLE_DC_KW = 500.0
+SUPPORTED_PREFERENCE_MODES = {"closest", "cheapest", "fastest"}
 SUPPORTED_CHARGER_TYPES = {"any", "ac", "dc", "rapid", "ultrarapid", "ultra_rapid", "ultra rapid"}
+
+
+def normalize_preference_mode(value: str) -> str:
+    """Normalize app/API optimization labels to backend policy names."""
+
+    normalized = str(value or "").strip().lower()
+    if normalized not in SUPPORTED_PREFERENCE_MODES:
+        raise ValueError("preference_mode must be one of closest, cheapest, or fastest.")
+    return normalized
 
 
 class ExternalChargingRequest(BaseModel):
@@ -61,6 +71,11 @@ class ExternalChargingRequest(BaseModel):
         if not 0.0 <= value <= 100.0:
             raise ValueError("SOC values must be between 0 and 100.")
         return value
+
+    @field_validator("preference_mode", mode="before")
+    @classmethod
+    def normalize_preference_mode_value(cls, value: str) -> str:
+        return normalize_preference_mode(value)
 
     @field_validator("battery_kwh")
     @classmethod
@@ -161,4 +176,5 @@ __all__ = [
     "ExternalChargingRequest",
     "PreferenceMode",
     "SourceType",
+    "normalize_preference_mode",
 ]

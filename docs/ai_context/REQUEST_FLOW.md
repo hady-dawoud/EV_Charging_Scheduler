@@ -95,7 +95,8 @@ These generated requests are not replayed historical sessions and use the same r
 ## API Runtime Service
 
 8. `apps/api/app/services/recommendations_service.py`
-   - `generate_recommendations(request)` returns `inject_live_request(request)`.
+   - `generate_recommendations(request)` normalizes `request.preference_mode` to the matching recommender policy name (`closest`, `cheapest`, or `fastest`) unless the caller supplies an explicit `recommendation_policy_name`.
+   - Calls `inject_live_request(request, recommendation_policy_name=policy_name)`.
 
 9. `apps/api/app/services/runtime_service.py`
    - `get_runtime_manager()` returns cached `RuntimeManager(repo_root=REPO_ROOT)`.

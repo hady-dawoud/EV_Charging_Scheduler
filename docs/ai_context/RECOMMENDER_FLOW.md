@@ -8,6 +8,14 @@ The current recommendation output is deterministic weighted heuristic ranking. I
 
 Runtime allocation baselines can include stable pseudo-random choice during simulation, but that is separate from the recommender ranker used to score candidate stations.
 
+For app/API live recommendation calls, `apps/api/app/services/recommendations_service.py` now maps normalized optimization preferences to deterministic recommender policies:
+
+- `Cheapest` / `cheapest` -> `cheapest`
+- `Fastest` / `fastest` -> `fastest`
+- `Closest` / `closest` -> `closest`
+
+The original `preference_mode` remains on the runtime request for compatibility and debugging; the policy name is selected at the API/service boundary rather than inside rankers.
+
 ## Candidate Construction
 
 Candidate construction is owned by `packages/ev_core/src/ev_core/recommender/candidates.py`.
@@ -262,4 +270,23 @@ Congestion notes:
 - no ranked options: `No feasible station matched the request window and charger constraints.`
 - top wait over 30 minutes: notable waiting time note.
 - top transformer headroom below 50 kW: limited headroom note.
+
+## Future RL/MARL Policy Plug-In Path
+
+RL/MARL inference should plug into the existing recommender as another policy, not replace the API/mobile contracts or the candidate-building path.
+
+Intended sequence:
+
+```text
+offline training
+-> checkpoint saved outside git
+-> RL/MARL policy class loads checkpoint
+-> policy registered in PolicyRegistry
+-> RecommendationService can select it like other policies
+-> fallback to deterministic policy if checkpoint missing
+```
+
+The first learned policy should be single-agent MaskablePPO using the PR3 masked station-selection environment. MARL comes later, after single-agent evaluation is stable. Colab/Kaggle training is acceptable if the notebook installs and imports this repo code directly, trains against the repo environment/scenario sampler, and saves only checkpoints or evaluation artifacts outside git.
+
+The policy registry should keep deterministic policies (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`) available as fallbacks and baselines. A future checkpoint-backed policy should rank the same candidate contexts and return the same `RecommendationResponse` shape used by the mobile app and dashboard today.
 

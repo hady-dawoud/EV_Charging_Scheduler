@@ -20,7 +20,7 @@ Last verified against repo state: 2026-05-08.
 - `apps/api/app/main.py`: creates the FastAPI app, reads comma-separated `CORS_ORIGINS` from the environment with local defaults, configures CORS, includes system, station, and recommendation routers.
 - `apps/api/app/bootstrap_paths.py`: locates repo root and adds `packages/ev_core/src` plus repo root to `sys.path`.
 - `apps/api/app/routers/recommendations.py`: defines `POST /recommendations`; calls `generate_recommendations`.
-- `apps/api/app/services/recommendations_service.py`: thin wrapper over `inject_live_request`.
+- `apps/api/app/services/recommendations_service.py`: maps normalized app/API `preference_mode` values (`closest`, `cheapest`, `fastest`) to the matching recommender policy name unless an explicit policy override is supplied, then delegates to `inject_live_request`.
 - `apps/api/app/services/runtime_service.py`: cached `RuntimeManager`, runtime-start guard, runtime state/events/recommendation accessors. It now reads `DYNAMIC_PRICING_ENABLED`, `ROUTING_PROVIDER_NAME`, and `OSMNX_GRAPH_PATH` in addition to `RECOMMENDATION_POLICY_NAME` and optional `TOPOLOGY_SCENARIO_ID`.
 - `apps/api/app/schemas/recommendations.py`: aliases API schemas to `ev_core.contracts.requests.ExternalChargingRequest` and `ev_core.contracts.responses.RecommendationResponse`.
 - `apps/api/app/routers/system.py`: root, health, runtime status/state/events/recent recommendations endpoints.
@@ -86,6 +86,8 @@ Last verified against repo state: 2026-05-08.
   - `AllocationDecision`, `AllocationPolicy`.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
+- `packages/ev_core/src/ev_core/recommender/policy_registry.py`
+  - `PolicyRegistry` resolves deterministic recommendation policy names (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`). Future offline-trained RL/MARL inference should register here as a policy and fall back to a deterministic policy if a checkpoint is unavailable.
 - `packages/ev_core/src/ev_core/recommender/candidates.py`
   - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. Distance still enters as a callback, so candidate construction is decoupled from the concrete routing implementation. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent. Candidate pricing and metadata are now request-aware, using the same selected connector/power path as duration.
 - `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`
@@ -132,6 +134,8 @@ Last verified against repo state: 2026-05-08.
   - `rewards.py`: `StationSelectionReward` and RL-side `RewardBreakdown` for the first stable served/invalid/missed plus cost-distance-wait-duration-headroom reward contract.
   - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; no forecasting model is implemented yet.
   - `metrics.py`: helper functions for aggregating deterministic evaluation outputs.
+
+Future learned-policy integration remains out of this implementation: first train single-agent MaskablePPO offline, save checkpoints outside git, load them through a checkpoint-backed policy class, register that policy in `PolicyRegistry`, and let `RecommendationService` select it through the same policy-name path. MARL should come later and should not replace API/mobile/dashboard response contracts.
 - `scripts/generate_synthetic_live_requests.py`
   - CLI for writing synthetic-live request JSONL to `outputs/runtime/synthetic_live_requests.jsonl`.
 - `scripts/verify_synthetic_live_requests.py`
