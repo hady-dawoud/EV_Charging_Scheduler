@@ -27,11 +27,15 @@ Implemented or partially implemented:
 - Runtime storage under `outputs/runtime`.
 - Docker files and `docker-compose.yml` for containerized API, dashboard, runtime, and mobile web build.
 - Nginx reverse-proxy deployment using the Azure VM DNS name.
+- Release-signed Android APK `v0.1.2` for tester installs.
 
 Current truth:
 
 - `POST /recommendations` exists and injects a live external charging request into the simulator runtime.
 - The mobile app calls the backend through the deployed `/api` reverse-proxy path.
+- The recommended Android tester build is GitHub Release `v0.1.2`, asset `ev-smart-charging-v0.1.2.apk`.
+- The `v0.1.2` APK is release-signed, verified with `apksigner`, and uses Android `versionCode 3` / `versionName "0.1.2"`.
+- `v0.1.0` and `v0.1.1` are older APK releases and should not be recommended to testers.
 - Recommendation output is currently deterministic weighted heuristic scoring, not MARL/RL inference.
 - MARL is the long-term learning direction, after deterministic baselines and runtime behavior are stable.
 - Federated Learning is not part of the active implementation direction.
@@ -107,6 +111,18 @@ The deployed mobile app is available at:
 ```text
 http://smartevcharging.uaenorth.cloudapp.azure.com/
 ```
+
+Recommended Android tester APK:
+
+```text
+GitHub Release: v0.1.2
+Asset: ev-smart-charging-v0.1.2.apk
+SHA256: EA8D2091694329FF4E6836EB269694AC2A6EBCEBC903C2747320E4F20E1BD99B
+Android versionCode: 3
+Android versionName: 0.1.2
+```
+
+Use `docs/android_release_runbook.md` for release verification and publishing notes. Do not commit APK files, `release-artifacts/`, build outputs, private keystores, Gradle signing secrets, or local secret files.
 
 ### Backend/API gateway
 
