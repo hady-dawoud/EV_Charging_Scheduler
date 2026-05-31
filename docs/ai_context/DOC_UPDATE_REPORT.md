@@ -4,6 +4,16 @@ Last verified against repo state: 2026-05-02, `HEAD` commit `53788d2`.
 
 ## Update Summary
 
+2026-05-31 Android release documentation update:
+
+- GitHub Release `v0.1.2` now exists and is the recommended Android APK for testers.
+- APK asset: `ev-smart-charging-v0.1.2.apk`.
+- The APK is release-signed and verified with `apksigner`.
+- Android metadata is `versionCode 3` and `versionName "0.1.2"`.
+- APK SHA256 is `EA8D2091694329FF4E6836EB269694AC2A6EBCEBC903C2747320E4F20E1BD99B`.
+- `v0.1.0` and `v0.1.1` are older APK releases and should not be recommended for new tester installs.
+- Added `docs/android_release_runbook.md` with build, verification, artifact, and GitHub Release hygiene notes.
+
 The delta since the previous documentation pass is deployment/configuration oriented. The repo added Dockerfiles, `docker-compose.yml`, root `requirements.txt`, `.dockerignore`, configurable API CORS origins, and a mobile `EXPO_PUBLIC_API_BASE_URL` override. No product-code changes were found in `packages/ev_core`, `services/sim_runtime`, dashboard data flow, recommendation ranking, candidate construction, runtime storage, request schemas, MARL/RL integration, or tests.
 
 ## Files Changed In Repo
