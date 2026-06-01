@@ -5,19 +5,59 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
   Platform,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Zap } from 'lucide-react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
 import { useAuthStore } from '../stores/authStore';
 
-const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
+const SPLASH_GLOW_SIZE = 384;
+const SPLASH_GLOW_BLUR = 100;
+const NATIVE_GLOW_EXTRA = 116;
+const NATIVE_GLOW_CANVAS = SPLASH_GLOW_SIZE + NATIVE_GLOW_EXTRA * 2;
+const NATIVE_GLOW_INSET = (NATIVE_GLOW_CANVAS - SPLASH_GLOW_SIZE) / 2;
+
+function GlowBackground() {
+  const { height } = useWindowDimensions();
+
+  if (isWeb) {
+    return <View style={[styles.webGlow, { filter: `blur(${SPLASH_GLOW_BLUR}px)` } as any]} />;
+  }
+
+  return (
+    <Svg
+      width={NATIVE_GLOW_CANVAS}
+      height={NATIVE_GLOW_CANVAS}
+      viewBox={`0 0 ${NATIVE_GLOW_CANVAS} ${NATIVE_GLOW_CANVAS}`}
+      style={[styles.nativeGlow, { top: height * 0.3 - NATIVE_GLOW_INSET }]}
+      pointerEvents="none"
+    >
+      <Defs>
+        <RadialGradient id="splashGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+          <Stop offset="0%" stopColor={theme.colors.primary} stopOpacity="0.19" />
+          <Stop offset="34%" stopColor={theme.colors.primary} stopOpacity="0.156" />
+          <Stop offset="56%" stopColor={theme.colors.primary} stopOpacity="0.102" />
+          <Stop offset="78%" stopColor={theme.colors.primary} stopOpacity="0.041" />
+          <Stop offset="100%" stopColor={theme.colors.primary} stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Circle
+        cx={NATIVE_GLOW_CANVAS / 2}
+        cy={NATIVE_GLOW_CANVAS / 2}
+        r={NATIVE_GLOW_CANVAS / 2}
+        fill="url(#splashGlow)"
+      />
+    </Svg>
+  );
+}
 
 export default function SplashScreen({ navigation }: any) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -98,8 +138,7 @@ export default function SplashScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Glow background */}
-      <View style={[styles.glow, isWeb ? { filter: 'blur(100px)' } as any : {}]} />
+      <GlowBackground />
 
       <Animated.View
         style={[
@@ -107,8 +146,10 @@ export default function SplashScreen({ navigation }: any) {
           { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={[styles.iconBox, webStyles.neonGlow]}>
-          <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
+        <View style={styles.iconGlowFrame}>
+          <View style={[styles.iconBox, webStyles.neonGlow, !isWeb && styles.nativeIconBox]}>
+            <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
+          </View>
         </View>
         <Text style={styles.title}>EV APP</Text>
         <Text style={styles.subtitle}>
@@ -128,13 +169,14 @@ export default function SplashScreen({ navigation }: any) {
           },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.primaryBtn, webStyles.neonGlow]}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
+          frameStyle={styles.primaryBtnFrame}
           onPress={() => navigation.navigate('Login')}
           activeOpacity={0.85}
         >
           <Text style={styles.primaryBtnText}>Sign In</Text>
-        </TouchableOpacity>
+        </NeonButton>
 
         <TouchableOpacity
           style={[styles.secondaryBtn, webStyles.glass]}
@@ -159,7 +201,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.lg,
   },
-  glow: {
+  webGlow: {
     position: 'absolute',
     width: 384,
     height: 384,
@@ -168,12 +210,23 @@ const styles = StyleSheet.create({
     top: '30%',
     alignSelf: 'center',
   },
+  nativeGlow: {
+    position: 'absolute',
+    width: NATIVE_GLOW_CANVAS,
+    height: NATIVE_GLOW_CANVAS,
+    alignSelf: 'center',
+  },
   logoSection: {
     alignItems: 'center',
     marginBottom: 80,
   },
+  iconGlowFrame: {
+    width: 96,
+    height: 96,
+    marginBottom: theme.spacing.lg,
+    overflow: 'visible',
+  },
   iconBox: {
-    ...theme.neonGlow,
     width: 96,
     height: 96,
     borderRadius: 28,
@@ -182,7 +235,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.lg,
+    zIndex: 1,
+  },
+  nativeIconBox: {
+    backgroundColor: '#17191B',
+    borderColor: '#333538',
   },
   title: {
     color: theme.colors.text,
@@ -202,13 +259,19 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: theme.spacing.md,
   },
+  primaryBtnFrame: {
+    width: '100%',
+    height: 56,
+    marginBottom: theme.spacing.md,
+    overflow: 'visible',
+  },
   primaryBtn: {
     backgroundColor: theme.colors.primary,
     height: 56,
     borderRadius: theme.radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    overflow: 'visible',
   },
   primaryBtnText: {
     color: '#000',

@@ -253,7 +253,7 @@ function ReservationCard({ reservation }: ReservationCardProps) {
 
   return (
     <View style={[styles.upcomingCard, webStyles.glass]}>
-      <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
+      <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : webStyles.neonGlowSmall]} />
       <View style={styles.upcomingHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.upcomingName}>{reservation.station_name}</Text>

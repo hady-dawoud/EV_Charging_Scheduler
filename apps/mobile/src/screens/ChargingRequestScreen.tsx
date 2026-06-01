@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import {
   RecommendationChargerType,
@@ -110,14 +111,14 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.primaryBtn, webStyles.neonGlow]}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
           onPress={handleFindRecommendations}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
           <Text style={styles.primaryBtnText}>Find Best Options</Text>
-        </TouchableOpacity>
+        </NeonButton>
       </ScrollView>
     </SafeAreaView>
   );

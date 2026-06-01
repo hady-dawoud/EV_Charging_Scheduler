@@ -10,7 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Zap, Car } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { theme } from '../theme';
+import { NeonButton } from '../components/NeonButton';
+import { theme, webStyles } from '../theme';
 import { mockVehicle } from '../data/mockData';
 
 const isWeb = Platform.OS === 'web';
@@ -22,17 +23,6 @@ export default function HomeScreen({ navigation }: any) {
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
   const SVG_SIZE = 220;
 
-  // Web-only styles (bypassing StyleSheet.create which may strip CSS props)
-  const webGlass: any = isWeb
-    ? { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
-    : {};
-  const webNeonGlowSmall: any = isWeb
-    ? { boxShadow: '0 0 8px #00FF00' }
-    : {};
-  const webNeonGlow: any = isWeb
-    ? { boxShadow: '0 0 20px rgba(0, 255, 0, 0.3)' }
-    : {};
-
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
@@ -43,7 +33,7 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.logoText}>EV APP</Text>
           </View>
           <View style={styles.badge}>
-            <View style={[styles.badgeDot, webNeonGlowSmall]} />
+            <View style={[styles.badgeDot, webStyles.neonGlowSmall]} />
             <Text style={styles.badgeText}>Vehicle Connected</Text>
           </View>
         </View>
@@ -51,7 +41,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Battery Ring */}
         <View style={styles.ringWrapper}>
           <View style={styles.outerRing} />
-          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : {}}>
+          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : webStyles.neonGlowSmall}>
             <Svg width={SVG_SIZE} height={SVG_SIZE} viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}>
               <Circle
                 cx={SVG_SIZE / 2}
@@ -83,7 +73,7 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* Connected Vehicle */}
-        <View style={[styles.vehicleCard, webGlass]}>
+        <View style={[styles.vehicleCard, webStyles.glass]}>
           <Text style={styles.cardLabel}>CONNECTED VEHICLE</Text>
           <View style={styles.vehicleRow}>
             <View style={styles.vehicleIcon}>
@@ -97,14 +87,14 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* CTA */}
-        <TouchableOpacity
-          style={[styles.primaryBtn, isWeb ? { boxShadow: '0 0 20px rgba(0, 255, 0, 0.25)' } as any : {}]}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
           onPress={() => navigation.navigate('ChargingRequest')}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
           <Text style={styles.primaryBtnText}>Find Chargers</Text>
-        </TouchableOpacity>
+        </NeonButton>
       </View>
     </SafeAreaView>
   );
