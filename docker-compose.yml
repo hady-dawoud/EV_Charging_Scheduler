@@ -5,9 +5,9 @@ services:
     environment:
       POSTGRES_DB: ev_smart_charging
       POSTGRES_USER: ev_user
-      POSTGRES_PASSWORD: change_me
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,14 +47,14 @@ services:
       dockerfile: Dockerfile.api
     container_name: ev_api
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./outputs/runtime:/app/outputs/runtime
       - ./data:/app/data
     environment:
       - PYTHONPATH=/app:/app/packages/ev_core/src
       - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
-      - DATABASE_URL=postgresql+psycopg://ev_user:change_me@postgres:5432/ev_smart_charging
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_to_a_long_random_secret}
       - RECOMMENDATION_POLICY_NAME=weighted_score
       - DYNAMIC_PRICING_ENABLED=true
@@ -74,7 +74,7 @@ services:
       dockerfile: Dockerfile.dashboard
     container_name: ev_dashboard
     ports:
-      - "8501:8501"
+      - "127.0.0.1:8501:8501"
     volumes:
       - ./outputs/runtime:/app/outputs/runtime
       - ./data:/app/data
@@ -93,7 +93,7 @@ services:
         VITE_API_BASE_URL: https://smartevcharging.uaenorth.cloudapp.azure.com/api
     container_name: ev_mobile
     ports:
-      - "3000:80"
+      - "127.0.0.1:3000:80"
     depends_on:
       - api
     restart: unless-stopped
