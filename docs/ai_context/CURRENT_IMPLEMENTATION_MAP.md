@@ -182,3 +182,9 @@ Future learned-policy integration remains out of this implementation: first trai
 - `tests/pricing/test_dundee_tariffs.py`: charger-class tariff classification and same-multiplier price ordering.
 - `tests/sim_runtime/test_synthetic_live_runtime.py`: verifies a generated synthetic-live request can use the runtime recommendation path.
 - `tests/recommender/*`, `tests/contracts/*`, `tests/vehicles/*`, `tests/api/*`, and `tests/sim_runtime/*`: focused coverage added across the recommendation refactor series.
+
+## Config Boundaries (PR2)
+
+- `packages/ev_core/src/ev_core/config/*`: additive configuration contracts for runtime, recommendation, routing, pricing, topology, training, deployment, and shared project paths.
+- `ev_core.config` is import-safe and does not depend on FastAPI, Streamlit, dashboard modules, or runtime storage internals.
+- API runtime config parsing in `apps/api/app/services/runtime_service.py` now uses `ev_core.config` env helpers while preserving existing defaults and behavior.

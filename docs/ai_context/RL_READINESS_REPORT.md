@@ -413,3 +413,15 @@ Recommended request counts by horizon:
   - stress: `2012-2515`
 
 These episode sizes should be treated as target planning ranges, not default runtime overload settings.
+
+## PR2 Configuration Status
+
+Readiness scaffolding now includes centralized config contracts:
+- offline training outputs can be configured via `RLTrainingConfig` (`RL_CHECKPOINT_DIR`, `RL_EVALUATION_DIR`, `RL_TENSORBOARD_DIR`, `RL_FIGURES_DIR`)
+- future checkpoint inference can be configured via `RLDeploymentConfig` (`RL_POLICY_CHECKPOINT_PATH`, `RL_POLICY_FAIL_CLOSED`, `RL_FALLBACK_POLICY_NAME`)
+
+What is still intentionally not implemented:
+- no checkpoint-backed policy inference
+- no MaskablePPO training implementation
+- no MARL implementation
+- no benchmark dependency integration (EV2Gym/SustainGym remain future adapters)

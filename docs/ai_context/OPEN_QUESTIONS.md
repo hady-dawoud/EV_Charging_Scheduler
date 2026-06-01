@@ -164,3 +164,10 @@
   - Yes, on Colab/Kaggle or similar, if it installs and imports this repo code and trains against the repo environment/scenario sampler.
   - Checkpoints and large run artifacts should stay outside git; only lightweight loader/config/evaluation code should be committed later.
 
+
+## Configuration Rollout
+
+- Shared config contracts now exist in `ev_core.config` with env parsing helpers for runtime/recommendation/routing/pricing/topology/training/deployment.
+- Open question: where to incrementally adopt `EVSmartChargingConfig` beyond API runtime bootstrap (for example runtime manager CLI/demo entry points) without behavior drift.
+- Open question: when to introduce validation strictness tiers for env parsing in production deployments.
+- Open question: exact rollout plan for wiring `RLDeploymentConfig` into `PolicyRegistry` with deterministic fallback guarantees.

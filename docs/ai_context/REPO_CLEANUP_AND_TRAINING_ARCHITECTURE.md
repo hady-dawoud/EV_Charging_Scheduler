@@ -51,3 +51,26 @@ Planned follow-ups after this boundary PR:
 - Forecasting integration for training features.
 - Benchmark adapters.
 - Deployment/checkpoint loading and inference wiring.
+
+## PR2 Shared Configuration Boundaries
+
+This PR adds a shared, dependency-light config package at `ev_core.config`.
+
+Added contracts:
+- `ProjectPathsConfig`
+- `DigitalTwinRuntimeConfig`
+- `RecommendationConfig`
+- `RoutingConfig`
+- `PricingConfig`
+- `TopologyConfig`
+- `RLTrainingConfig`
+- `ForecastTrainingConfig`
+- `RLDeploymentConfig`
+- aggregate `EVSmartChargingConfig`
+
+Key constraints preserved:
+- `simple_distance` remains the default routing provider.
+- OSMnx remains optional and non-default.
+- No MaskablePPO, no MARL, and no training/inference runtime wiring in this PR.
+- No API/mobile/dashboard response-shape changes.
+- No changes to pricing formulas, routing behavior, or ranking behavior.
