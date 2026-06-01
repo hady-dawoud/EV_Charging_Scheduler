@@ -48,3 +48,13 @@ outputs/runtime/*.json
 outputs/runtime/*.jsonl
 outputs/runtime/*.db
 release-artifacts/
+
+# RL training outputs (keep directory placeholders)
+outputs/rl/checkpoints/*
+outputs/rl/evaluations/*
+outputs/rl/figures/*
+outputs/rl/tensorboard/*
+!outputs/rl/checkpoints/.gitkeep
+!outputs/rl/evaluations/.gitkeep
+!outputs/rl/figures/.gitkeep
+!outputs/rl/tensorboard/.gitkeep
