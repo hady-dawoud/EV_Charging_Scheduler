@@ -36,6 +36,11 @@ const API_BASE_URL =
       : LOCAL_API_BASE_URL);
 
 let accessTokenMemory: string | null = null;
+let authExpiredHandler: (() => void) | null = null;
+
+const notifyAuthExpired = () => {
+  authExpiredHandler?.();
+};
 
 type BackendUser = {
   id: string;
@@ -134,6 +139,8 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
   if (!refreshToken) {
     accessTokenMemory = null;
+    await authStorage.clearRefreshToken();
+    notifyAuthExpired();
     return null;
   }
 
@@ -158,6 +165,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   } catch (error) {
     accessTokenMemory = null;
     await authStorage.clearRefreshToken();
+    notifyAuthExpired();
     throw error;
   }
 };
@@ -202,6 +210,10 @@ const calculateRequestedEnergyKwh = (targetSoc: number) => {
 export const api = {
   setAccessToken: (accessToken: string | null) => {
     accessTokenMemory = accessToken;
+  },
+
+  setAuthExpiredHandler: (handler: (() => void) | null) => {
+    authExpiredHandler = handler;
   },
 
   login: async (payload: LoginRequest): Promise<AuthResponse> => {

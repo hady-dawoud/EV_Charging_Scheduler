@@ -22,10 +22,13 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
   const setSession = useAuthStore((state) => state.setSession);
+  const authMessage = useAuthStore((state) => state.authMessage);
+  const clearAuthMessage = useAuthStore((state) => state.clearAuthMessage);
 
   const handleLogin = async () => {
     setIsLoading(true);
     setError(null);
+    clearAuthMessage();
 
     try {
       const session = await api.login({
@@ -89,7 +92,9 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error || authMessage ? (
+          <Text style={styles.errorText}>{error ?? authMessage}</Text>
+        ) : null}
 
         <TouchableOpacity style={styles.forgotRow}>
           <Text style={styles.forgotText}>Forgot password?</Text>

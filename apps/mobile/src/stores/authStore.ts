@@ -8,8 +8,11 @@ type AuthState = {
   accessToken: string | null;
   isAuthenticated: boolean;
   isBootstrapping: boolean;
+  authMessage: string | null;
   setSession: (user: User, accessToken: string) => void;
   clearSession: () => void;
+  expireSession: (message?: string) => void;
+  clearAuthMessage: () => void;
   setBootstrapping: (value: boolean) => void;
 };
 
@@ -18,6 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   isAuthenticated: false,
   isBootstrapping: true,
+  authMessage: null,
 
   setSession: (user, accessToken) => {
     api.setAccessToken(accessToken);
@@ -27,6 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken,
       isAuthenticated: true,
       isBootstrapping: false,
+      authMessage: null,
     });
   },
 
@@ -38,7 +43,24 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken: null,
       isAuthenticated: false,
       isBootstrapping: false,
+      authMessage: null,
     });
+  },
+
+  expireSession: (message = 'Session expired. Please sign in again.') => {
+    api.setAccessToken(null);
+
+    set({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      isBootstrapping: false,
+      authMessage: message,
+    });
+  },
+
+  clearAuthMessage: () => {
+    set({ authMessage: null });
   },
 
   setBootstrapping: (value) => {
