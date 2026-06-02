@@ -41,7 +41,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Battery Ring */}
         <View style={styles.ringWrapper}>
           <View style={styles.outerRing} />
-          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : webStyles.neonGlowSmall}>
+          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : styles.nativeRingGlowFrame}>
             <Svg width={SVG_SIZE} height={SVG_SIZE} viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}>
               <Circle
                 cx={SVG_SIZE / 2}
@@ -51,6 +51,38 @@ export default function HomeScreen({ navigation }: any) {
                 stroke="rgba(0,255,0,0.2)"
                 strokeWidth={10}
               />
+
+              {!isWeb ? (
+                <>
+                  <Circle
+                    cx={SVG_SIZE / 2}
+                    cy={SVG_SIZE / 2}
+                    r={RADIUS}
+                    fill="transparent"
+                    stroke="rgba(0,255,0,0.10)"
+                    strokeWidth={24}
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+                  />
+                  <Circle
+                    cx={SVG_SIZE / 2}
+                    cy={SVG_SIZE / 2}
+                    r={RADIUS}
+                    fill="transparent"
+                    stroke="rgba(0,255,0,0.18)"
+                    strokeWidth={16}
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+                  />
+                </>
+              ) : null}
+
               <Circle
                 cx={SVG_SIZE / 2}
                 cy={SVG_SIZE / 2}
@@ -151,6 +183,12 @@ const styles = StyleSheet.create({
     borderRadius: 110,
     borderWidth: 10,
     borderColor: 'rgba(255,255,255,0.05)',
+  },
+  nativeRingGlowFrame: {
+    width: 220,
+    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ringInner: {
     position: 'absolute',

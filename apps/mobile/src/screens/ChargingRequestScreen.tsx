@@ -11,6 +11,7 @@ import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
+import { mockVehicle } from '../data/mockData';
 import {
   RecommendationChargerType,
   RecommendationPreferenceMode,
@@ -19,17 +20,22 @@ import {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChargingRequest'>;
 
+const TARGET_SOC_STEP = 5;
+const MIN_TARGET_SOC = Math.min(100, mockVehicle.currentSoC + TARGET_SOC_STEP);
+
 export default function ChargingRequestScreen({ navigation }: Props) {
-  const [targetSoC, setTargetSoC] = useState(80);
+  const [targetSoC, setTargetSoC] = useState(Math.max(80, MIN_TARGET_SOC));
   const [optMode, setOptMode] =
     useState<RecommendationPreferenceMode>('cheapest');
   const [chargerType, setChargerType] =
     useState<RecommendationChargerType>('any');
 
   const handleFindRecommendations = () => {
+    const safeTargetSoC = Math.max(targetSoC, MIN_TARGET_SOC);
+
     navigation.navigate('LoadingRecommendations', {
       request: {
-        targetSoc: targetSoC,
+        targetSoc: safeTargetSoC,
         preferenceMode: optMode,
         chargerType,
       },
@@ -58,15 +64,22 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           <Text style={styles.cardLabel}>TARGET CHARGE</Text>
           <View style={styles.targetControls}>
             <TouchableOpacity
-              style={styles.controlBtn}
-              onPress={() => setTargetSoC((p) => Math.max(0, p - 5))}
+              style={[
+                styles.controlBtn,
+                targetSoC <= MIN_TARGET_SOC && styles.controlBtnDisabled,
+              ]}
+              onPress={() => setTargetSoC((p) => Math.max(MIN_TARGET_SOC, p - TARGET_SOC_STEP))}
+              disabled={targetSoC <= MIN_TARGET_SOC}
             >
-              <Minus color={theme.colors.textMuted} size={24} />
+              <Minus
+                color={targetSoC <= MIN_TARGET_SOC ? 'rgba(156,163,175,0.35)' : theme.colors.textMuted}
+                size={24}
+              />
             </TouchableOpacity>
             <Text style={styles.targetValue}>{targetSoC}%</Text>
             <TouchableOpacity
               style={styles.controlBtn}
-              onPress={() => setTargetSoC((p) => Math.min(100, p + 5))}
+              onPress={() => setTargetSoC((p) => Math.min(100, p + TARGET_SOC_STEP))}
             >
               <Plus color={theme.colors.textMuted} size={24} />
             </TouchableOpacity>
@@ -166,6 +179,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  controlBtnDisabled: {
+    opacity: 0.45,
   },
   targetValue: { color: theme.colors.text, fontSize: 48, fontWeight: 'bold' },
   segmented: {
