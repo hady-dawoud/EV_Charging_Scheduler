@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
+import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
@@ -105,8 +106,9 @@ export default function SignupScreen({ navigation }: any) {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <TouchableOpacity
-          style={styles.primaryBtn}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
+          frameStyle={styles.primaryBtnFrame}
           onPress={handleSignup}
           disabled={isLoading}
           activeOpacity={0.85}
@@ -116,7 +118,7 @@ export default function SignupScreen({ navigation }: any) {
           ) : (
             <Text style={styles.primaryBtnText}>Sign Up</Text>
           )}
-        </TouchableOpacity>
+        </NeonButton>
 
         <View style={styles.signinRow}>
           <Text style={styles.signinText}>Already have an account?</Text>
@@ -188,13 +190,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: theme.spacing.md,
   },
+  primaryBtnFrame: {
+    marginBottom: theme.spacing.xl,
+  },
   primaryBtn: {
     backgroundColor: theme.colors.primary,
     height: 56,
     borderRadius: theme.radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
   },
   primaryBtnText: {
     color: '#000',
