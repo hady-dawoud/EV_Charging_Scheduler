@@ -37,7 +37,10 @@ Trained checkpoints are expected to plug in through deployment-time inference co
 
 ## Cleanup policy for this phase
 
-- Script cleanup is deferred until audit-backed follow-up PRs.
+- Script cleanup is audit-backed only in this phase.
+- `scripts/audit_repo_entrypoints.py` now generates `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`.
+- Script grouping is planned but not yet applied physically.
+- Deletion still requires explicit user approval even when the audit finds low-risk candidates.
 - `outputs/test_data` is intentionally kept as-is for now.
 - No runtime/API/mobile/dashboard response shape changes are made in this phase.
 
@@ -46,6 +49,7 @@ Trained checkpoints are expected to plug in through deployment-time inference co
 Planned follow-ups after this boundary PR:
 - Configuration surfaces for training/deployment paths.
 - Script inventory and audit-based cleanup.
+- Group scripts by workflow or remove only confirmed unused files, depending on the audit result.
 - Offline environment evolution.
 - MaskablePPO exploration (deferred by design in this PR).
 - Forecasting integration for training features.

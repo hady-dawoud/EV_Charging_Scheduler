@@ -171,3 +171,11 @@
 - Open question: where to incrementally adopt `EVSmartChargingConfig` beyond API runtime bootstrap (for example runtime manager CLI/demo entry points) without behavior drift.
 - Open question: when to introduce validation strictness tiers for env parsing in production deployments.
 - Open question: exact rollout plan for wiring `RLDeploymentConfig` into `PolicyRegistry` with deterministic fallback guarantees.
+
+## Script Cleanup Follow-Up
+
+- Current truth: `scripts/audit_repo_entrypoints.py` and `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md` now provide a conservative inventory of repo entrypoints and reference evidence.
+- Current truth: scripts are still flat in `scripts/`; grouping is planned but intentionally not done in this PR.
+- Current truth: `outputs/test_data` is intentionally retained for now and is not a cleanup target in this PR.
+- Open question: should the next follow-up PR group scripts by workflow first, or remove only confirmed unused files if stronger dead-file evidence appears?
+- Open question: should some low-reference manual CLIs such as `seed_stations.py`, `verify_app_pricing_duration_alignment.py`, and `verify_runtime_liveness.py` gain explicit docs coverage before any future cleanup discussion?

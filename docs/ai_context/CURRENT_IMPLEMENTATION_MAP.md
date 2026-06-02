@@ -60,6 +60,8 @@ Last verified against repo state: 2026-05-08.
 - `scripts/verify_dundee_tariff_pricing.py`: same-energy tariff sanity check for AC Standard, AC Fast, Rapid, and Ultra Rapid.
 - `scripts/evaluate_osmnx_routing_usefulness.py`: compares simple-distance and OSMnx routing across sampled Dundee request/station pairs and summarizes success/fallback rates.
 - `scripts/verify_app_runtime_integration.py`: proves pricing/routing metadata and runtime status are connected to the app-facing recommendation path.
+- `scripts/audit_repo_entrypoints.py`: dependency-light audit tooling that scans repo entrypoints, classifies scripts conservatively, searches references, and can render Markdown or JSON reports including `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`.
+- `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`: generated audit report for current script inventory, future grouping suggestions, and conservative cleanup rules. Scripts remain in place in this PR.
 
 ## EV Core
 
@@ -188,3 +190,9 @@ Future learned-policy integration remains out of this implementation: first trai
 - `packages/ev_core/src/ev_core/config/*`: additive configuration contracts for runtime, recommendation, routing, pricing, topology, training, deployment, and shared project paths.
 - `ev_core.config` is import-safe and does not depend on FastAPI, Streamlit, dashboard modules, or runtime storage internals.
 - API runtime config parsing in `apps/api/app/services/runtime_service.py` now uses `ev_core.config` env helpers while preserving existing defaults and behavior.
+
+## Cleanup Status
+
+- Script grouping is planned but not yet executed physically.
+- The audit currently keeps `outputs/test_data` intentionally in place.
+- Any future script deletion still requires explicit user approval after audit evidence and passing tests.
