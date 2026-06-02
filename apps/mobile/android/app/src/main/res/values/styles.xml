@@ -9,6 +9,8 @@
         <item name="android:navigationBarColor">@color/ev_background</item>
         <item name="android:statusBarColor">@color/ev_background</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:forceDarkAllowed">false</item>
     </style>
 

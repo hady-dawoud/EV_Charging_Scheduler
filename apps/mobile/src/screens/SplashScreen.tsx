@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Zap } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { Shadow } from 'react-native-shadow-2';
 import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
@@ -147,9 +148,39 @@ export default function SplashScreen({ navigation }: any) {
         ]}
       >
         <View style={styles.iconGlowFrame}>
-          <View style={[styles.iconBox, webStyles.neonGlow, !isWeb && styles.nativeIconBox]}>
-            <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
-          </View>
+          {isWeb ? (
+            <View style={[styles.iconBox, webStyles.neonGlow]}>
+              <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
+            </View>
+          ) : (
+            <Shadow
+                distance={8}
+                startColor="rgba(0, 255, 0, 0.1)"
+                endColor="rgba(0, 255, 0, 0)"
+                offset={[0, 0]}
+                style={styles.iconShadow}
+              >
+              <Shadow
+                distance={6}
+                startColor="rgba(0, 255, 0, 0.25)"
+                endColor="rgba(0, 255, 0, 0)"
+                offset={[0, 0]}
+                style={styles.iconShadow}
+              >
+                <Shadow
+                  distance={4}
+                  startColor="rgba(0, 255, 0, 0.39)"
+                  endColor="rgba(0, 255, 0, 0)"
+                  offset={[0, 0]}
+                  style={styles.iconShadow}
+                >
+                  <View style={[styles.iconBox, styles.nativeIconBox]}>
+                    <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
+                  </View>
+                </Shadow>
+              </Shadow>
+            </Shadow>
+          )}
         </View>
         <Text style={styles.title}>EV APP</Text>
         <Text style={styles.subtitle}>
@@ -226,6 +257,11 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     overflow: 'visible',
   },
+  iconShadow: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+  },
   iconBox: {
     width: 96,
     height: 96,
@@ -238,8 +274,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   nativeIconBox: {
-    backgroundColor: '#17191B',
-    borderColor: '#333538',
+    backgroundColor: '#102317',
+    borderColor: 'rgba(54, 92, 58, 0.72)',
   },
   title: {
     color: theme.colors.text,
