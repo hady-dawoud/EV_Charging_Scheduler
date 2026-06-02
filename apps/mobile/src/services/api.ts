@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { mockVehicle } from '../data/mockData';
+import { authStorage } from './authStorage';
 import type {
   ApiActiveChargingSessionResponse,
   ApiChargingSession,
@@ -91,7 +92,7 @@ const requestJson = async <T>(
   options: RequestInit = {},
   overrideAccessToken?: string | null
 ): Promise<T> => {
-  const token = overrideAccessToken ?? accessTokenMemory;
+  const token = overrideAccessToken === undefined ? accessTokenMemory : overrideAccessToken;
   const headers = new Headers(options.headers);
 
   headers.set('Accept', 'application/json');
@@ -126,6 +127,62 @@ const requestJson = async <T>(
   return JSON.parse(responseText) as T;
 };
 
+const DEVICE_ID = 'mobile-app';
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  const refreshToken = await authStorage.getRefreshToken();
+
+  if (!refreshToken) {
+    accessTokenMemory = null;
+    return null;
+  }
+
+  try {
+    const body = await requestJson<BackendTokenResponse>(
+      '/auth/refresh',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+          device_id: DEVICE_ID,
+        }),
+      },
+      null
+    );
+
+    const mapped = mapTokenResponse(body);
+    accessTokenMemory = mapped.accessToken;
+    await authStorage.saveRefreshToken(mapped.refreshToken);
+
+    return mapped.accessToken;
+  } catch (error) {
+    accessTokenMemory = null;
+    await authStorage.clearRefreshToken();
+    throw error;
+  }
+};
+
+const requestJsonWithAuthRetry = async <T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> => {
+  try {
+    return await requestJson<T>(path, options);
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 401) {
+      throw error;
+    }
+
+    const refreshedAccessToken = await refreshAccessToken();
+
+    if (!refreshedAccessToken) {
+      throw error;
+    }
+
+    return requestJson<T>(path, options, refreshedAccessToken);
+  }
+};
+
 const mapChargerType = (chargerType: MobileRecommendationRequest['chargerType']) => {
   switch (chargerType) {
     case 'ac':
@@ -148,10 +205,14 @@ export const api = {
   },
 
   login: async (payload: LoginRequest): Promise<AuthResponse> => {
-    const body = await requestJson<BackendAuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    const body = await requestJson<BackendAuthResponse>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      null
+    );
 
     const mapped = mapAuthResponse(body);
     accessTokenMemory = mapped.accessToken;
@@ -160,10 +221,14 @@ export const api = {
   },
 
   register: async (payload: RegisterRequest): Promise<AuthResponse> => {
-    const body = await requestJson<BackendAuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    const body = await requestJson<BackendAuthResponse>(
+      '/auth/register',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      null
+    );
 
     const mapped = mapAuthResponse(body);
     accessTokenMemory = mapped.accessToken;
@@ -172,13 +237,17 @@ export const api = {
   },
 
   refresh: async (refreshToken: string, deviceId: string): Promise<AuthTokens> => {
-    const body = await requestJson<BackendTokenResponse>('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({
-        refresh_token: refreshToken,
-        device_id: deviceId,
-      }),
-    });
+    const body = await requestJson<BackendTokenResponse>(
+      '/auth/refresh',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+          device_id: deviceId,
+        }),
+      },
+      null
+    );
 
     const mapped = mapTokenResponse(body);
     accessTokenMemory = mapped.accessToken;
@@ -199,12 +268,16 @@ export const api = {
   },
 
   logout: async (refreshToken: string) => {
-    await requestJson<{ success: boolean }>('/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({
-        refresh_token: refreshToken,
-      }),
-    });
+    await requestJson<{ success: boolean }>(
+      '/auth/logout',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+        }),
+      },
+      null
+    );
 
     accessTokenMemory = null;
   },
@@ -228,14 +301,14 @@ export const api = {
       },
     };
 
-    return requestJson<ApiRecommendationsResponse>('/mobile/recommendations', {
+    return requestJsonWithAuthRetry<ApiRecommendationsResponse>('/mobile/recommendations', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
   getMyChargingSessions: async (): Promise<ApiChargingSession[]> => {
-    const response = await requestJson<ApiChargingSessionsResponse>('/sessions/me', {
+    const response = await requestJsonWithAuthRetry<ApiChargingSessionsResponse>('/sessions/me', {
       method: 'GET',
     });
 
@@ -243,7 +316,7 @@ export const api = {
   },
 
   getActiveChargingSession: async (): Promise<ApiChargingSession | null> => {
-    const response = await requestJson<ApiActiveChargingSessionResponse>('/sessions/active', {
+    const response = await requestJsonWithAuthRetry<ApiActiveChargingSessionResponse>('/sessions/active', {
       method: 'GET',
     });
 
@@ -254,14 +327,14 @@ export const api = {
   createReservation: async (
     payload: CreateReservationRequest
   ): Promise<ApiReservation> => {
-    return requestJson<ApiReservation>('/reservations', {
+    return requestJsonWithAuthRetry<ApiReservation>('/reservations', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
   getMyReservations: async (): Promise<ApiReservation[]> => {
-    const response = await requestJson<ApiReservationsResponse>('/reservations/me', {
+    const response = await requestJsonWithAuthRetry<ApiReservationsResponse>('/reservations/me', {
       method: 'GET',
     });
 
