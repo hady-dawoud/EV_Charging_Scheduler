@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'node:path';
 
 const extensions = [
   '.web.tsx',
@@ -31,6 +32,10 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      {
+        find: 'react-native-shadow-2',
+        replacement: path.resolve(process.cwd(), 'src/web-shims/react-native-shadow-2.tsx'),
+      },
       {
         find: /^react-native$/,
         replacement: 'react-native-web',
