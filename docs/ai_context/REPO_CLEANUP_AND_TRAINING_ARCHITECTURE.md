@@ -27,6 +27,8 @@ Digital twin/runtime behavior remains the source of live recommendation behavior
 
 This keeps training code reusable and testable in non-app contexts.
 
+The current offline training boundary now wraps the existing `ev_core.rl.env.DundeeStationSelectionEnv` through `ev_core.rl_training` helper modules rather than forking environment logic. Scenario creation, Dundee data loading, rollouts, and metrics now live behind that boundary so Colab/Kaggle-style training can import repo code without depending on app/runtime storage surfaces.
+
 ## Benchmark adapters
 
 EV2Gym and SustainGym are future adapter targets under `ev_core.benchmarks`; they are not the main app runtime. Core imports must remain functional without benchmark packages installed.
@@ -51,7 +53,7 @@ Planned follow-ups after this boundary PR:
 - Configuration surfaces for training/deployment paths.
 - Script inventory and audit-based cleanup.
 - Remove compatibility wrappers only after docs/tests migrate and the audit still supports it.
-- Offline environment evolution.
+- Offline environment evolution beyond the current decision-level wrapper.
 - MaskablePPO exploration (deferred by design in this PR).
 - Forecasting integration for training features.
 - Benchmark adapters.

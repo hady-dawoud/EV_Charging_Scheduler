@@ -136,6 +136,12 @@ Last verified against repo state: 2026-05-08.
   - `rewards.py`: `StationSelectionReward` and RL-side `RewardBreakdown` for the first stable served/invalid/missed plus cost-distance-wait-duration-headroom reward contract.
   - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; no forecasting model is implemented yet.
   - `metrics.py`: helper functions for aggregating deterministic evaluation outputs.
+- `packages/ev_core/src/ev_core/rl_training/*`
+  - `offline_station_selection_env.py`: training-facing headless wrapper around `ev_core.rl.env.DundeeStationSelectionEnv`, keeping the existing env as the single source of truth for the first offline-training pass.
+  - `scenario_factory.py`: `OfflineTrainingScenarioRequest`, `OfflineTrainingScenarioBundle`, and `OfflineDundeeScenarioFactory` for reproducible train/validation/test scenario construction from `RLTrainingConfig` and `RLScenarioSampler`.
+  - `data_adapter.py`: `DundeeTrainingDataAdapter` and `TrainingDataSummary` for repo-backed Dundee bundle loading, station/chargepoint counts, request-generator construction, and scenario-sampler creation without runtime storage coupling.
+  - `rollout.py`: `RolloutResult` plus random-valid, fixed-action, and deterministic recommendation-policy rollouts that operate directly on the wrapped offline env without SB3.
+  - `metrics.py`: `summarize_rollouts(...)` for average reward, served count, invalid action count, missed count, and step count aggregation.
 
 Future learned-policy integration remains out of this implementation: first train single-agent MaskablePPO offline, save checkpoints outside git, load them through a checkpoint-backed policy class, register that policy in `PolicyRegistry`, and let `RecommendationService` select it through the same policy-name path. MARL should come later and should not replace API/mobile/dashboard response contracts.
 - `scripts/generate_synthetic_live_requests.py`
@@ -148,6 +154,10 @@ Future learned-policy integration remains out of this implementation: first trai
   - CLI smoke check for PR2 scenario sampling, request generation, and one lightweight deterministic baseline evaluation.
 - `scripts/verify_rl_env_skeleton.py`
   - CLI smoke check for PR3 Gymnasium environment reset/step behavior, observation shape, valid-action count, first-step reward, and short valid-action rollout.
+- `scripts/verify_offline_rl_training_env.py`
+  - Legacy wrapper for the grouped offline-training verification script.
+- `scripts/rl_training/verify_offline_rl_training_env.py`
+  - CLI smoke check for the offline `ev_core.rl_training` wrapper, scenario factory, action mask, first random-valid step, and short rollout summary without SB3 or `sb3-contrib`.
 - `scripts/build_dundee_osmnx_graph.py`
   - Internet-requiring helper script that builds `data/processed/routing/dundee_drive.graphml` from `Dundee, Scotland, United Kingdom` with OSMnx `network_type="drive"`.
 - `scripts/verify_osmnx_routing_provider.py`

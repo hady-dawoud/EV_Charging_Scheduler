@@ -63,6 +63,7 @@
   - Current truth: no. PR2 baseline evaluation is request-centric and uses the existing recommendation path under fixed-seed scenarios.
   - Current truth: this is enough to lock contracts, seed splits, scenario metadata, and baseline names before Gymnasium work begins.
   - Current truth: PR3 now adds a Gymnasium-compatible masked environment skeleton, but it is still decision-level rather than fully closed-loop queue/session mutation.
+  - Current truth: PR4 now wraps that env through `ev_core.rl_training` for offline scenario creation, rollout, and metrics without changing the underlying env semantics.
   - Still open: a true stepwise closed-loop evaluator that uses the same masked environment semantics while mutating runtime sessions and queues.
 
 - Is demand scaling now formalized enough for RL preparation?
@@ -80,6 +81,7 @@
   - Current truth: no. PR3 freezes a first stable version so training integration can begin.
   - Current truth: the env is single-agent, station-selection, masked discrete action, and fixed-size flat vector observation.
   - Current truth: `simple_distance` remains the default RL routing provider and OSMnx stays optional.
+  - Current truth: PR4 keeps `DundeeStationSelectionEnv` as the single source of truth and adds only a thin offline-training wrapper around it.
   - Still open: observation normalization, feature scaling policy, richer per-station features, and reward tuning after first MaskablePPO experiments.
 
 ## Routing
@@ -162,6 +164,7 @@
 
 - Can offline training happen outside this repo workspace?
   - Yes, on Colab/Kaggle or similar, if it installs and imports this repo code and trains against the repo environment/scenario sampler.
+  - Current truth: `ev_core.rl_training` now provides the intended import-safe offline boundary for that workflow.
   - Checkpoints and large run artifacts should stay outside git; only lightweight loader/config/evaluation code should be committed later.
 
 

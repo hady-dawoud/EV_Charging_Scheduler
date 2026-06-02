@@ -44,6 +44,18 @@ Scope and constraints:
 
 This PR still does not add MaskablePPO training, Stable-Baselines3, `sb3-contrib`, MARL, or PettingZoo.
 
+## PR4 Status
+
+PR4 now adds the first offline Dundee RL training boundary under `ev_core.rl_training`:
+
+- `offline_station_selection_env.py` wraps `ev_core.rl.env.DundeeStationSelectionEnv` instead of forking env logic
+- `scenario_factory.py` builds reproducible Dundee train/validation/test scenario bundles from `RLScenarioSampler` and `RLTrainingConfig`
+- `data_adapter.py` loads Dundee bundle counts and request-generation inputs without runtime-storage coupling
+- `rollout.py` runs random-valid, fixed-action, and deterministic recommendation-policy rollouts without SB3
+- `metrics.py` summarizes rollout outputs for quick offline evaluation
+
+This PR still does not add MaskablePPO training, Stable-Baselines3, `sb3-contrib`, MARL, or checkpoint-backed runtime inference.
+
 ## Current Implementation Status
 
 The current system is RL-adjacent but still deterministic at decision time.
@@ -81,6 +93,7 @@ Status update:
 
 - This PR2 has now done that first harness/sampler step.
 - PR3 has now added that Gymnasium single-agent masked environment skeleton.
+- PR4 now exposes a clean offline-training boundary around that env for Colab/Kaggle-style use without touching app/runtime response contracts.
 - The next PR should add MaskablePPO training and baseline-evaluation scripts.
 
 ## Runtime Recommender Plug-In Architecture
@@ -418,6 +431,9 @@ These episode sizes should be treated as target planning ranges, not default run
 
 Readiness scaffolding now includes centralized config contracts:
 - offline training outputs can be configured via `RLTrainingConfig` (`RL_CHECKPOINT_DIR`, `RL_EVALUATION_DIR`, `RL_TENSORBOARD_DIR`, `RL_FIGURES_DIR`)
+- offline scenario construction and headless rollout utilities now live under `ev_core.rl_training`
+- `simple_distance` remains the default offline-training routing provider
+- the first offline-training wrapper intentionally reuses `DundeeStationSelectionEnv` as the source of truth
 - future checkpoint inference can be configured via `RLDeploymentConfig` (`RL_POLICY_CHECKPOINT_PATH`, `RL_POLICY_FAIL_CLOSED`, `RL_FALLBACK_POLICY_NAME`)
 
 What is still intentionally not implemented:

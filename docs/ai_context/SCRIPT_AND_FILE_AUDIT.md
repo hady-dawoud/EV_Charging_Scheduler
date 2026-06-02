@@ -2,7 +2,7 @@
 
 ## Summary
 
-- Scripts scanned: 77
+- Scripts scanned: 79
 - `api_mobile_integration`: 6
 - `dashboard_verification`: 2
 - `data_build`: 18
@@ -11,13 +11,13 @@
 - `general_verification`: 2
 - `pricing_verification`: 6
 - `rl_training`: 2
-- `rl_verification`: 4
+- `rl_verification`: 6
 - `routing_maps`: 14
 - `topology_calibration`: 8
-- Grouped implementation scripts: 38
-- Legacy compatibility wrappers: 38
+- Grouped implementation scripts: 39
+- Legacy compatibility wrappers: 39
 - Scripts with no references: 0
-- Scripts recommended to keep: 77
+- Scripts recommended to keep: 79
 - Scripts needing human review: 0
 - Scripts that look safe to delete later: 0
 
@@ -101,6 +101,8 @@
 - verify_dundee_tariff_pricing.py
 - verify_dynamic_pricing.py
 - verify_dynamic_pricing.py
+- verify_offline_rl_training_env.py
+- verify_offline_rl_training_env.py
 - verify_osmnx_routing_provider.py
 - verify_osmnx_routing_provider.py
 - verify_rl_env_skeleton.py
@@ -809,19 +811,33 @@ A file can only be deleted if:
 - ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md, docs/ai_context/RL_READINESS_REPORT.md
 - python: scripts/analyze_rl_demand_realism.py
 
+### `scripts/rl_training/verify_offline_rl_training_env.py`
+
+- Category: `rl_verification`
+- Entrypoint kind: `grouped_implementation`
+- Recommended action: `keep`
+- Known manual CLI: `True`
+- Reference counts: ai_context=1, docs=0, tests=1, python=2, readme_setup=0
+- Evidence: Found 4 reference(s) across repo search targets.
+- Evidence: Name matches a likely manual CLI or verification entrypoint.
+- Evidence: Keep in place for this PR; future grouping can be evaluated in a follow-up PR.
+- ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md
+- tests: tests/architecture/test_rl_training_dependency_boundaries.py
+- python: scripts/rl_training/README.md, scripts/verify_offline_rl_training_env.py
+
 ### `scripts/rl_training/verify_rl_env_skeleton.py`
 
 - Category: `rl_verification`
 - Entrypoint kind: `grouped_implementation`
 - Recommended action: `keep`
 - Known manual CLI: `True`
-- Reference counts: ai_context=1, docs=0, tests=2, python=1, readme_setup=0
-- Evidence: Found 4 reference(s) across repo search targets.
+- Reference counts: ai_context=1, docs=0, tests=2, python=2, readme_setup=0
+- Evidence: Found 5 reference(s) across repo search targets.
 - Evidence: Name matches a likely manual CLI or verification entrypoint.
 - Evidence: Keep in place for this PR; future grouping can be evaluated in a follow-up PR.
 - ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md
 - tests: tests/architecture/test_script_audit.py, tests/architecture/test_script_grouping.py
-- python: scripts/verify_rl_env_skeleton.py
+- python: scripts/rl_training/README.md, scripts/verify_rl_env_skeleton.py
 
 ### `scripts/rl_training/verify_rl_scenario_sampler.py`
 
@@ -1045,6 +1061,21 @@ A file can only be deleted if:
 - Evidence: Keep in place for this PR; future grouping can be evaluated in a follow-up PR.
 - ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md, docs/ai_context/RECOMMENDER_FLOW.md, docs/ai_context/RL_READINESS_REPORT.md
 
+### `scripts/verify_offline_rl_training_env.py`
+
+- Category: `rl_verification`
+- Entrypoint kind: `legacy_wrapper`
+- Recommended action: `keep`
+- Known manual CLI: `True`
+- Wrapper target: `scripts/rl_training/verify_offline_rl_training_env.py`
+- Reference counts: ai_context=1, docs=0, tests=1, python=1, readme_setup=0
+- Evidence: Found 3 reference(s) across repo search targets.
+- Evidence: Name matches a likely manual CLI or verification entrypoint.
+- Evidence: Keep in place for this PR; future grouping can be evaluated in a follow-up PR.
+- ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md
+- tests: tests/architecture/test_rl_training_dependency_boundaries.py
+- python: scripts/rl_training/README.md
+
 ### `scripts/verify_osmnx_routing_provider.py`
 
 - Category: `routing_maps`
@@ -1065,12 +1096,13 @@ A file can only be deleted if:
 - Recommended action: `keep`
 - Known manual CLI: `True`
 - Wrapper target: `scripts/rl_training/verify_rl_env_skeleton.py`
-- Reference counts: ai_context=1, docs=0, tests=2, python=0, readme_setup=0
-- Evidence: Found 3 reference(s) across repo search targets.
+- Reference counts: ai_context=1, docs=0, tests=2, python=1, readme_setup=0
+- Evidence: Found 4 reference(s) across repo search targets.
 - Evidence: Name matches a likely manual CLI or verification entrypoint.
 - Evidence: Keep in place for this PR; future grouping can be evaluated in a follow-up PR.
 - ai_context_docs: docs/ai_context/CURRENT_IMPLEMENTATION_MAP.md
 - tests: tests/architecture/test_script_audit.py, tests/architecture/test_script_grouping.py
+- python: scripts/rl_training/README.md
 
 ### `scripts/verify_rl_scenario_sampler.py`
 
