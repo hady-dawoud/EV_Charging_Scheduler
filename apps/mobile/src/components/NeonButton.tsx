@@ -8,7 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Shadow } from 'react-native-shadow-2';
 import { webStyles } from '../theme';
 
 const isWeb = Platform.OS === 'web';
@@ -29,52 +29,84 @@ export function NeonButton({
 }: NeonButtonProps) {
   const webGlow = glow === 'small' ? webStyles.neonGlowSmall : webStyles.neonGlow;
 
+  if (isWeb) {
+    return (
+      <View style={[styles.frame, frameStyle]}>
+        <TouchableOpacity
+          {...touchableProps}
+          style={[styles.button, webGlow, buttonStyle]}
+        >
+          {children}
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const innerDistance = glow === 'small' ? 2 : 3;
+  const innerStartColor = glow === 'small'
+    ? 'rgba(0, 255, 0, 0.26)'
+    : 'rgba(0, 255, 0, 0.39)';
+
+  const outerDistance = glow === 'small' ? 4 : 5;
+  const outerStartColor = glow === 'small'
+    ? 'rgba(0, 255, 0, 0.13)'
+    : 'rgba(0, 255, 0, 0.26)';
+
+  const outer2Distance = glow === 'small' ? 6 : 7;
+  const outer2StartColor = glow === 'small'
+    ? 'rgba(0, 255, 0, 0.1)'
+    : 'rgba(0, 255, 0, 0.13)';
+
+  const endColor = 'rgba(0, 255, 0, 0)';
+
   return (
     <View style={[styles.frame, frameStyle]}>
-      {!isWeb && (
-        <Svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 360 96"
-          preserveAspectRatio="none"
-          style={styles.nativeGlow}
-          pointerEvents="none"
-        >
-          <Defs>
-            <RadialGradient id="neonButtonGlow" cx="50%" cy="50%" rx="58%" ry="64%">
-              <Stop offset="0%" stopColor="#00FF00" stopOpacity={glow === 'small' ? '0.16' : '0.24'} />
-              <Stop offset="48%" stopColor="#00FF00" stopOpacity={glow === 'small' ? '0.09' : '0.14'} />
-              <Stop offset="76%" stopColor="#00FF00" stopOpacity={glow === 'small' ? '0.035' : '0.055'} />
-              <Stop offset="100%" stopColor="#00FF00" stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
-          <Rect x="0" y="0" width="360" height="96" rx="32" fill="url(#neonButtonGlow)" opacity="0.38" />
-          <Rect x="10" y="10" width="340" height="76" rx="24" fill="url(#neonButtonGlow)" opacity="0.5" />
-          <Rect x="20" y="20" width="320" height="56" rx="16" fill="url(#neonButtonGlow)" />
-        </Svg>
-      )}
-      <TouchableOpacity
-        {...touchableProps}
-        style={[styles.button, isWeb && webGlow, buttonStyle]}
+      <Shadow
+        distance={outer2Distance}
+        startColor={outer2StartColor}
+        endColor={endColor}
+        offset={[0, 0]}
+        stretch
+        style={styles.shadow}
       >
-        {children}
-      </TouchableOpacity>
+        <Shadow
+          distance={outerDistance}
+          startColor={outerStartColor}
+          endColor={endColor}
+          offset={[0, 0]}
+          stretch
+          style={styles.shadow}
+        >
+          <Shadow
+            distance={innerDistance}
+            startColor={innerStartColor}
+            endColor={endColor}
+            offset={[0, 0]}
+            stretch
+            style={styles.shadow}
+          >
+            <TouchableOpacity
+              {...touchableProps}
+              style={[styles.button, buttonStyle]}
+            >
+              {children}
+            </TouchableOpacity>
+          </Shadow>
+        </Shadow>
+      </Shadow>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    height: 56,
+    minHeight: 56,
     overflow: 'visible',
     width: '100%',
   },
-  nativeGlow: {
-    bottom: -20,
-    left: -20,
-    position: 'absolute',
-    right: -20,
-    top: -20,
+  shadow: {
+    width: '100%',
+    borderRadius: 16,
   },
   button: {
     height: 56,
