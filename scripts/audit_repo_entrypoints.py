@@ -79,6 +79,15 @@ ROOT_ENTRYPOINT_PREFIXES = (
     "audit_",
     "smoke_",
 )
+GROUPED_SCRIPT_FOLDERS = (
+    "data",
+    "digital_twin",
+    "maps",
+    "verification",
+    "rl_training",
+    "forecasting",
+    "benchmarks",
+)
 
 
 @dataclass
@@ -97,6 +106,8 @@ class ReferenceMatches:
 class AuditEntry:
     path: Path
     category: str
+    entrypoint_kind: str
+    wrapper_target_path: str | None
     references: ReferenceMatches
     known_manual_cli: bool
     recommended_action: str
@@ -119,6 +130,7 @@ class AuditReport:
     entries: list[AuditEntry]
     summary: AuditSummary
     warnings: list[str]
+    grouped_folders: list[str]
 
 
 def classify_entrypoint(name: str) -> str:
@@ -182,7 +194,7 @@ def is_known_manual_cli(path: Path) -> bool:
 def _iter_entrypoints(root: Path) -> Iterable[Path]:
     if not root.exists():
         return
-    for path in sorted(root.iterdir()):
+    for path in sorted(root.rglob("*")):
         if path.is_file() and path.suffix.lower() in ENTRYPOINT_SUFFIXES:
             yield path
 
@@ -195,13 +207,16 @@ def discover_entrypoints(repo_root: Path, entrypoint_roots: list[Path] | None = 
     for root in entrypoint_roots:
         for path in _iter_entrypoints(root):
             discovered[str(path.resolve())] = path
-
-    for path in sorted(repo_root.iterdir()):
-        if not path.is_file() or path.suffix.lower() not in ENTRYPOINT_SUFFIXES:
-            continue
-        if path.name.lower().startswith(ROOT_ENTRYPOINT_PREFIXES):
-            discovered[str(path.resolve())] = path
     return sorted(discovered.values())
+
+
+def discover_grouped_folders(repo_root: Path) -> list[str]:
+    scripts_root = repo_root / "scripts"
+    discovered: list[str] = []
+    for folder in GROUPED_SCRIPT_FOLDERS:
+        if (scripts_root / folder).is_dir():
+            discovered.append(folder)
+    return discovered
 
 
 def _is_reference_file(repo_root: Path, path: Path) -> bool:
@@ -279,6 +294,32 @@ def _search_terms(entrypoint: Path, repo_root: Path) -> list[str]:
     if relative.startswith("scripts/"):
         terms.append(relative.replace("/", "\\").lower())
     return list(dict.fromkeys(terms))
+
+
+def detect_wrapper_target(repo_root: Path, entrypoint: Path) -> str | None:
+    try:
+        content = entrypoint.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+
+    marker = "# Wrapper target:"
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(marker):
+            target = stripped.removeprefix(marker).strip()
+            if target:
+                return target
+    return None
+
+
+def classify_entrypoint_kind(repo_root: Path, entrypoint: Path) -> tuple[str, str | None]:
+    relative = entrypoint.relative_to(repo_root)
+    wrapper_target = detect_wrapper_target(repo_root, entrypoint)
+    if wrapper_target is not None:
+        return "legacy_wrapper", wrapper_target
+    if relative.parts[:2] and len(relative.parts) >= 2 and relative.parts[0] == "scripts" and relative.parts[1] in GROUPED_SCRIPT_FOLDERS:
+        return "grouped_implementation", None
+    return "root_entrypoint", None
 
 
 def find_references(repo_root: Path, entrypoint: Path, reference_files: list[Path]) -> ReferenceMatches:
@@ -369,6 +410,7 @@ def scan_repo_entrypoints(
     entries: list[AuditEntry] = []
     for entrypoint in entrypoints:
         category = classify_entrypoint(entrypoint.name)
+        entrypoint_kind, wrapper_target = classify_entrypoint_kind(repo_root, entrypoint)
         references = find_references(repo_root, entrypoint, reference_files)
         known_cli = is_known_manual_cli(entrypoint)
         action, evidence = recommend_action(entrypoint, category, references, known_cli)
@@ -376,6 +418,8 @@ def scan_repo_entrypoints(
             AuditEntry(
                 path=entrypoint,
                 category=category,
+                entrypoint_kind=entrypoint_kind,
+                wrapper_target_path=wrapper_target,
                 references=references,
                 known_manual_cli=known_cli,
                 recommended_action=action,
@@ -388,6 +432,7 @@ def scan_repo_entrypoints(
         entries=entries,
         summary=build_summary(entries),
         warnings=warnings,
+        grouped_folders=discover_grouped_folders(repo_root),
     )
 
 
@@ -400,6 +445,8 @@ def render_json_report(report: AuditReport) -> str:
                 "name": entry.path.name,
                 "path": entry.path.relative_to(report.repo_root).as_posix(),
                 "category": entry.category,
+                "entrypoint_kind": entry.entrypoint_kind,
+                "wrapper_target_path": entry.wrapper_target_path,
                 "known_manual_cli": entry.known_manual_cli,
                 "recommended_action": entry.recommended_action,
                 "references": asdict(entry.references),
@@ -408,6 +455,7 @@ def render_json_report(report: AuditReport) -> str:
             for entry in report.entries
         ],
         "warnings": report.warnings,
+        "grouped_folders": report.grouped_folders,
     }
     return json.dumps(payload, indent=2)
 
@@ -423,10 +471,29 @@ def render_markdown_report(report: AuditReport) -> str:
     lines.append(f"- Scripts scanned: {report.summary.script_count}")
     for category, count in report.summary.category_counts.items():
         lines.append(f"- `{category}`: {count}")
+    wrapper_count = sum(1 for entry in report.entries if entry.entrypoint_kind == "legacy_wrapper")
+    grouped_count = sum(1 for entry in report.entries if entry.entrypoint_kind == "grouped_implementation")
+    lines.append(f"- Grouped implementation scripts: {grouped_count}")
+    lines.append(f"- Legacy compatibility wrappers: {wrapper_count}")
     lines.append(f"- Scripts with no references: {len(report.summary.scripts_with_no_references)}")
     lines.append(f"- Scripts recommended to keep: {len(report.summary.scripts_recommended_to_keep)}")
     lines.append(f"- Scripts needing human review: {len(report.summary.scripts_needing_human_review)}")
     lines.append(f"- Scripts that look safe to delete later: {len(report.summary.scripts_safe_to_delete_later)}")
+    lines.append("")
+
+    lines.append("## Grouped Script Folders")
+    lines.append("")
+    for folder in _format_list([f"scripts/{folder}/" for folder in report.grouped_folders]):
+        lines.append(f"- `{folder}`")
+    lines.append("")
+
+    lines.append("## Compatibility Wrappers")
+    lines.append("")
+    if wrapper_count:
+        lines.append("- Legacy root-level script paths are kept as thin wrappers in this PR.")
+        lines.append("- Wrappers are temporary compatibility entrypoints and should be removed only after docs and tests migrate.")
+    else:
+        lines.append("- No legacy compatibility wrappers were detected in this audit run.")
     lines.append("")
 
     lines.append("## Scripts With No References")
@@ -488,8 +555,11 @@ def render_markdown_report(report: AuditReport) -> str:
         lines.append(f"### `{rel_path}`")
         lines.append("")
         lines.append(f"- Category: `{entry.category}`")
+        lines.append(f"- Entrypoint kind: `{entry.entrypoint_kind}`")
         lines.append(f"- Recommended action: `{entry.recommended_action}`")
         lines.append(f"- Known manual CLI: `{entry.known_manual_cli}`")
+        if entry.wrapper_target_path is not None:
+            lines.append(f"- Wrapper target: `{entry.wrapper_target_path}`")
         lines.append(
             "- Reference counts: "
             f"ai_context={len(entry.references.ai_context_docs)}, "

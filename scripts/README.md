@@ -1,10 +1,20 @@
 # Scripts
 
-This folder is intentionally still flat in this PR.
+Scripts are now grouped by workflow under:
+
+- `scripts/data/`
+- `scripts/digital_twin/`
+- `scripts/maps/`
+- `scripts/verification/`
+- `scripts/rl_training/`
+- `scripts/forecasting/`
+- `scripts/benchmarks/`
+
+Legacy root-level script paths are kept temporarily as backward-compatible wrappers so existing commands, docs, and tests keep working while migration is in progress.
 
 The current audit and conservative cleanup guidance live in `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`.
 
-Do not move or delete scripts from this folder without checking that audit first. Deletion requires:
+Do not move or delete scripts without checking that audit first. Deletion requires:
 
 1. no references in docs, tests, or code
 2. confirmation that the script is not a useful manual CLI

@@ -39,7 +39,8 @@ Trained checkpoints are expected to plug in through deployment-time inference co
 
 - Script cleanup is audit-backed only in this phase.
 - `scripts/audit_repo_entrypoints.py` now generates `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`.
-- Script grouping is planned but not yet applied physically.
+- Script grouping is now applied physically under workflow folders inside `scripts/`.
+- Legacy root-level script paths are temporarily preserved as thin compatibility wrappers.
 - Deletion still requires explicit user approval even when the audit finds low-risk candidates.
 - `outputs/test_data` is intentionally kept as-is for now.
 - No runtime/API/mobile/dashboard response shape changes are made in this phase.
@@ -49,7 +50,7 @@ Trained checkpoints are expected to plug in through deployment-time inference co
 Planned follow-ups after this boundary PR:
 - Configuration surfaces for training/deployment paths.
 - Script inventory and audit-based cleanup.
-- Group scripts by workflow or remove only confirmed unused files, depending on the audit result.
+- Remove compatibility wrappers only after docs/tests migrate and the audit still supports it.
 - Offline environment evolution.
 - MaskablePPO exploration (deferred by design in this PR).
 - Forecasting integration for training features.

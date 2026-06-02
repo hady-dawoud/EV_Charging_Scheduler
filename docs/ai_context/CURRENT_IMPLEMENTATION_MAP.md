@@ -51,17 +51,17 @@ Last verified against repo state: 2026-05-08.
   - `RuntimeArtifacts`: paths under `outputs/runtime`.
   - `RuntimeStorage`: JSON plus SQLite persistence for state, metrics, events, external requests, and recommendations.
 - `services/sim_runtime/event_bus.py`: event bus; currently used with a no-op wildcard subscriber in `RuntimeManager`.
-- `services/sim_runtime/demo.py`, `scripts/run_demo_runtime.py`, `scripts/inject_live_request.py`: runtime demo/helper entry points.
-- `scripts/verify_station_access.py`: reports station access counts and normal-user eligibility for the real Dundee station table.
-- `scripts/calibrate_transformer_capacities.py`: computes CP-inventory-based synthetic transformer capacity recommendations and can write calibrated realistic/stress topology scenario JSON files.
-- `scripts/verify_topology_scenario.py`: reports processed/default or optional scenario station-transformer counts, transformer capacities, connected CP kW, capacity warning flags, and validates every station maps to an existing transformer.
-- `scripts/verify_runtime_smoke.py`: starts runtime, injects a live request, verifies persistence, and sweeps recommendation policies.
-- `scripts/verify_dynamic_pricing.py`: runtime-facing pricing smoke check that prints tariff/dynamic price metadata before and after added transformer stress.
-- `scripts/verify_dundee_tariff_pricing.py`: same-energy tariff sanity check for AC Standard, AC Fast, Rapid, and Ultra Rapid.
-- `scripts/evaluate_osmnx_routing_usefulness.py`: compares simple-distance and OSMnx routing across sampled Dundee request/station pairs and summarizes success/fallback rates.
-- `scripts/verify_app_runtime_integration.py`: proves pricing/routing metadata and runtime status are connected to the app-facing recommendation path.
+- `services/sim_runtime/demo.py`, `scripts/digital_twin/run_demo_runtime.py`, `scripts/digital_twin/inject_live_request.py`: runtime demo/helper entry points. Legacy root-level wrappers remain temporarily.
+- `scripts/verification/verify_station_access.py`: reports station access counts and normal-user eligibility for the real Dundee station table.
+- `scripts/data/calibrate_transformer_capacities.py`: computes CP-inventory-based synthetic transformer capacity recommendations and can write calibrated realistic/stress topology scenario JSON files.
+- `scripts/verification/verify_topology_scenario.py`: reports processed/default or optional scenario station-transformer counts, transformer capacities, connected CP kW, capacity warning flags, and validates every station maps to an existing transformer.
+- `scripts/digital_twin/verify_runtime_smoke.py`: starts runtime, injects a live request, verifies persistence, and sweeps recommendation policies.
+- `scripts/verification/verify_dynamic_pricing.py`: runtime-facing pricing smoke check that prints tariff/dynamic price metadata before and after added transformer stress.
+- `scripts/verification/verify_dundee_tariff_pricing.py`: same-energy tariff sanity check for AC Standard, AC Fast, Rapid, and Ultra Rapid.
+- `scripts/maps/evaluate_osmnx_routing_usefulness.py`: compares simple-distance and OSMnx routing across sampled Dundee request/station pairs and summarizes success/fallback rates.
+- `scripts/digital_twin/verify_app_runtime_integration.py`: proves pricing/routing metadata and runtime status are connected to the app-facing recommendation path.
 - `scripts/audit_repo_entrypoints.py`: dependency-light audit tooling that scans repo entrypoints, classifies scripts conservatively, searches references, and can render Markdown or JSON reports including `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`.
-- `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`: generated audit report for current script inventory, future grouping suggestions, and conservative cleanup rules. Scripts remain in place in this PR.
+- `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md`: generated audit report for grouped implementation scripts, legacy compatibility wrappers, and conservative cleanup rules.
 
 ## EV Core
 
@@ -193,6 +193,7 @@ Future learned-policy integration remains out of this implementation: first trai
 
 ## Cleanup Status
 
-- Script grouping is planned but not yet executed physically.
+- Script grouping is now applied under workflow folders in `scripts/`.
+- Root-level script names are temporary backward-compatible wrappers for common/manual entrypoints.
 - The audit currently keeps `outputs/test_data` intentionally in place.
 - Any future script deletion still requires explicit user approval after audit evidence and passing tests.

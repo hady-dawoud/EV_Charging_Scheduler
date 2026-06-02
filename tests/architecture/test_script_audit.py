@@ -131,3 +131,34 @@ def test_markdown_output_contains_summary_and_category_names(tmp_path: Path) -> 
     assert "# Script And File Audit" in markdown
     assert "## Summary" in markdown
     assert "dashboard_verification" in markdown
+
+
+def test_audit_reports_wrapper_compatibility(tmp_path: Path) -> None:
+    module = _load_audit_module()
+
+    scripts_dir = tmp_path / "scripts"
+    implementation_dir = scripts_dir / "digital_twin"
+    implementation_dir.mkdir(parents=True)
+    (implementation_dir / "verify_runtime_smoke.py").write_text("print('impl')\n", encoding="utf-8")
+    (scripts_dir / "verify_runtime_smoke.py").write_text(
+        "from pathlib import Path\n"
+        "import runpy\n\n"
+        "# Backward-compatible entrypoint.\n"
+        "# Wrapper target: scripts/digital_twin/verify_runtime_smoke.py\n"
+        "if __name__ == '__main__':\n"
+        "    runpy.run_path(str(Path(__file__).resolve().parent / 'digital_twin' / 'verify_runtime_smoke.py'), run_name='__main__')\n",
+        encoding="utf-8",
+    )
+
+    report = module.scan_repo_entrypoints(
+        repo_root=tmp_path,
+        entrypoint_roots=[scripts_dir],
+        reference_roots=[tmp_path],
+    )
+    payload = json.loads(module.render_json_report(report))
+    markdown = module.render_markdown_report(report)
+
+    wrapper_entry = next(item for item in payload["entries"] if item["path"] == "scripts/verify_runtime_smoke.py")
+    assert wrapper_entry["entrypoint_kind"] == "legacy_wrapper"
+    assert wrapper_entry["wrapper_target_path"] == "scripts/digital_twin/verify_runtime_smoke.py"
+    assert "Compatibility Wrappers" in markdown
