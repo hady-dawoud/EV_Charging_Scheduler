@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { Shadow } from 'react-native-shadow-2';
 import { History, Zap, Clock, PoundSterling, CheckCircle, AlertTriangle } from 'lucide-react-native';
 
 import { api } from '../services/api';
@@ -55,6 +56,26 @@ const durationFromSession = (session: ApiChargingSession) => {
   const minutes = Math.max(0, Math.round((end - start) / 60000));
   return `${minutes} min`;
 };
+
+function CardCornerGlow() {
+  if (isWeb) {
+    return <View style={[styles.cardGlow, { filter: 'blur(40px)' } as any]} />;
+  }
+
+  return (
+    <View pointerEvents="none" style={styles.nativeCardGlowClip}>
+      <Shadow
+        distance={100}
+        startColor="rgba(0, 255, 0, 0.070)"
+        endColor="rgba(0, 255, 0, 0)"
+        offset={[0, 0]}
+        style={styles.nativeCardGlowShadow}
+      >
+        <View style={styles.nativeCardGlowAnchor} />
+      </Shadow>
+    </View>
+  );
+}
 
 export default function SessionsScreen() {
   const [reservations, setReservations] = useState<ApiReservation[]>([]);
@@ -253,7 +274,7 @@ function ReservationCard({ reservation }: ReservationCardProps) {
 
   return (
     <View style={[styles.upcomingCard, webStyles.glass]}>
-      <View style={[styles.cardGlow, isWeb ? ({ filter: 'blur(40px)' } as any) : {}]} />
+      <CardCornerGlow />
       <View style={styles.upcomingHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.upcomingName}>{reservation.station_name}</Text>
@@ -413,6 +434,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,255,0,0.08)',
     top: -32,
     right: -32,
+  },
+  nativeCardGlowClip: {
+    position: 'absolute',
+    top: -35,
+    right: -35,
+    width: 70,
+    height: 70,
+    overflow: 'visible',
+  },
+  nativeCardGlowShadow: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  nativeCardGlowAnchor: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(0, 255, 0, 0.001)',
   },
   upcomingHeader: {
     flexDirection: 'row',

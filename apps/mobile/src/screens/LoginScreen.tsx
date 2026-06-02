@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
@@ -21,10 +22,13 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
   const setSession = useAuthStore((state) => state.setSession);
+  const authMessage = useAuthStore((state) => state.authMessage);
+  const clearAuthMessage = useAuthStore((state) => state.clearAuthMessage);
 
   const handleLogin = async () => {
     setIsLoading(true);
     setError(null);
+    clearAuthMessage();
 
     try {
       const session = await api.login({
@@ -88,15 +92,18 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error || authMessage ? (
+          <Text style={styles.errorText}>{error ?? authMessage}</Text>
+        ) : null}
 
         <TouchableOpacity style={styles.forgotRow}>
           <Text style={styles.forgotText}>Forgot password?</Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={styles.primaryBtn}
+      <NeonButton
+        buttonStyle={styles.primaryBtn}
+        frameStyle={styles.primaryBtnFrame}
         onPress={handleLogin}
         disabled={isLoading}
         activeOpacity={0.85}
@@ -106,7 +113,7 @@ export default function LoginScreen({ navigation }: any) {
         ) : (
           <Text style={styles.primaryBtnText}>Sign In</Text>
         )}
-      </TouchableOpacity>
+      </NeonButton>
 
       <View style={styles.dividerRow}>
         <View style={styles.divider} />
@@ -201,13 +208,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  primaryBtnFrame: {
+    marginBottom: theme.spacing.xl,
+  },
   primaryBtn: {
     backgroundColor: theme.colors.primary,
     height: 56,
     borderRadius: theme.radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
   },
   primaryBtnText: {
     color: '#000',

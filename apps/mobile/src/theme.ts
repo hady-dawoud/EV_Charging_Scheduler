@@ -10,19 +10,19 @@ export const webStyles = {
     : {},
   neonGlow: isWeb
     ? ({ boxShadow: '0 0 8px rgba(0, 255, 0, 0.4), 0 0 20px rgba(0, 255, 0, 0.25), 0 0 40px rgba(0, 255, 0, 0.1)' } as any)
-    : {},
+    : { shadowColor: '#00FF00', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.75, shadowRadius: 20, elevation: 16 },
   neonGlowSmall: isWeb
     ? ({ boxShadow: '0 0 4px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3)' } as any)
-    : {},
+    : { shadowColor: '#00FF00', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.65, shadowRadius: 10, elevation: 8 },
   neonGlowIntense: isWeb
     ? ({ boxShadow: '0 0 15px rgba(0, 255, 0, 0.5), 0 0 40px rgba(0, 255, 0, 0.3), 0 0 80px rgba(0, 255, 0, 0.1)' } as any)
-    : {},
+    : { shadowColor: '#00FF00', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.9, shadowRadius: 30, elevation: 24 },
   blueGlow: isWeb
     ? ({ boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4), 0 8px 24px rgba(37, 99, 235, 0.2)' } as any)
-    : {},
+    : { shadowColor: '#2563EB', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 10 },
   neonText: isWeb
     ? ({ textShadow: '0 0 10px rgba(0, 255, 0, 0.5)' } as any)
-    : {},
+    : { textShadowColor: 'rgba(0, 255, 0, 0.5)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
 };
 
 export const theme = {

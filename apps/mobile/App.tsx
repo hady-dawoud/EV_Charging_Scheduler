@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { api } from './src/services/api';
+import { useAuthStore } from './src/stores/authStore';
 import { theme } from './src/theme';
 import type { RootStackParamList } from './src/types';
 import MainTabs from './src/components/MainTabs';
@@ -16,11 +18,32 @@ import StationDetailsScreen from './src/screens/StationDetailsScreen';
 import ReservationConfirmScreen from './src/screens/ReservationConfirmScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 export default function App() {
+  const expireSession = useAuthStore((state) => state.expireSession);
+
+  useEffect(() => {
+    api.setAuthExpiredHandler(() => {
+      expireSession('Session expired. Please sign in again.');
+
+      if (navigationRef.isReady()) {
+        navigationRef.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
+    });
+
+    return () => {
+      api.setAuthExpiredHandler(null);
+    };
+  }, [expireSession]);
+
   return (
     <View style={styles.root}>
       <NavigationContainer
+        ref={navigationRef}
         theme={{
           dark: true,
           colors: {

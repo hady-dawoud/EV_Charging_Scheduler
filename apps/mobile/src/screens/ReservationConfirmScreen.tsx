@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { NeonButton } from '../components/NeonButton';
 import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
 import type { ApiReservation, RootStackParamList } from '../types';
@@ -148,15 +149,17 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.navBtn, webStyles.neonGlowSmall, isCreating && styles.disabledBtn]}
+          <NeonButton
+            glow="small"
+            buttonStyle={[styles.navBtn, isCreating && styles.disabledBtn]}
+            frameStyle={styles.navBtnFrame}
             onPress={() => navigation.navigate('Main', { screen: 'Sessions' })}
             disabled={isCreating}
             activeOpacity={0.85}
           >
             <MapPin color="#000" size={20} />
             <Text style={styles.navBtnText}>View Sessions</Text>
-          </TouchableOpacity>
+          </NeonButton>
 
           <TouchableOpacity
             style={styles.homeBtn}
@@ -223,8 +226,10 @@ const styles = StyleSheet.create({
   detailLabel: { color: theme.colors.textMuted, fontSize: 14 },
   detailValue: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold', flexShrink: 1, textAlign: 'right' },
   actions: { gap: theme.spacing.md },
+  navBtnFrame: {
+    marginBottom: theme.spacing.md,
+  },
   navBtn: {
-    ...theme.neonGlowSmall,
     height: 56,
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radii.lg,
@@ -232,7 +237,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
   },
   disabledBtn: {
     opacity: 0.6,
