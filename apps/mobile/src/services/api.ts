@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 
-import { mockVehicle } from '../data/mockData';
 import { authStorage } from './authStorage';
 import type {
   ApiActiveChargingSessionResponse,
@@ -18,6 +17,8 @@ import type {
   CreateReservationRequest,
   RegisterRequest,
   User,
+  VehicleProfile,
+  VehicleProfileUpdateRequest,
 } from '../types';
 
 const LOCAL_API_BASE_URL =
@@ -57,6 +58,16 @@ type BackendAuthResponse = {
   token_type: string;
 };
 
+
+type BackendVehicleProfile = {
+  id: string;
+  make: string;
+  model: string;
+  battery_capacity_kwh: number;
+  current_soc: number;
+  range_km: number;
+};
+
 type BackendTokenResponse = {
   access_token: string;
   refresh_token: string;
@@ -74,6 +85,16 @@ class ApiError extends Error {
     this.body = body;
   }
 }
+
+
+const mapBackendVehicle = (vehicle: BackendVehicleProfile): VehicleProfile => ({
+  id: vehicle.id,
+  make: vehicle.make,
+  model: vehicle.model,
+  batteryCapacity: vehicle.battery_capacity_kwh,
+  currentSoC: vehicle.current_soc,
+  rangeLeft: vehicle.range_km,
+});
 
 const mapBackendUser = (user: BackendUser): User => ({
   id: user.id,
@@ -204,9 +225,13 @@ const mapChargerType = (chargerType: MobileRecommendationRequest['chargerType'])
   }
 };
 
-const calculateRequestedEnergyKwh = (targetSoc: number) => {
-  const deltaSoc = Math.max(0, targetSoc - mockVehicle.currentSoC) / 100;
-  return Number((deltaSoc * mockVehicle.batteryCapacity).toFixed(3));
+const calculateRequestedEnergyKwh = (
+  targetSoc: number,
+  currentSoC: number,
+  batteryCapacity: number
+) => {
+  const deltaSoc = Math.max(0, targetSoc - currentSoC) / 100;
+  return Number((deltaSoc * batteryCapacity).toFixed(3));
 };
 
 export const api = {
@@ -310,6 +335,32 @@ export const api = {
     return mapBackendUser(body);
   },
 
+
+  getMyVehicle: async (): Promise<VehicleProfile> => {
+    const body = await requestJsonWithAuthRetry<BackendVehicleProfile>('/vehicles/me', {
+      method: 'GET',
+    });
+
+    return mapBackendVehicle(body);
+  },
+
+  updateMyVehicle: async (
+    payload: VehicleProfileUpdateRequest
+  ): Promise<VehicleProfile> => {
+    const body = await requestJsonWithAuthRetry<BackendVehicleProfile>('/vehicles/me', {
+      method: 'PUT',
+      body: JSON.stringify({
+        make: payload.make,
+        model: payload.model,
+        battery_capacity_kwh: payload.batteryCapacity,
+        current_soc: payload.currentSoC,
+        range_km: payload.rangeLeft,
+      }),
+    });
+
+    return mapBackendVehicle(body);
+  },
+
   logout: async (refreshToken: string) => {
     await requestJson<{ success: boolean }>(
       '/auth/logout',
@@ -331,10 +382,14 @@ export const api = {
     const payload = {
       latitude: 56.462,
       longitude: -2.9707,
-      battery_level: mockVehicle.currentSoC,
+      battery_level: request.vehicleCurrentSoC,
       target_battery_level: request.targetSoc,
-      battery_kwh: mockVehicle.batteryCapacity,
-      requested_energy_kwh: calculateRequestedEnergyKwh(request.targetSoc),
+      battery_kwh: request.vehicleBatteryCapacity,
+      requested_energy_kwh: calculateRequestedEnergyKwh(
+        request.targetSoc,
+        request.vehicleCurrentSoC,
+        request.vehicleBatteryCapacity
+      ),
       preference_mode: request.preferenceMode,
       connector_type: mapChargerType(request.chargerType),
       latest_finish_minutes_from_now: 120,

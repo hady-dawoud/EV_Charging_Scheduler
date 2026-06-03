@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
+import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
-import { mockVehicle } from '../data/mockData';
 import {
   RecommendationChargerType,
   RecommendationPreferenceMode,
@@ -21,23 +21,36 @@ import {
 type Props = NativeStackScreenProps<RootStackParamList, 'ChargingRequest'>;
 
 const TARGET_SOC_STEP = 5;
-const MIN_TARGET_SOC = Math.min(100, mockVehicle.currentSoC + TARGET_SOC_STEP);
 
 export default function ChargingRequestScreen({ navigation }: Props) {
-  const [targetSoC, setTargetSoC] = useState(Math.max(80, MIN_TARGET_SOC));
+  const vehicle = useVehicleStore((state) => state.vehicle);
+  const loadVehicle = useVehicleStore((state) => state.loadVehicle);
+  const activeVehicle = vehicle ?? fallbackVehicle;
+  const minTargetSoC = Math.min(100, activeVehicle.currentSoC + TARGET_SOC_STEP);
+  const [targetSoC, setTargetSoC] = useState(Math.max(80, minTargetSoC));
+
+  useEffect(() => {
+    loadVehicle();
+  }, [loadVehicle]);
+
+  useEffect(() => {
+    setTargetSoC((current) => Math.max(current, minTargetSoC));
+  }, [minTargetSoC]);
   const [optMode, setOptMode] =
     useState<RecommendationPreferenceMode>('cheapest');
   const [chargerType, setChargerType] =
     useState<RecommendationChargerType>('any');
 
   const handleFindRecommendations = () => {
-    const safeTargetSoC = Math.max(targetSoC, MIN_TARGET_SOC);
+    const safeTargetSoC = Math.max(targetSoC, minTargetSoC);
 
     navigation.navigate('LoadingRecommendations', {
       request: {
         targetSoc: safeTargetSoC,
         preferenceMode: optMode,
         chargerType,
+        vehicleCurrentSoC: activeVehicle.currentSoC,
+        vehicleBatteryCapacity: activeVehicle.batteryCapacity,
       },
     });
   };
@@ -66,13 +79,13 @@ export default function ChargingRequestScreen({ navigation }: Props) {
             <TouchableOpacity
               style={[
                 styles.controlBtn,
-                targetSoC <= MIN_TARGET_SOC && styles.controlBtnDisabled,
+                targetSoC <= minTargetSoC && styles.controlBtnDisabled,
               ]}
-              onPress={() => setTargetSoC((p) => Math.max(MIN_TARGET_SOC, p - TARGET_SOC_STEP))}
-              disabled={targetSoC <= MIN_TARGET_SOC}
+              onPress={() => setTargetSoC((p) => Math.max(minTargetSoC, p - TARGET_SOC_STEP))}
+              disabled={targetSoC <= minTargetSoC}
             >
               <Minus
-                color={targetSoC <= MIN_TARGET_SOC ? 'rgba(156,163,175,0.35)' : theme.colors.textMuted}
+                color={targetSoC <= minTargetSoC ? 'rgba(156,163,175,0.35)' : theme.colors.textMuted}
                 size={24}
               />
             </TouchableOpacity>

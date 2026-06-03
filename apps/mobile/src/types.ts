@@ -48,6 +48,18 @@ export interface Vehicle {
   rangeLeft: number;
 }
 
+export type VehicleProfile = Vehicle;
+
+export type VehicleProfileUpdateRequest = {
+  make: string;
+  model: string;
+  batteryCapacity: number;
+  currentSoC: number;
+  rangeLeft: number;
+};
+
+
+
 export interface ChargingStation {
   id: string;
   name: string;
@@ -74,6 +86,8 @@ export type MobileRecommendationRequest = {
   targetSoc: number;
   preferenceMode: RecommendationPreferenceMode;
   chargerType: RecommendationChargerType;
+  vehicleCurrentSoC: number;
+  vehicleBatteryCapacity: number;
 };
 
 export type ApiRecommendationOption = {
@@ -209,6 +223,7 @@ export type RootStackParamList = {
   Signup: undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string; email?: string } | undefined;
+  ManageVehicle: undefined;
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
