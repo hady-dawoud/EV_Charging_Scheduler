@@ -235,6 +235,8 @@ const calculateRequestedEnergyKwh = (
 };
 
 export const api = {
+  getBaseUrl: () => API_BASE_URL,
+
   setAccessToken: (accessToken: string | null) => {
     accessTokenMemory = accessToken;
   },

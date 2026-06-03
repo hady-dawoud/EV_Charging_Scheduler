@@ -39,6 +39,21 @@ export type AuthResponse = AuthTokens & {
   user: User;
 };
 
+export type DistanceUnit = 'km' | 'mi';
+export type CurrencyCode = 'GBP' | 'EGP';
+
+export type NotificationPreferences = {
+  reservationReminders: boolean;
+  chargingSessionUpdates: boolean;
+  recommendationAlerts: boolean;
+};
+
+export type AppPreferences = {
+  distanceUnit: DistanceUnit;
+  currency: CurrencyCode;
+  notifications: NotificationPreferences;
+};
+
 export interface Vehicle {
   id: string;
   make: string;
@@ -224,6 +239,9 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string; email?: string } | undefined;
   ManageVehicle: undefined;
+  AppSettings: undefined;
+  NotificationSettings: undefined;
+  PrivacySecurity: undefined;
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
