@@ -11,6 +11,8 @@ import MainTabs from './src/components/MainTabs';
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import ChargingRequestScreen from './src/screens/ChargingRequestScreen';
 import LoadingRecommendationsScreen from './src/screens/LoadingRecommendationsScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
@@ -64,6 +66,8 @@ export default function App() {
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
           <Stack.Screen name="Main" component={MainTabs} />
           <Stack.Screen name="ChargingRequest" component={ChargingRequestScreen} />
           <Stack.Screen name="LoadingRecommendations" component={LoadingRecommendationsScreen} />
