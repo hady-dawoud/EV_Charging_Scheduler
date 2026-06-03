@@ -155,7 +155,6 @@ def refresh(
 )
 def logout(
     request: LogoutRequest,
-    _current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> LogoutResponse:
     return logout_user(db, request.refresh_token)
