@@ -15,10 +15,10 @@ import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
 
 const menuItems = [
-  { icon: Settings, label: 'App Settings' },
-  { icon: Bell, label: 'Notifications' },
-  { icon: Shield, label: 'Privacy & Security' },
-];
+  { icon: Settings, label: 'App Settings', route: 'AppSettings' },
+  { icon: Bell, label: 'Notifications', route: 'NotificationSettings' },
+  { icon: Shield, label: 'Privacy & Security', route: 'PrivacySecurity' },
+] as const;
 
 export default function ProfileScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
@@ -89,7 +89,12 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.menuSection}>
           <Text style={styles.menuLabel}>PREFERENCES</Text>
           {menuItems.map((item) => (
-            <TouchableOpacity key={item.label} style={styles.menuItem} activeOpacity={0.75}>
+            <TouchableOpacity
+              key={item.label}
+              style={styles.menuItem}
+              activeOpacity={0.75}
+              onPress={() => navigation.navigate(item.route)}
+            >
               <View style={styles.menuItemLeft}>
                 <item.icon color={theme.colors.textMuted} size={20} />
                 <Text style={styles.menuItemText}>{item.label}</Text>
