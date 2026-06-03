@@ -50,6 +50,12 @@ class User(TimestampMixin, Base):
         cascade="all, delete-orphan",
     )
 
+    vehicle: Mapped["UserVehicle | None"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
 
 class RefreshToken(TimestampMixin, Base):
     __tablename__ = "refresh_tokens"

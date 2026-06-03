@@ -12,13 +12,22 @@ import { Zap, Car } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
-import { mockVehicle } from '../data/mockData';
+import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 
 const isWeb = Platform.OS === 'web';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function HomeScreen({ navigation }: any) {
+  const vehicle = useVehicleStore((state) => state.vehicle);
+  const loadVehicle = useVehicleStore((state) => state.loadVehicle);
+  const activeVehicle = vehicle ?? fallbackVehicle;
+  const batteryProgress = Math.max(0, Math.min(100, activeVehicle.currentSoC)) / 100;
+
+  useEffect(() => {
+    loadVehicle();
+  }, [loadVehicle]);
+
   const RADIUS = 96;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
   const SVG_SIZE = 220;
@@ -62,7 +71,7 @@ export default function HomeScreen({ navigation }: any) {
                     stroke="rgba(0,255,0,0.10)"
                     strokeWidth={24}
                     strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
                     strokeLinecap="round"
                     rotation="-90"
                     origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
@@ -75,7 +84,7 @@ export default function HomeScreen({ navigation }: any) {
                     stroke="rgba(0,255,0,0.18)"
                     strokeWidth={16}
                     strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
                     strokeLinecap="round"
                     rotation="-90"
                     origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
@@ -91,7 +100,7 @@ export default function HomeScreen({ navigation }: any) {
                 stroke={theme.colors.primary}
                 strokeWidth={10}
                 strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
                 strokeLinecap="round"
                 rotation="-90"
                 origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
@@ -99,8 +108,8 @@ export default function HomeScreen({ navigation }: any) {
             </Svg>
           </View>
           <View style={styles.ringInner}>
-            <Text style={styles.batteryPct}>45%</Text>
-            <Text style={styles.batteryRange}>~225 km range</Text>
+            <Text style={styles.batteryPct}>{Math.round(activeVehicle.currentSoC)}%</Text>
+            <Text style={styles.batteryRange}>~{Math.round(activeVehicle.rangeLeft)} km range</Text>
           </View>
         </View>
 
@@ -112,8 +121,8 @@ export default function HomeScreen({ navigation }: any) {
               <Car color={theme.colors.primary} size={24} />
             </View>
             <View style={styles.vehicleInfo}>
-              <Text style={styles.vehicleName}>{mockVehicle.make} {mockVehicle.model}</Text>
-              <Text style={styles.vehicleSub}>{mockVehicle.batteryCapacity} kWh Battery</Text>
+              <Text style={styles.vehicleName}>{activeVehicle.make} {activeVehicle.model}</Text>
+              <Text style={styles.vehicleSub}>{activeVehicle.batteryCapacity} kWh Battery</Text>
             </View>
           </View>
         </View>

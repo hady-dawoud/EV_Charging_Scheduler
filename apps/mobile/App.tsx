@@ -18,6 +18,7 @@ import LoadingRecommendationsScreen from './src/screens/LoadingRecommendationsSc
 import ResultsScreen from './src/screens/ResultsScreen';
 import StationDetailsScreen from './src/screens/StationDetailsScreen';
 import ReservationConfirmScreen from './src/screens/ReservationConfirmScreen';
+import ManageVehicleScreen from './src/screens/ManageVehicleScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -74,6 +75,7 @@ export default function App() {
           <Stack.Screen name="Results" component={ResultsScreen} />
           <Stack.Screen name="StationDetails" component={StationDetailsScreen} />
           <Stack.Screen name="ReservationConfirm" component={ReservationConfirmScreen} />
+          <Stack.Screen name="ManageVehicle" component={ManageVehicleScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

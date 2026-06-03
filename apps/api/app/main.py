@@ -10,6 +10,7 @@ from app.routers.recommendations import router as recommendations_router
 from app.routers.reservations import router as reservations_router
 from app.routers.stations import router as stations_router
 from app.routers.system import router as system_router
+from app.routers.vehicles import router as vehicles_router
 
 settings = get_settings()
 
@@ -34,3 +35,4 @@ app.include_router(charger_events_router)
 app.include_router(reservations_router)
 app.include_router(stations_router)
 app.include_router(recommendations_router)
+app.include_router(vehicles_router)
