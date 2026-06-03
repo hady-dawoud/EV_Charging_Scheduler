@@ -1,27 +1,10 @@
-"""Placeholder entry point for 15-minute price tables."""
-
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
+import runpy
 
-
-def build_parser() -> argparse.ArgumentParser:
-    """Build the CLI parser for price table generation."""
-
-    parser = argparse.ArgumentParser(description="Build 15-minute energy price tables.")
-    parser.add_argument("--output-path", type=Path, default=Path("data/processed/price_15min.parquet"))
-    return parser
-
-
-def main() -> int:
-    """Run the placeholder CLI."""
-
-    args = build_parser().parse_args()
-    _ = args
-    # TODO: implement 15-minute price table generation.
-    return 0
-
-
+# Backward-compatible entrypoint.
+# Wrapper target: scripts/forecasting/build_price_15min.py
 if __name__ == "__main__":
-    raise SystemExit(main())
+    target = Path(__file__).resolve().parent / "forecasting" / "build_price_15min.py"
+    runpy.run_path(str(target), run_name="__main__")

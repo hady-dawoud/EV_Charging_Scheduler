@@ -356,6 +356,7 @@ class RuntimeManager:
     def _persist_env(self, env: DundeeEnv, *, include_events: bool = False) -> StateSnapshot:
         status = self.storage.load_runtime_status()
         base_snapshot = env.get_state_snapshot()
+        runtime_phase = self._runtime_phase(env)
         snapshot = base_snapshot.model_copy(
             update={
                 "runtime_mode": env.runtime_mode,
@@ -369,6 +370,9 @@ class RuntimeManager:
                     "runtime_status_updated_at": datetime.now(UTC).isoformat(),
                     "dynamic_pricing_enabled": env.dynamic_pricing_enabled,
                     "last_routing_fallback_reason": env.last_routing_fallback_reason,
+                    "runtime_status": runtime_phase["runtime_status"],
+                    "replay_exhausted": runtime_phase["replay_exhausted"],
+                    "terminal_reason": runtime_phase["terminal_reason"],
                 },
             }
         )
@@ -399,12 +403,19 @@ class RuntimeManager:
         routing_provider_name = getattr(routing_provider, "name", "unknown")
         routing_provider_available = bool(getattr(routing_provider, "is_available", lambda: True)())
         osmnx_graph_exists = self.osmnx_graph_path.exists()
+        runtime_phase = self._runtime_phase(env)
+        active_request_count = sum(1 for request in env.requests.values() if request.status == "pending")
+        queued_request_count = sum(1 for request in env.requests.values() if request.status == "queued")
+        active_session_count = len(env.active_sessions)
         return {
+            "runtime_status": runtime_phase["runtime_status"],
             "loop_running": bool(loop_running),
             "loop_interval_seconds": float(loop_interval_seconds),
             "runtime_mode": env.runtime_mode,
             "active_policy": env.policy_mode,
             "recommendation_policy_name": self.config.recommendation_policy_name,
+            "replay_exhausted": runtime_phase["replay_exhausted"],
+            "terminal_reason": runtime_phase["terminal_reason"],
             "pricing_model": "dundee_tariff_plus_dynamic_overlay",
             "dynamic_pricing_enabled": env.dynamic_pricing_enabled,
             "routing_provider_name": routing_provider_name,
@@ -419,11 +430,43 @@ class RuntimeManager:
             "operational_start_ts": env.operational_start_time.isoformat(),
             "simulated_timestamp": env.current_time.isoformat(),
             "latest_external_request_id": env.latest_external_request_id,
-            "active_request_count": sum(1 for request in env.requests.values() if request.status == "pending"),
-            "queued_request_count": sum(1 for request in env.requests.values() if request.status == "queued"),
-            "active_session_count": len(env.active_sessions),
+            "active_request_count": active_request_count,
+            "queued_request_count": queued_request_count,
+            "active_session_count": active_session_count,
             "completed_requests_total": env.completed_requests_total,
             "missed_requests_total": env.missed_requests_total,
+        }
+
+    def _runtime_phase(self, env: DundeeEnv) -> dict[str, Any]:
+        replay_total = len(getattr(env, "replay_day_frame", []))
+        replay_window_end = getattr(env, "replay_window_end", None)
+        past_replay_window = replay_window_end is not None and env.current_time > replay_window_end
+        replay_exhausted = (
+            env.runtime_mode in {"replay", "hybrid"}
+            and (
+                past_replay_window
+                or (replay_total > 0 and int(getattr(env, "replay_cursor", 0)) >= replay_total)
+            )
+        )
+        has_inflight_work = any(
+            request.status in {"pending", "queued", "charging"}
+            for request in getattr(env, "requests", {}).values()
+        ) or bool(getattr(env, "active_sessions", {}))
+        if not bool(getattr(env, "running", False)):
+            runtime_status = "paused"
+        elif env.runtime_mode == "replay" and replay_exhausted:
+            runtime_status = "draining_replay" if has_inflight_work else "replay_exhausted"
+        else:
+            runtime_status = "running"
+        terminal_reason = (
+            "replay_exhausted_no_active_work"
+            if runtime_status == "replay_exhausted"
+            else None
+        )
+        return {
+            "runtime_status": runtime_status,
+            "replay_exhausted": replay_exhausted,
+            "terminal_reason": terminal_reason,
         }
 
     def _resolve_start_options(

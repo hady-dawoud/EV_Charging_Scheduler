@@ -45,7 +45,8 @@
 - How should synthetic-live scenarios evolve?
   - Current truth: `SyntheticLiveRequestGenerator` creates valid `ExternalChargingRequest` objects with `source_type="external_live"` and synthetic-live metadata.
   - Current truth: it uses Dundee historical priors, station/zone distributions, and default vehicle profiles without replaying old sessions.
-  - Still open: scenario-level demand controls, route-aware origin sampling, richer vehicle-profile priors, and evaluation-set versioning.
+  - Current truth: PR2 now adds `RLScenarioSampler` and `generate_requests_for_scenario(...)` around the synthetic-live generator with fixed train/validation/test seed ranges and explicit normal/busy/stress scenario contracts.
+  - Still open: route-aware origin sampling, richer vehicle-profile priors, scenario catalogs beyond the current defaults, and evaluation-set versioning.
 
 ## Dynamic Pricing
 
@@ -56,10 +57,39 @@
   - Current truth: no connection, parking, overstay, or reservation fees are applied.
   - Still open: calibration against stress scenarios, queue sensitivity tuning, and whether future policy/MARL work should consume the same signal directly.
 
+## RL Preparation
+
+- Is the current RL baseline evaluation fully closed-loop?
+  - Current truth: no. PR2 baseline evaluation is request-centric and uses the existing recommendation path under fixed-seed scenarios.
+  - Current truth: this is enough to lock contracts, seed splits, scenario metadata, and baseline names before Gymnasium work begins.
+  - Current truth: PR3 now adds a Gymnasium-compatible masked environment skeleton, but it is still decision-level rather than fully closed-loop queue/session mutation.
+  - Current truth: PR4 now wraps that env through `ev_core.rl_training` for offline scenario creation, rollout, and metrics without changing the underlying env semantics.
+  - Still open: a true stepwise closed-loop evaluator that uses the same masked environment semantics while mutating runtime sessions and queues.
+
+- Is demand scaling now formalized enough for RL preparation?
+  - Current truth: yes for first-step scenario generation. PR2 uses demand realism guidance from the repo data, including the current 35-station / 90-chargepoint topology and the fact that historical average demand is lighter than normal utilization.
+  - Current truth: demand multipliers now have explicit curriculum bands: normal `1.5x-3.0x`, busy `3.0x-5.0x`, stress `5.0x+` as a minority slice.
+  - Still open: whether those multiplier bands need recalibration after the Gymnasium environment and evaluation harness are running closed-loop.
+
+- How should forecasting plug into RL?
+  - Current truth: PR2 adds a `ForecastFeatureSnapshot` placeholder with default `source="none"`.
+  - Current truth: no forecasting model is implemented in this PR.
+  - Current truth: background load is optional for EV-arrival forecasting, but it is required for true grid-headroom forecasting because transformer headroom depends on non-EV load too.
+  - Still open: the exact observation schema for forecast features and whether single-agent RL and future MARL agents should consume the same forecast channels.
+
+- Is the PR3 observation/action/reward contract final?
+  - Current truth: no. PR3 freezes a first stable version so training integration can begin.
+  - Current truth: the env is single-agent, station-selection, masked discrete action, and fixed-size flat vector observation.
+  - Current truth: `simple_distance` remains the default RL routing provider and OSMnx stays optional.
+  - Current truth: PR4 keeps `DundeeStationSelectionEnv` as the single source of truth and adds only a thin offline-training wrapper around it.
+  - Still open: observation normalization, feature scaling policy, richer per-station features, and reward tuning after first MaskablePPO experiments.
+
 ## Routing
 
 - Is OSMnx useful enough to keep for evaluation or future RL routing realism?
   - Current truth: OSMnx support remains optional and default runtime routing is still `simple_distance`.
+  - Current truth: PR2 keeps `simple_distance` as the first RL default and does not make OSMnx part of scenario defaults.
+  - Current truth: PR3 keeps `simple_distance` as the default environment routing path for the Gymnasium skeleton.
   - Current truth: real Dundee verification and usefulness-evaluation scripts now exist for the locally built GraphML path.
   - Current truth: if OSMnx is unavailable, the graph is missing, nearest-node snapping fails, or no route exists, runtime can still fall back safely.
   - Still open: whether sampled Dundee success rate, fallback rate, and distance realism are strong enough to justify using OSMnx in later RL evaluation/training loops.
@@ -117,14 +147,39 @@
 ## MARL
 
 - What MARL framework/checkpoint format should be used?
-  - Not verified. No current MARL checkpoint loading path was found.
-  - Need decision among likely options such as RLlib, PettingZoo/SuperSuit, CleanRL-style PyTorch modules, Stable-Baselines-style single-agent wrappers, or a custom PyTorch policy.
+  - Current scope: do not add MARL before the single-agent learned-policy path is proven.
+  - Intended plug-in architecture is policy-based: offline training -> checkpoint outside git -> checkpoint-backed policy class -> `PolicyRegistry` registration -> `RecommendationService` selection -> deterministic fallback if checkpoint is missing.
+  - First learned model should be single-agent MaskablePPO. MARL comes later after the single-agent path has stable evaluation and fallback behavior.
+  - Still open: final MARL framework/checkpoint format. Likely options remain RLlib, PettingZoo/SuperSuit, CleanRL-style PyTorch modules, Stable-Baselines-style wrappers where applicable, or a custom PyTorch policy.
 
 - What is the observation/action contract for MARL inference?
-  - Not verified.
+  - Not verified for MARL.
+  - RL/MARL should consume repo-built candidate/runtime features and return rankings or station selections through the recommender policy interface, not change API/mobile contracts.
   - Vehicle profile support has started, but MARL still needs stable candidate features, runtime context, action semantics, charging-curve treatment, and fallback behavior before adding checkpoint inference.
 
 - Should MARL rank all candidates or choose a station directly?
   - Current runtime separates candidate ranking from allocation policy selection during simulation.
-  - Need architectural decision before training/inference integration.
+  - For the first single-agent MaskablePPO path, use the masked station-selection contract from PR3 and adapt the selected station into the recommender policy path.
+  - Need architectural decision before MARL training/inference integration.
 
+- Can offline training happen outside this repo workspace?
+  - Yes, on Colab/Kaggle or similar, if it installs and imports this repo code and trains against the repo environment/scenario sampler.
+  - Current truth: `ev_core.rl_training` now provides the intended import-safe offline boundary for that workflow.
+  - Checkpoints and large run artifacts should stay outside git; only lightweight loader/config/evaluation code should be committed later.
+
+
+## Configuration Rollout
+
+- Shared config contracts now exist in `ev_core.config` with env parsing helpers for runtime/recommendation/routing/pricing/topology/training/deployment.
+- Open question: where to incrementally adopt `EVSmartChargingConfig` beyond API runtime bootstrap (for example runtime manager CLI/demo entry points) without behavior drift.
+- Open question: when to introduce validation strictness tiers for env parsing in production deployments.
+- Open question: exact rollout plan for wiring `RLDeploymentConfig` into `PolicyRegistry` with deterministic fallback guarantees.
+
+## Script Cleanup Follow-Up
+
+- Current truth: `scripts/audit_repo_entrypoints.py` and `docs/ai_context/SCRIPT_AND_FILE_AUDIT.md` now provide a conservative inventory of repo entrypoints and reference evidence.
+- Current truth: scripts are now grouped by workflow under `scripts/data`, `scripts/digital_twin`, `scripts/maps`, `scripts/verification`, `scripts/rl_training`, `scripts/forecasting`, and `scripts/benchmarks`.
+- Current truth: legacy root-level script names are temporarily kept as compatibility wrappers while docs/tests migrate.
+- Current truth: `outputs/test_data` is intentionally retained for now and is not a cleanup target in this PR.
+- Open question: when can the compatibility wrappers be removed safely after docs/tests stop using legacy root-level script paths?
+- Open question: should some low-reference manual CLIs such as `seed_stations.py`, `verify_app_pricing_duration_alignment.py`, and `verify_runtime_liveness.py` gain explicit docs coverage before any future cleanup discussion?

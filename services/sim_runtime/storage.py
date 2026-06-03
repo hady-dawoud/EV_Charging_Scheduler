@@ -110,11 +110,14 @@ class RuntimeStorage:
 
         if not self.artifacts.runtime_status_path.exists():
             return {
+                "runtime_status": "not_started",
                 "loop_running": False,
                 "loop_interval_seconds": 0.0,
                 "runtime_mode": "replay",
                 "active_policy": "overload_aware",
                 "recommendation_policy_name": "weighted_score",
+                "replay_exhausted": False,
+                "terminal_reason": None,
                 "demand_multiplier": 1.0,
                 "warm_start_minutes": 0,
             }

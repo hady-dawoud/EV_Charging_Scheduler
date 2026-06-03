@@ -6,7 +6,11 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import streamlit as st
+
+try:
+    import streamlit as st
+except ImportError:  # pragma: no cover - exercised by smoke tests without dashboard deps
+    st = None
 
 try:
     from streamlit_autorefresh import st_autorefresh
@@ -31,6 +35,18 @@ def load_runtime_data(repo_root: Path):
     events = storage.get_recent_events(limit=300)
     status = storage.load_runtime_status()
     return storage, state, metrics, metric_history, recommendations, external_requests, events, status
+
+
+def build_status_panel_values(state, metrics, status: dict) -> dict:
+    return {
+        "runtime_status": str(status.get("runtime_status", "unknown")),
+        "simulated_timestamp": None if state is None else state.simulated_timestamp,
+        "recommendation_policy": str(status.get("recommendation_policy_name", "unknown")),
+        "pricing_model": str(status.get("pricing_model", "unknown")),
+        "dynamic_pricing_enabled": bool(status.get("dynamic_pricing_enabled", False)),
+        "routing_provider": str(status.get("routing_provider_name", "unknown")),
+        "osmnx_graph_exists": bool(status.get("osmnx_graph_exists", False)),
+    }
 
 
 def station_color(row: pd.Series) -> list[int]:
@@ -227,6 +243,8 @@ def render_map(state) -> None:
 
 
 def main() -> None:
+    if st is None:
+        raise RuntimeError("Streamlit is required to run the dashboard UI.")
     st.set_page_config(page_title="Dundee Simulator Dashboard", layout="wide")
     st.title("Dundee Simulator Dashboard")
     st.caption("Standalone EV-side runtime visualization outside apps/**.")
@@ -239,14 +257,16 @@ def main() -> None:
         st.warning("No runtime snapshot found yet. Use the sidebar to start the Dundee simulator runtime.")
         return
 
-    overview = st.columns(7)
-    overview[0].metric("Sim Time", str(state.simulated_timestamp))
-    overview[1].metric("Policy", state.active_policy)
-    overview[2].metric("Mode", state.runtime_mode)
-    overview[3].metric("Loop", "Running" if state.loop_running else "Stopped")
-    overview[4].metric("Active Requests", metrics.active_request_count)
-    overview[5].metric("Queued", metrics.queued_request_count)
-    overview[6].metric("Active Sessions", metrics.active_session_count)
+    status_summary = build_status_panel_values(state, metrics, status)
+    overview = st.columns(8)
+    overview[0].metric("Runtime", status_summary["runtime_status"])
+    overview[1].metric("Sim Time", str(status_summary["simulated_timestamp"]))
+    overview[2].metric("Policy", state.active_policy)
+    overview[3].metric("Mode", state.runtime_mode)
+    overview[4].metric("Loop", "Running" if state.loop_running else "Stopped")
+    overview[5].metric("Active Requests", metrics.active_request_count)
+    overview[6].metric("Queued", metrics.queued_request_count)
+    overview[7].metric("Active Sessions", metrics.active_session_count)
 
     secondary = st.columns(6)
     secondary[0].metric("Completed", metrics.completed_requests_total)
@@ -257,13 +277,14 @@ def main() -> None:
     secondary[5].metric("Warm-start", f"{state.warm_start_minutes} min")
 
     st.subheader("Runtime Configuration")
-    config_cols = st.columns(3)
-    config_cols[0].metric("Pricing Model", str(status.get("pricing_model", "unknown")))
-    config_cols[1].metric("Dynamic Pricing", "On" if status.get("dynamic_pricing_enabled") else "Off")
-    config_cols[2].metric("Routing Provider", str(status.get("routing_provider_name", "unknown")))
+    config_cols = st.columns(4)
+    config_cols[0].metric("Recommendation Policy", status_summary["recommendation_policy"])
+    config_cols[1].metric("Pricing Model", status_summary["pricing_model"])
+    config_cols[2].metric("Dynamic Pricing", "On" if status_summary["dynamic_pricing_enabled"] else "Off")
+    config_cols[3].metric("Routing Provider", status_summary["routing_provider"])
     st.caption(
         f"Routing available: {status.get('routing_provider_available')} | "
-        f"OSMnx graph exists: {status.get('osmnx_graph_exists')} | "
+        f"OSMnx graph exists: {status_summary['osmnx_graph_exists']} | "
         f"Last routing fallback: {status.get('last_routing_fallback_reason')}"
     )
 
