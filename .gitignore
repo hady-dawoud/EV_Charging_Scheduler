@@ -49,6 +49,15 @@ outputs/runtime/*.jsonl
 outputs/runtime/*.db
 release-artifacts/
 
+# Android release artifacts and signing material
+*.apk
+*.aab
+*.keystore
+*.jks
+*.p12
+!apps/mobile/android/app/debug.keystore
+local.secret
+*.secret
 # RL training outputs (keep directory placeholders)
 outputs/rl/checkpoints/*
 outputs/rl/evaluations/*

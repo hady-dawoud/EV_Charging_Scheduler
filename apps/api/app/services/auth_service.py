@@ -8,24 +8,35 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.security import (
     create_access_token,
+    create_password_reset_token,
     create_refresh_token,
     hash_password,
+    hash_password_reset_token,
     hash_refresh_token,
     verify_password,
 )
 from app.models.user import User
 from app.repositories.auth_repository import (
+    create_password_reset_token_record,
     create_refresh_token_record,
     create_user,
+    get_active_password_reset_token_by_hash,
     get_active_refresh_token_by_hash,
     get_user_by_email,
     get_user_by_id,
+    mark_password_reset_token_used,
+    revoke_active_refresh_tokens_for_user,
     revoke_refresh_token,
+    update_user_password_hash,
 )
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
     LogoutResponse,
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequest,
+    PasswordResetRequestResponse,
     RefreshTokenRequest,
     RefreshTokenResponse,
     RegisterRequest,
@@ -45,6 +56,10 @@ class InvalidRefreshTokenError(ValueError):
     pass
 
 
+class InvalidPasswordResetTokenError(ValueError):
+    pass
+
+
 class InactiveUserError(ValueError):
     pass
 
@@ -61,6 +76,13 @@ def _refresh_expiry() -> datetime:
     settings = get_settings()
     return datetime.now(timezone.utc) + timedelta(
         days=settings.jwt_refresh_token_expire_days,
+    )
+
+
+def _password_reset_expiry() -> datetime:
+    settings = get_settings()
+    return datetime.now(timezone.utc) + timedelta(
+        minutes=settings.password_reset_token_expire_minutes,
     )
 
 
@@ -178,6 +200,79 @@ def logout_user(db: Session, refresh_token: str) -> LogoutResponse:
     )
 
     return LogoutResponse(success=True)
+
+
+def request_password_reset(
+    db: Session,
+    request: PasswordResetRequest,
+) -> PasswordResetRequestResponse:
+    settings = get_settings()
+    user = get_user_by_email(db, request.email)
+
+    response = PasswordResetRequestResponse(
+        success=True,
+        message="If an account exists for that email, password reset instructions have been generated.",
+    )
+
+    if user is None or not user.is_active:
+        return response
+
+    reset_token = create_password_reset_token()
+
+    create_password_reset_token_record(
+        db,
+        user_id=user.id,
+        token_hash=hash_password_reset_token(reset_token),
+        expires_at=_password_reset_expiry(),
+    )
+
+    if settings.password_reset_return_token_for_development:
+        response.development_reset_token = reset_token
+
+    return response
+
+
+def confirm_password_reset(
+    db: Session,
+    request: PasswordResetConfirmRequest,
+) -> PasswordResetConfirmResponse:
+    now = datetime.now(timezone.utc)
+    token_hash = hash_password_reset_token(request.token)
+    reset_token_record = get_active_password_reset_token_by_hash(db, token_hash)
+
+    if reset_token_record is None:
+        raise InvalidPasswordResetTokenError("Invalid or already used password reset token")
+
+    if reset_token_record.expires_at <= now:
+        raise InvalidPasswordResetTokenError("Password reset token has expired")
+
+    user = get_user_by_id(db, reset_token_record.user_id)
+
+    if user is None:
+        raise InvalidPasswordResetTokenError("Password reset token user no longer exists")
+
+    if not user.is_active:
+        raise InactiveUserError("User account is inactive")
+
+    update_user_password_hash(
+        db,
+        user=user,
+        password_hash=hash_password(request.new_password),
+    )
+
+    mark_password_reset_token_used(
+        db,
+        token_hash=token_hash,
+        used_at=now,
+    )
+
+    revoke_active_refresh_tokens_for_user(
+        db,
+        user_id=user.id,
+        revoked_at=now,
+    )
+
+    return PasswordResetConfirmResponse(success=True)
 
 
 def get_current_user_from_subject(db: Session, subject: str) -> User:

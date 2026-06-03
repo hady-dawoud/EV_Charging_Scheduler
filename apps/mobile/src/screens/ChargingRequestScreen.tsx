@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NeonButton } from '../components/NeonButton';
+import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
 import {
   RecommendationChargerType,
@@ -18,19 +20,37 @@ import {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChargingRequest'>;
 
+const TARGET_SOC_STEP = 5;
+
 export default function ChargingRequestScreen({ navigation }: Props) {
-  const [targetSoC, setTargetSoC] = useState(80);
+  const vehicle = useVehicleStore((state) => state.vehicle);
+  const loadVehicle = useVehicleStore((state) => state.loadVehicle);
+  const activeVehicle = vehicle ?? fallbackVehicle;
+  const minTargetSoC = Math.min(100, activeVehicle.currentSoC + TARGET_SOC_STEP);
+  const [targetSoC, setTargetSoC] = useState(Math.max(80, minTargetSoC));
+
+  useEffect(() => {
+    loadVehicle();
+  }, [loadVehicle]);
+
+  useEffect(() => {
+    setTargetSoC((current) => Math.max(current, minTargetSoC));
+  }, [minTargetSoC]);
   const [optMode, setOptMode] =
     useState<RecommendationPreferenceMode>('cheapest');
   const [chargerType, setChargerType] =
     useState<RecommendationChargerType>('any');
 
   const handleFindRecommendations = () => {
+    const safeTargetSoC = Math.max(targetSoC, minTargetSoC);
+
     navigation.navigate('LoadingRecommendations', {
       request: {
-        targetSoc: targetSoC,
+        targetSoc: safeTargetSoC,
         preferenceMode: optMode,
         chargerType,
+        vehicleCurrentSoC: activeVehicle.currentSoC,
+        vehicleBatteryCapacity: activeVehicle.batteryCapacity,
       },
     });
   };
@@ -57,15 +77,22 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           <Text style={styles.cardLabel}>TARGET CHARGE</Text>
           <View style={styles.targetControls}>
             <TouchableOpacity
-              style={styles.controlBtn}
-              onPress={() => setTargetSoC((p) => Math.max(0, p - 5))}
+              style={[
+                styles.controlBtn,
+                targetSoC <= minTargetSoC && styles.controlBtnDisabled,
+              ]}
+              onPress={() => setTargetSoC((p) => Math.max(minTargetSoC, p - TARGET_SOC_STEP))}
+              disabled={targetSoC <= minTargetSoC}
             >
-              <Minus color={theme.colors.textMuted} size={24} />
+              <Minus
+                color={targetSoC <= minTargetSoC ? 'rgba(156,163,175,0.35)' : theme.colors.textMuted}
+                size={24}
+              />
             </TouchableOpacity>
             <Text style={styles.targetValue}>{targetSoC}%</Text>
             <TouchableOpacity
               style={styles.controlBtn}
-              onPress={() => setTargetSoC((p) => Math.min(100, p + 5))}
+              onPress={() => setTargetSoC((p) => Math.min(100, p + TARGET_SOC_STEP))}
             >
               <Plus color={theme.colors.textMuted} size={24} />
             </TouchableOpacity>
@@ -110,14 +137,14 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.primaryBtn, webStyles.neonGlow]}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
           onPress={handleFindRecommendations}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
           <Text style={styles.primaryBtnText}>Find Best Options</Text>
-        </TouchableOpacity>
+        </NeonButton>
       </ScrollView>
     </SafeAreaView>
   );
@@ -165,6 +192,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  controlBtnDisabled: {
+    opacity: 0.45,
   },
   targetValue: { color: theme.colors.text, fontSize: 48, fontWeight: 'bold' },
   segmented: {

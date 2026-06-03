@@ -10,28 +10,27 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Zap, Car } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { theme } from '../theme';
-import { mockVehicle } from '../data/mockData';
+import { NeonButton } from '../components/NeonButton';
+import { theme, webStyles } from '../theme';
+import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 
 const isWeb = Platform.OS === 'web';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function HomeScreen({ navigation }: any) {
+  const vehicle = useVehicleStore((state) => state.vehicle);
+  const loadVehicle = useVehicleStore((state) => state.loadVehicle);
+  const activeVehicle = vehicle ?? fallbackVehicle;
+  const batteryProgress = Math.max(0, Math.min(100, activeVehicle.currentSoC)) / 100;
+
+  useEffect(() => {
+    loadVehicle();
+  }, [loadVehicle]);
+
   const RADIUS = 96;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
   const SVG_SIZE = 220;
-
-  // Web-only styles (bypassing StyleSheet.create which may strip CSS props)
-  const webGlass: any = isWeb
-    ? { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
-    : {};
-  const webNeonGlowSmall: any = isWeb
-    ? { boxShadow: '0 0 8px #00FF00' }
-    : {};
-  const webNeonGlow: any = isWeb
-    ? { boxShadow: '0 0 20px rgba(0, 255, 0, 0.3)' }
-    : {};
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -43,7 +42,7 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.logoText}>EV APP</Text>
           </View>
           <View style={styles.badge}>
-            <View style={[styles.badgeDot, webNeonGlowSmall]} />
+            <View style={[styles.badgeDot, webStyles.neonGlowSmall]} />
             <Text style={styles.badgeText}>Vehicle Connected</Text>
           </View>
         </View>
@@ -51,7 +50,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Battery Ring */}
         <View style={styles.ringWrapper}>
           <View style={styles.outerRing} />
-          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : {}}>
+          <View style={isWeb ? { filter: 'drop-shadow(0 0 10px rgba(0,255,0,0.6))' } as any : styles.nativeRingGlowFrame}>
             <Svg width={SVG_SIZE} height={SVG_SIZE} viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}>
               <Circle
                 cx={SVG_SIZE / 2}
@@ -61,6 +60,38 @@ export default function HomeScreen({ navigation }: any) {
                 stroke="rgba(0,255,0,0.2)"
                 strokeWidth={10}
               />
+
+              {!isWeb ? (
+                <>
+                  <Circle
+                    cx={SVG_SIZE / 2}
+                    cy={SVG_SIZE / 2}
+                    r={RADIUS}
+                    fill="transparent"
+                    stroke="rgba(0,255,0,0.10)"
+                    strokeWidth={24}
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+                  />
+                  <Circle
+                    cx={SVG_SIZE / 2}
+                    cy={SVG_SIZE / 2}
+                    r={RADIUS}
+                    fill="transparent"
+                    stroke="rgba(0,255,0,0.18)"
+                    strokeWidth={16}
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
+                  />
+                </>
+              ) : null}
+
               <Circle
                 cx={SVG_SIZE / 2}
                 cy={SVG_SIZE / 2}
@@ -69,7 +100,7 @@ export default function HomeScreen({ navigation }: any) {
                 stroke={theme.colors.primary}
                 strokeWidth={10}
                 strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={CIRCUMFERENCE * (1 - 0.45)}
+                strokeDashoffset={CIRCUMFERENCE * (1 - batteryProgress)}
                 strokeLinecap="round"
                 rotation="-90"
                 origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
@@ -77,34 +108,34 @@ export default function HomeScreen({ navigation }: any) {
             </Svg>
           </View>
           <View style={styles.ringInner}>
-            <Text style={styles.batteryPct}>45%</Text>
-            <Text style={styles.batteryRange}>~225 km range</Text>
+            <Text style={styles.batteryPct}>{Math.round(activeVehicle.currentSoC)}%</Text>
+            <Text style={styles.batteryRange}>~{Math.round(activeVehicle.rangeLeft)} km range</Text>
           </View>
         </View>
 
         {/* Connected Vehicle */}
-        <View style={[styles.vehicleCard, webGlass]}>
+        <View style={[styles.vehicleCard, webStyles.glass]}>
           <Text style={styles.cardLabel}>CONNECTED VEHICLE</Text>
           <View style={styles.vehicleRow}>
             <View style={styles.vehicleIcon}>
               <Car color={theme.colors.primary} size={24} />
             </View>
             <View style={styles.vehicleInfo}>
-              <Text style={styles.vehicleName}>{mockVehicle.make} {mockVehicle.model}</Text>
-              <Text style={styles.vehicleSub}>{mockVehicle.batteryCapacity} kWh Battery</Text>
+              <Text style={styles.vehicleName}>{activeVehicle.make} {activeVehicle.model}</Text>
+              <Text style={styles.vehicleSub}>{activeVehicle.batteryCapacity} kWh Battery</Text>
             </View>
           </View>
         </View>
 
         {/* CTA */}
-        <TouchableOpacity
-          style={[styles.primaryBtn, isWeb ? { boxShadow: '0 0 20px rgba(0, 255, 0, 0.25)' } as any : {}]}
+        <NeonButton
+          buttonStyle={styles.primaryBtn}
           onPress={() => navigation.navigate('ChargingRequest')}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
           <Text style={styles.primaryBtnText}>Find Chargers</Text>
-        </TouchableOpacity>
+        </NeonButton>
       </View>
     </SafeAreaView>
   );
@@ -161,6 +192,12 @@ const styles = StyleSheet.create({
     borderRadius: 110,
     borderWidth: 10,
     borderColor: 'rgba(255,255,255,0.05)',
+  },
+  nativeRingGlowFrame: {
+    width: 220,
+    height: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ringInner: {
     position: 'absolute',

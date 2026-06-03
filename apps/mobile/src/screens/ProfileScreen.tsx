@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Settings, Bell, Shield, LogOut, Car, ChevronRight } from 'lucide-react-native';
-import { mockVehicle } from '../data/mockData';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
 import { useAuthStore } from '../stores/authStore';
+import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
 
 const menuItems = [
@@ -23,6 +23,13 @@ const menuItems = [
 export default function ProfileScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const vehicle = useVehicleStore((state) => state.vehicle);
+  const loadVehicle = useVehicleStore((state) => state.loadVehicle);
+  const activeVehicle = vehicle ?? fallbackVehicle;
+
+  useEffect(() => {
+    loadVehicle();
+  }, [loadVehicle]);
 
   const handleLogout = async () => {
     const refreshToken = await authStorage.getRefreshToken();
@@ -66,10 +73,13 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
           <View style={styles.vehicleBody}>
             <View>
-              <Text style={styles.vehicleName}>{mockVehicle.make} {mockVehicle.model}</Text>
-              <Text style={styles.vehicleSub}>{mockVehicle.batteryCapacity} kWh Battery</Text>
+              <Text style={styles.vehicleName}>{activeVehicle.make} {activeVehicle.model}</Text>
+              <Text style={styles.vehicleSub}>{activeVehicle.batteryCapacity} kWh Battery</Text>
             </View>
-            <TouchableOpacity style={styles.manageBtn}>
+            <TouchableOpacity
+              style={styles.manageBtn}
+              onPress={() => navigation.navigate('ManageVehicle')}
+            >
               <Text style={styles.manageBtnText}>Manage</Text>
             </TouchableOpacity>
           </View>

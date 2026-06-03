@@ -16,6 +16,7 @@ import {
   Activity,
 } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { RootStackParamList, UiStationRecommendation } from '../types';
 
@@ -108,14 +109,15 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.reserveBtn, webStyles.neonGlowSmall]}
+        <NeonButton
+          glow="small"
+          buttonStyle={styles.reserveBtn}
           onPress={() => navigation.navigate('ReservationConfirm', { station })}
           activeOpacity={0.85}
         >
           <Navigation color="#000" size={20} />
           <Text style={styles.reserveBtnText}>Reserve & Navigate</Text>
-        </TouchableOpacity>
+        </NeonButton>
       </View>
     </View>
   );
@@ -219,7 +221,6 @@ const styles = StyleSheet.create({
   statSub: { color: theme.colors.textMuted, fontSize: 9, fontWeight: 'bold', letterSpacing: 1 },
   statVal: { color: theme.colors.text, fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
   reserveBtn: {
-    ...theme.neonGlowSmall,
     height: 56,
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radii.lg,

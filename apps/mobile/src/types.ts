@@ -19,6 +19,16 @@ export type RegisterRequest = {
   password: string;
 };
 
+export type PasswordResetRequestResponse = {
+  success: boolean;
+  message: string;
+  development_reset_token?: string | null;
+};
+
+export type PasswordResetConfirmResponse = {
+  success: boolean;
+};
+
 export type AuthTokens = {
   accessToken: string;
   refreshToken: string;
@@ -37,6 +47,18 @@ export interface Vehicle {
   currentSoC: number;
   rangeLeft: number;
 }
+
+export type VehicleProfile = Vehicle;
+
+export type VehicleProfileUpdateRequest = {
+  make: string;
+  model: string;
+  batteryCapacity: number;
+  currentSoC: number;
+  rangeLeft: number;
+};
+
+
 
 export interface ChargingStation {
   id: string;
@@ -64,6 +86,8 @@ export type MobileRecommendationRequest = {
   targetSoc: number;
   preferenceMode: RecommendationPreferenceMode;
   chargerType: RecommendationChargerType;
+  vehicleCurrentSoC: number;
+  vehicleBatteryCapacity: number;
 };
 
 export type ApiRecommendationOption = {
@@ -197,6 +221,9 @@ export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token?: string; email?: string } | undefined;
+  ManageVehicle: undefined;
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };

@@ -26,6 +26,16 @@ def get_mobile_recommendations(
     request: MobileRecommendationRequest,
     current_user: User = Depends(get_current_user),
 ) -> RecommendationsResponse:
+    if (
+        request.battery_level is not None
+        and request.target_battery_level is not None
+        and request.target_battery_level <= request.battery_level
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Target battery level must be greater than current battery level.",
+        )
+
     try:
         return generate_mobile_recommendations(
             request,

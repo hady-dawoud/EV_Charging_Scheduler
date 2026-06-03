@@ -11,6 +11,10 @@ from app.schemas.auth import (
     LoginRequest,
     LogoutRequest,
     LogoutResponse,
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequest,
+    PasswordResetRequestResponse,
     RefreshTokenRequest,
     RefreshTokenResponse,
     RegisterRequest,
@@ -20,12 +24,15 @@ from app.services.auth_service import (
     EmailAlreadyRegisteredError,
     InactiveUserError,
     InvalidCredentialsError,
+    InvalidPasswordResetTokenError,
     InvalidRefreshTokenError,
     build_user_read,
+    confirm_password_reset,
     login_user,
     logout_user,
     refresh_tokens,
     register_user,
+    request_password_reset,
 )
 
 router = APIRouter(
@@ -68,6 +75,45 @@ def login(
     except InvalidCredentialsError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+    except InactiveUserError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(exc),
+        ) from exc
+
+
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetRequestResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Request password reset",
+)
+def password_reset_request(
+    request: PasswordResetRequest,
+    db: Session = Depends(get_db),
+) -> PasswordResetRequestResponse:
+    return request_password_reset(db, request)
+
+
+@router.post(
+    "/password-reset/confirm",
+    response_model=PasswordResetConfirmResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Confirm password reset",
+)
+def password_reset_confirm(
+    request: PasswordResetConfirmRequest,
+    db: Session = Depends(get_db),
+) -> PasswordResetConfirmResponse:
+    try:
+        return confirm_password_reset(db, request)
+    except InvalidPasswordResetTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
     except InactiveUserError as exc:

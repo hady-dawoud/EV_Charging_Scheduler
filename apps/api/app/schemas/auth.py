@@ -52,3 +52,27 @@ class LogoutRequest(BaseModel):
 
 class LogoutResponse(BaseModel):
     success: bool
+
+
+
+class PasswordResetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+
+
+class PasswordResetRequestResponse(BaseModel):
+    success: bool
+    message: str
+    development_reset_token: str | None = None
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    token: str = Field(..., min_length=20)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class PasswordResetConfirmResponse(BaseModel):
+    success: bool

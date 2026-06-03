@@ -28,6 +28,10 @@ Last verified against repo state: 2026-05-08.
 
 ## Mobile
 - Mobile reservations and charging-session history are backend-backed through `/reservations`, `/sessions`, and internal `/charger-events` lifecycle endpoints.
+- Android tester distribution is currently GitHub Release `v0.1.2`, asset `ev-smart-charging-v0.1.2.apk`.
+- The `v0.1.2` APK is release-signed and verified with `apksigner`; Android metadata is `versionCode 3` and `versionName "0.1.2"`.
+- `v0.1.0` and `v0.1.1` are older Android APK releases and should not be recommended for new tester installs.
+- Android release build notes live in `docs/android_release_runbook.md`.
 
 - `apps/mobile/src/screens/ChargingRequestScreen.tsx`: collects `targetSoc`, `preferenceMode`, and `chargerType`.
 - `apps/mobile/src/screens/LoadingRecommendationsScreen.tsx`: calls `api.getRecommendations(request)`, navigates to results on success.
