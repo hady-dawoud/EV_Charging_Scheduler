@@ -19,6 +19,16 @@ export type RegisterRequest = {
   password: string;
 };
 
+export type PasswordResetRequestResponse = {
+  success: boolean;
+  message: string;
+  development_reset_token?: string | null;
+};
+
+export type PasswordResetConfirmResponse = {
+  success: boolean;
+};
+
 export type AuthTokens = {
   accessToken: string;
   refreshToken: string;
@@ -197,6 +207,8 @@ export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token?: string; email?: string } | undefined;
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };

@@ -72,3 +72,11 @@ def decode_token(token: str) -> dict[str, Any]:
         )
     except JWTError as exc:
         raise ValueError("Invalid token") from exc
+
+
+def create_password_reset_token() -> str:
+    return secrets.token_urlsafe(64)
+
+
+def hash_password_reset_token(reset_token: str) -> str:
+    return hashlib.sha256(reset_token.encode("utf-8")).hexdigest()

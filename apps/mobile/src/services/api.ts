@@ -13,6 +13,8 @@ import type {
   AuthTokens,
   LoginRequest,
   MobileRecommendationRequest,
+  PasswordResetConfirmResponse,
+  PasswordResetRequestResponse,
   CreateReservationRequest,
   RegisterRequest,
   User,
@@ -246,6 +248,35 @@ export const api = {
     accessTokenMemory = mapped.accessToken;
 
     return mapped;
+  },
+
+
+  requestPasswordReset: async (email: string): Promise<PasswordResetRequestResponse> => {
+    return requestJson<PasswordResetRequestResponse>(
+      '/auth/password-reset/request',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      },
+      null
+    );
+  },
+
+  confirmPasswordReset: async (
+    token: string,
+    newPassword: string
+  ): Promise<PasswordResetConfirmResponse> => {
+    return requestJson<PasswordResetConfirmResponse>(
+      '/auth/password-reset/confirm',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          token,
+          new_password: newPassword,
+        }),
+      },
+      null
+    );
   },
 
   refresh: async (refreshToken: string, deviceId: string): Promise<AuthTokens> => {

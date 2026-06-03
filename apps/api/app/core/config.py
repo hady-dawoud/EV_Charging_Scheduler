@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 15
     jwt_refresh_token_expire_days: int = 30
+    password_reset_token_expire_minutes: int = 30
+    password_reset_return_token_for_development: bool = True
 
     charger_event_secret: str = "change_me_charger_event_secret"
 
