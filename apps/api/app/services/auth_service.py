@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -29,6 +30,7 @@ from app.repositories.auth_repository import (
     revoke_refresh_token,
     update_user_password_hash,
 )
+from app.services.email_service import EmailDeliveryError, send_password_reset_email
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
@@ -42,6 +44,9 @@ from app.schemas.auth import (
     RegisterRequest,
     UserRead,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmailAlreadyRegisteredError(ValueError):
@@ -225,6 +230,16 @@ def request_password_reset(
         token_hash=hash_password_reset_token(reset_token),
         expires_at=_password_reset_expiry(),
     )
+
+    if settings.password_reset_email_enabled:
+        try:
+            send_password_reset_email(
+                recipient_email=user.email,
+                reset_token=reset_token,
+                expires_minutes=settings.password_reset_token_expire_minutes,
+            )
+        except EmailDeliveryError:
+            logger.exception("Password reset email delivery failed")
 
     if settings.password_reset_return_token_for_development:
         response.development_reset_token = reset_token
