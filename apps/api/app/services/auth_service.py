@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from urllib.parse import quote
 from datetime import datetime, timedelta, timezone
 
 from google.auth.transport import requests as google_requests
@@ -309,9 +310,14 @@ def request_password_reset(
 
     if settings.password_reset_email_enabled:
         try:
+            reset_url = (
+                f"{settings.password_reset_web_url.rstrip('/')}"
+                f"/?reset_token={quote(reset_token)}"
+            )
+
             send_password_reset_email(
                 recipient_email=user.email,
-                reset_token=reset_token,
+                reset_url=reset_url,
                 expires_minutes=settings.password_reset_token_expire_minutes,
             )
         except EmailDeliveryError:

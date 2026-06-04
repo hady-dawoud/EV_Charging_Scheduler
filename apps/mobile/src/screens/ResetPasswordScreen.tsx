@@ -19,12 +19,13 @@ import type { RootStackParamList } from '../types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 
 export default function ResetPasswordScreen({ navigation, route }: Props) {
-  const [token, setToken] = useState(route.params?.token ?? '');
+  const initialToken = route.params?.token ?? '';
+  const [token, setToken] = useState(initialToken);
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(
-    route.params?.token ? 'Reset token loaded. Enter a new password.' : null
+    route.params?.token ? 'Reset link verified. Enter a new password.' : null
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -65,23 +66,25 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
       <View style={styles.header}>
         <Text style={styles.title}>Set new password</Text>
         <Text style={styles.subtitle}>
-          Paste your reset token and choose a new password.
+          Choose a new password for your account.
         </Text>
       </View>
 
       <View style={[styles.card, webStyles.glass]}>
-        <View style={styles.inputRow}>
-          <KeyRound color={theme.colors.textMuted} size={20} style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Reset token"
-            placeholderTextColor={theme.colors.textMuted}
-            value={token}
-            onChangeText={setToken}
-            autoCapitalize="none"
-            multiline
-          />
-        </View>
+        {!initialToken ? (
+          <View style={styles.inputRow}>
+            <KeyRound color={theme.colors.textMuted} size={20} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Reset token"
+              placeholderTextColor={theme.colors.textMuted}
+              value={token}
+              onChangeText={setToken}
+              autoCapitalize="none"
+              multiline
+            />
+          </View>
+        ) : null}
 
         <View style={styles.inputRow}>
           <Lock color={theme.colors.textMuted} size={20} style={styles.inputIcon} />
