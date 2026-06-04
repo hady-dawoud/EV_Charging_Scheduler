@@ -4,6 +4,8 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -22,17 +24,20 @@ from app.repositories.auth_repository import (
     create_refresh_token_record,
     create_user,
     get_active_password_reset_token_by_hash,
+    get_user_by_google_sub,
     get_active_refresh_token_by_hash,
     get_user_by_email,
     get_user_by_id,
     mark_password_reset_token_used,
     revoke_active_refresh_tokens_for_user,
     revoke_refresh_token,
+    update_user_google_sub,
     update_user_password_hash,
 )
 from app.services.email_service import EmailDeliveryError, send_password_reset_email
 from app.schemas.auth import (
     AuthResponse,
+    GoogleLoginRequest,
     LoginRequest,
     LogoutResponse,
     PasswordResetConfirmRequest,
@@ -58,6 +63,10 @@ class InvalidCredentialsError(ValueError):
 
 
 class InvalidRefreshTokenError(ValueError):
+    pass
+
+
+class InvalidGoogleTokenError(ValueError):
     pass
 
 
@@ -138,6 +147,73 @@ def login_user(db: Session, request: LoginRequest) -> AuthResponse:
 
     if user is None or not verify_password(request.password, user.password_hash):
         raise InvalidCredentialsError("Invalid email or password")
+
+    if not user.is_active:
+        raise InactiveUserError("User account is inactive")
+
+    access_token, refresh_token = _issue_token_pair(
+        db,
+        user=user,
+        device_id=request.device_id,
+    )
+
+    return AuthResponse(
+        user=build_user_read(user),
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
+
+
+
+
+def login_google_user(db: Session, request: GoogleLoginRequest) -> AuthResponse:
+    settings = get_settings()
+
+    if not settings.google_web_client_id:
+        raise InvalidGoogleTokenError("Google login is not configured")
+
+    try:
+        id_info = google_id_token.verify_oauth2_token(
+            request.id_token,
+            google_requests.Request(),
+            settings.google_web_client_id,
+        )
+    except ValueError as exc:
+        raise InvalidGoogleTokenError("Invalid Google ID token") from exc
+
+    google_sub = str(id_info.get("sub") or "")
+    email = str(id_info.get("email") or "").lower()
+    full_name = str(id_info.get("name") or "").strip()
+    email_verified = bool(id_info.get("email_verified"))
+
+    if not google_sub or not email or not email_verified:
+        raise InvalidGoogleTokenError("Google account email is not verified")
+
+    if not full_name:
+        full_name = email.split("@", maxsplit=1)[0]
+
+    user = get_user_by_google_sub(db, google_sub)
+
+    if user is None:
+        existing_user = get_user_by_email(db, email)
+
+        if existing_user is not None:
+            if not existing_user.is_active:
+                raise InactiveUserError("User account is inactive")
+
+            user = update_user_google_sub(
+                db,
+                user=existing_user,
+                google_sub=google_sub,
+            )
+        else:
+            user = create_user(
+                db,
+                email=email,
+                full_name=full_name,
+                password_hash=hash_password(create_refresh_token()),
+                google_sub=google_sub,
+            )
 
     if not user.is_active:
         raise InactiveUserError("User account is inactive")

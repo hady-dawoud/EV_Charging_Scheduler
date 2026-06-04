@@ -25,6 +25,12 @@ class User(TimestampMixin, Base):
         index=True,
         nullable=False,
     )
+    google_sub: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=True,
+    )
     full_name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

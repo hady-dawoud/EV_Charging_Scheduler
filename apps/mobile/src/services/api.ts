@@ -15,6 +15,7 @@ import type {
   PasswordResetConfirmResponse,
   PasswordResetRequestResponse,
   CreateReservationRequest,
+  GoogleLoginRequest,
   RegisterRequest,
   User,
   VehicleProfile,
@@ -251,6 +252,26 @@ export const api = {
       {
         method: 'POST',
         body: JSON.stringify(payload),
+      },
+      null
+    );
+
+    const mapped = mapAuthResponse(body);
+    accessTokenMemory = mapped.accessToken;
+
+    return mapped;
+  },
+
+
+  loginWithGoogle: async (payload: GoogleLoginRequest): Promise<AuthResponse> => {
+    const body = await requestJson<BackendAuthResponse>(
+      '/auth/google',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          id_token: payload.idToken,
+          device_id: payload.deviceId,
+        }),
       },
       null
     );
