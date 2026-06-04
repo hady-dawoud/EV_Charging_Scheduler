@@ -13,6 +13,11 @@ export type LoginRequest = {
   device_id: string;
 };
 
+export type GoogleLoginRequest = {
+  idToken: string;
+  deviceId: string;
+};
+
 export type RegisterRequest = {
   full_name: string;
   email: string;

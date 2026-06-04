@@ -19,17 +19,24 @@ def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
     return db.execute(statement).scalar_one_or_none()
 
 
+def get_user_by_google_sub(db: Session, google_sub: str) -> User | None:
+    statement = select(User).where(User.google_sub == google_sub)
+    return db.execute(statement).scalar_one_or_none()
+
+
 def create_user(
     db: Session,
     *,
     email: str,
     full_name: str,
     password_hash: str,
+    google_sub: str | None = None,
 ) -> User:
     user = User(
         email=email.lower(),
         full_name=full_name,
         password_hash=password_hash,
+        google_sub=google_sub,
     )
     db.add(user)
     db.commit()
@@ -162,3 +169,17 @@ def revoke_active_refresh_tokens_for_user(
 
     db.commit()
     return len(refresh_tokens)
+
+
+
+def update_user_google_sub(
+    db: Session,
+    *,
+    user: User,
+    google_sub: str,
+) -> User:
+    user.google_sub = google_sub
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user

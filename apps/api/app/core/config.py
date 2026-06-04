@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     smtp_from_email: str = "no-reply@smartevcharging.local"
     smtp_use_starttls: bool = True
 
+    google_web_client_id: str | None = None
+
     charger_event_secret: str = "change_me_charger_event_secret"
 
     recommendation_policy_name: str = "weighted_score"

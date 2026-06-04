@@ -61,6 +61,7 @@ services:
       - ROUTING_PROVIDER_NAME=simple_distance
       - OSMNX_GRAPH_PATH=data/processed/routing/dundee_drive.graphml
       - CHARGER_EVENT_SECRET=${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}
+      - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-}
       - PASSWORD_RESET_EMAIL_ENABLED=${PASSWORD_RESET_EMAIL_ENABLED:-false}
       - PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT=${PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT:-true}
       - SMTP_HOST=${SMTP_HOST:-}
