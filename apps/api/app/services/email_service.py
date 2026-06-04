@@ -13,7 +13,7 @@ class EmailDeliveryError(RuntimeError):
 def send_password_reset_email(
     *,
     recipient_email: str,
-    reset_token: str,
+    reset_url: str,
     expires_minutes: int,
 ) -> None:
     settings = get_settings()
@@ -31,13 +31,11 @@ def send_password_reset_email(
             [
                 "EV Smart Charging password reset",
                 "",
-                "Use this reset token to set a new password:",
+                "Use the secure link below to set a new password:",
                 "",
-                reset_token,
+                reset_url,
                 "",
-                f"This token expires in {expires_minutes} minutes.",
-                "",
-                "Open the EV Smart Charging app or web app, go to Login -> Forgot password -> Already have a reset token, then paste the token.",
+                f"This link expires in {expires_minutes} minutes.",
                 "",
                 "If you did not request this reset, ignore this email.",
             ]

@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     password_reset_token_expire_minutes: int = 30
     password_reset_return_token_for_development: bool = True
     password_reset_email_enabled: bool = False
+    password_reset_web_url: str = "https://smartevcharging.uaenorth.cloudapp.azure.com"
 
     smtp_host: str | None = None
     smtp_port: int = 587

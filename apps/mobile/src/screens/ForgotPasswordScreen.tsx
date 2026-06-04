@@ -63,7 +63,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
       <View style={styles.header}>
         <Text style={styles.title}>Reset password</Text>
         <Text style={styles.subtitle}>
-          Enter your account email and we’ll generate reset instructions.
+          Enter your account email and we’ll send a password reset link.
         </Text>
       </View>
 
@@ -85,7 +85,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         {message ? <Text style={styles.messageText}>{message}</Text> : null}
 
         {developmentToken && isWeb ? (
-          <Text style={styles.devTokenText}>Development reset token generated.</Text>
+          <Text style={styles.devTokenText}>Development reset link generated.</Text>
         ) : null}
       </View>
 
@@ -107,7 +107,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         style={styles.secondaryBtn}
         onPress={() => navigation.navigate('ResetPassword')}
       >
-        <Text style={styles.secondaryBtnText}>Already have a reset token?</Text>
+        <Text style={styles.secondaryBtnText}>Already opened a reset link?</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
