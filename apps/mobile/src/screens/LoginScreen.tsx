@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
@@ -144,30 +143,26 @@ export default function LoginScreen({ navigation }: any) {
         )}
       </NeonButton>
 
-      {Platform.OS !== 'web' ? (
-        <>
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>Or continue with</Text>
-            <View style={styles.divider} />
-          </View>
+      <View style={styles.dividerRow}>
+        <View style={styles.divider} />
+        <Text style={styles.dividerText}>Or continue with</Text>
+        <View style={styles.divider} />
+      </View>
 
-          <View style={styles.socialRow}>
-            <TouchableOpacity
-              style={styles.socialBtn}
-              onPress={handleGoogleLogin}
-              disabled={isGoogleLoading}
-              activeOpacity={0.85}
-            >
-              {isGoogleLoading ? (
-                <ActivityIndicator color={theme.colors.text} />
-              ) : (
-                <Text style={styles.socialBtnText}>Google</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </>
-      ) : null}
+      <View style={styles.socialRow}>
+        <TouchableOpacity
+          style={styles.socialBtn}
+          onPress={handleGoogleLogin}
+          disabled={isGoogleLoading}
+          activeOpacity={0.85}
+        >
+          {isGoogleLoading ? (
+            <ActivityIndicator color={theme.colors.text} />
+          ) : (
+            <Text style={styles.socialBtnText}>Google</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.signupRow}>
         <Text style={styles.signupText}>Don't have an account?</Text>
