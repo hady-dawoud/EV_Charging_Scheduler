@@ -1,13 +1,17 @@
 # Mobile API Contract - EV Smart Charging App v0.1.6
 
 **Last updated:** 2026-06-09  
-**Latest tested APK baseline:** `ev-smart-charging-v0.1.6.apk`
+**Code baseline checked:** uploaded `apps/api` files and Android `build.gradle` from 2026-06-09  
+**Latest tested APK baseline:** `ev-smart-charging-v0.1.6.apk`  
+**Android build metadata:** `versionName "0.1.6"`, `versionCode 7`
+
+---
 
 ## 1. Purpose
 
-This document defines the API contract used by the production mobile app and the local web development harness.
+This document defines the API contract used by the EV Smart Charging mobile app and the local web development harness.
 
-The mobile app talks only to the FastAPI backend. It must not talk directly to PostgreSQL, Docker, the simulator runtime, or charger-event endpoints.
+The mobile app talks only to the FastAPI backend. It must not talk directly to PostgreSQL, Docker, the simulator runtime, or internal charger-event endpoints.
 
 Production-style lifecycle:
 
@@ -16,22 +20,14 @@ Mobile user creates reservation
 Backend stores reservation
 Charger/simulator/admin event starts session
 Charger/simulator/admin event completes session
-Mobile only displays reservation/session lifecycle state
+Mobile displays reservation/session lifecycle state
 ```
 
-v0.1.6 auth baseline:
+Important implementation note:
 
-- Email/password signup and login remain supported.
-- Google sign-in and Google sign-up entry point are supported.
-- Backend verifies Google ID tokens.
-- Backend supports Google-linked user accounts.
-- Password reset uses reset-link email flow, not manual token copy/paste.
-- Reset Password screen handles the token internally when opened from the email link.
-
-Contract-freeze note:
-
-- This document was updated from the v0.1.6 release notes and previous handover/contract docs.
-- Verify the exact Google auth route name and any extra Google response fields against `/api/openapi.json` or `apps/api` auth route code before final contract freeze.
+- The backend still exposes authenticated user session mutation endpoints: `POST /sessions` and `PATCH /sessions/{session_id}/complete`.
+- Product/demo rule remains: the mobile UI should not manually start or complete charging sessions in the normal user journey.
+- Internal charger-event endpoints are the preferred source of charging lifecycle state for the production-style flow.
 
 ---
 
@@ -61,13 +57,32 @@ Deployed backend through reverse proxy:
 https://smartevcharging.uaenorth.cloudapp.azure.com/api
 ```
 
-Production/release builds must use the HTTPS API base. Do not ship Android builds pointing at the old insecure HTTP hosted URL.
+FastAPI is configured with `root_path="/api"`, so public reverse-proxy requests use the `/api` prefix while app routers are defined without duplicating that prefix.
 
 ---
 
-## 3. Auth endpoints
+## 3. Auth model
 
-Common token response shape:
+Auth uses:
+
+- JWT access tokens.
+- Opaque refresh tokens stored server-side as hashes.
+- Refresh-token rotation on refresh.
+- Logout by refresh token only.
+- Google ID-token login through `POST /auth/google`.
+- Password reset tokens stored as hashes and consumed once.
+
+Common user object:
+
+```json
+{
+  "id": "uuid",
+  "full_name": "Mobile User",
+  "email": "mobile.user@example.com"
+}
+```
+
+Common auth response for register, email/password login, and Google login:
 
 ```json
 {
@@ -84,13 +99,16 @@ Common token response shape:
 
 Mobile token behavior:
 
-- Save access token in memory.
-- Save refresh token in secure storage.
-- Native secure storage uses `react-native-keychain`.
-- Web harness uses localStorage wrapper.
-- For token expiry, try refresh once; if refresh fails, clear session and navigate to Login.
+- Keep access token in app memory/state.
+- Store refresh token in secure storage: Keychain on native, localStorage wrapper on web.
+- On `401`, attempt refresh once, retry the protected request once, then sign out if refresh fails.
+- Do not expose raw JWT/refresh tokens in logs.
 
-### Register with email/password
+---
+
+## 4. Auth endpoints
+
+### Register
 
 ```text
 POST /auth/register
@@ -106,12 +124,33 @@ Request:
 }
 ```
 
-Response shape matches common token response.
+Validation:
+
+```text
+full_name: required, 2-255 chars
+email: valid email
+password: required, 8-128 chars
+extra fields: forbidden
+```
+
+Response:
+
+```text
+201 AuthResponse
+```
+
+Failure cases:
+
+```text
+409 email already registered
+422 validation error
+```
 
 Mobile behavior:
 
+- Save returned tokens.
 - Navigate to main app after success.
-- Show validation errors from `422`.
+- Show user-readable validation or duplicate-email message.
 
 ### Login with email/password
 
@@ -129,9 +168,30 @@ Request:
 }
 ```
 
-Response shape matches common token response.
+Validation:
 
-### Continue with Google
+```text
+email: valid email
+password: required, 1-128 chars
+device_id: optional, max 255 chars
+extra fields: forbidden
+```
+
+Response:
+
+```text
+200 AuthResponse
+```
+
+Failure cases:
+
+```text
+401 invalid email or password
+403 inactive user
+422 validation error
+```
+
+### Login/sign up with Google
 
 ```text
 POST /auth/google
@@ -141,30 +201,50 @@ Request:
 
 ```json
 {
-  "id_token": "google_id_token_from_google_sign_in",
+  "id_token": "google_id_token_from_client",
   "device_id": "mobile-app"
 }
 ```
 
-Expected response shape matches common token response.
+Validation:
+
+```text
+id_token: required, min 20 chars
+device_id: optional, max 255 chars
+extra fields: forbidden
+```
+
+Response:
+
+```text
+200 AuthResponse
+```
 
 Backend behavior:
 
-- Verify the Google ID token server-side.
-- Create or link the user account using the verified Google identity.
-- Issue normal app access/refresh tokens after successful verification.
-- Do not trust client-provided Google profile fields without token verification.
+- Requires `GOOGLE_WEB_CLIENT_ID` / `google_web_client_id` to be configured.
+- Verifies the supplied Google ID token against the configured Google web client ID.
+- Requires Google `sub`, email, and verified email.
+- Uses `name` from Google as full name if available; otherwise uses the email local part.
+- If `google_sub` already exists, logs in that user.
+- If email exists without `google_sub`, links the Google subject to that existing account.
+- If no account exists, creates a new Google-linked account with a generated internal password hash.
+
+Failure cases:
+
+```text
+401 Google login not configured
+401 invalid Google ID token
+401 Google account email is not verified
+403 inactive user
+422 validation error
+```
 
 Mobile behavior:
 
-- Use Google sign-in to obtain the ID token.
-- Send only the ID token and device identifier to the backend.
-- Store the backend-issued access/refresh tokens like normal login.
-- Do not treat Google client success as app login success until the backend returns app tokens.
-
-Contract-freeze check:
-
-- Confirm the exact endpoint path. If the backend uses a different route, update this section.
+- Send the backend a Google **ID token**, not an access token.
+- Treat the response exactly like normal login/register and store both tokens.
+- Use this endpoint for both “Continue with Google” and the Google sign-up entry point.
 
 ### Refresh token
 
@@ -181,7 +261,41 @@ Request:
 }
 ```
 
-Response shape matches common token response.
+Validation:
+
+```text
+refresh_token: required, min 20 chars
+device_id: optional, max 255 chars
+extra fields: forbidden
+```
+
+Response:
+
+```json
+{
+  "access_token": "new_jwt_access_token",
+  "refresh_token": "new_opaque_refresh_token",
+  "token_type": "bearer"
+}
+```
+
+Important: refresh response does **not** include the `user` object.
+
+Backend behavior:
+
+- Hashes the supplied refresh token and looks up an active record.
+- Rejects missing, revoked, or expired refresh tokens.
+- Revokes the old refresh token.
+- Issues a new access token and refresh token.
+
+Failure cases:
+
+```text
+401 invalid refresh token
+401 refresh token expired
+403 inactive user
+422 validation error
+```
 
 ### Logout
 
@@ -193,31 +307,37 @@ Request:
 
 ```json
 {
-  "refresh_token": "opaque_refresh_token",
-  "device_id": "mobile-app"
+  "refresh_token": "opaque_refresh_token"
 }
 ```
 
-Expected behavior:
+Response:
 
-- Revoke the refresh token.
-- Do not require a bearer access token for logout.
-- Return success for the active refresh-token logout path.
+```json
+{
+  "success": true
+}
+```
+
+Backend behavior:
+
+- Hashes and revokes the refresh token if active.
+- Does not require a bearer access token.
+- Returns success even if the token is already absent/revoked from the user perspective.
 
 Mobile behavior:
 
-- Call logout when possible.
-- Clear local access token and refresh token whether logout succeeds or fails.
-- Navigate to Login after clearing local session.
+- Call logout with the stored refresh token.
+- Clear access token and refresh token locally regardless of response details.
 
-### Current user
+### Get current user
 
 ```text
 GET /auth/me
 Authorization: Bearer <access_token>
 ```
 
-Expected response:
+Response:
 
 ```json
 {
@@ -227,16 +347,21 @@ Expected response:
 }
 ```
 
-Mobile behavior:
+Failure cases:
 
-- Use for session validation and profile identity display.
-- Refresh once on `401`; if refresh fails, sign out.
+```text
+401 missing bearer token
+401 invalid token
+401 invalid token type
+401 invalid token subject
+403 inactive user
+```
 
 ---
 
-## 4. Password reset
+## 5. Password reset endpoints
 
-### Request password reset link
+### Request password reset
 
 ```text
 POST /auth/password-reset/request
@@ -250,24 +375,41 @@ Request:
 }
 ```
 
-Expected behavior:
+Response:
 
-- Create a short-lived hashed reset token record.
-- Send a reset-link email using the configured Resend sender.
-- The email link should open the Reset Password screen directly.
-- The token should be handled internally by the app/web route.
-- The endpoint should not reveal whether the email exists in a way that enables account enumeration.
+```json
+{
+  "success": true,
+  "message": "If an account exists for that email, password reset instructions have been generated.",
+  "development_reset_token": null
+}
+```
 
-Mobile/web behavior:
+Backend behavior:
 
-- Show a generic success message instructing the user to check email.
-- Do not ask the user to manually copy/paste a reset token.
-- If opened from the email link, hide the token field.
+- Always returns a generic success message so account existence is not exposed.
+- If the user exists and is active, creates a short-lived reset token.
+- Stores only the token hash in `password_reset_tokens`.
+- If email sending is enabled, sends a reset URL in this shape:
 
-Email sender caveat:
+```text
+<PASSWORD_RESET_WEB_URL>/?reset_token=<url-encoded-token>
+```
 
-- If using `onboarding@resend.dev`, describe delivery as development/testing only.
-- Use a verified Resend sending domain before production-grade email claims.
+Configuration knobs:
+
+```text
+password_reset_token_expire_minutes: default 30
+password_reset_email_enabled: default false unless VM env enables it
+password_reset_return_token_for_development: default true in code; should be false outside dev/demo token-copy mode
+password_reset_web_url: default https://smartevcharging.uaenorth.cloudapp.azure.com
+```
+
+Release behavior note:
+
+- v0.1.6 uses reset-link email UX.
+- If `development_reset_token` is still returned in any non-local deployment, disable it with the VM environment config.
+- If the sender is `onboarding@resend.dev`, treat email delivery as development/testing until a verified sending domain is configured.
 
 ### Confirm password reset
 
@@ -280,48 +422,88 @@ Request:
 ```json
 {
   "token": "reset_token_from_email_link",
-  "new_password": "newPassword123"
+  "new_password": "newpassword123"
 }
 ```
 
-Expected behavior:
+Validation:
 
-- Validate the reset token.
-- Reject expired or already-used tokens.
-- Update password hash.
-- Mark reset token as used.
-- Revoke active refresh tokens for that user.
+```text
+token: required, min 20 chars
+new_password: required, 8-128 chars
+extra fields: forbidden
+```
 
-Mobile behavior:
+Response:
 
-- When opened from email link, submit the internally captured token.
-- After successful reset, navigate to Login.
-- Ask the user to sign in with the new password.
+```json
+{
+  "success": true
+}
+```
+
+Backend behavior:
+
+- Hashes the supplied token.
+- Rejects invalid, expired, or already-used tokens.
+- Updates the user password hash.
+- Marks the reset token as used.
+- Revokes all active refresh tokens for the user.
+
+Failure cases:
+
+```text
+400 invalid or already used password reset token
+400 password reset token expired
+403 inactive user
+422 validation error
+```
+
+Mobile/web behavior:
+
+- Forgot Password screen requests reset by email.
+- Reset Password screen should read `reset_token` from the email link and avoid requiring manual token copy/paste.
+- Hide the token field when the screen is opened from a reset-link URL.
 
 ---
 
-## 5. Vehicle profile
+## 6. Vehicle profile endpoints
 
-### Get my vehicle profile
+### Get current user's vehicle
 
 ```text
 GET /vehicles/me
 Authorization: Bearer <access_token>
 ```
 
-Expected response:
+Response:
+
+```json
+{
+  "id": "uuid",
+  "make": "Tesla",
+  "model": "Model 3 LR",
+  "battery_capacity_kwh": 82.0,
+  "current_soc": 45.0,
+  "range_km": 225.0
+}
+```
+
+Backend behavior:
+
+- If the user has no vehicle row, creates and returns a default vehicle profile:
 
 ```json
 {
   "make": "Tesla",
-  "model": "Model 3",
-  "battery_capacity_kwh": 75.0,
-  "current_soc": 42,
-  "range_km": 180
+  "model": "Model 3 LR",
+  "battery_capacity_kwh": 82.0,
+  "current_soc": 45.0,
+  "range_km": 225.0
 }
 ```
 
-### Save my vehicle profile
+### Upsert current user's vehicle
 
 ```text
 PUT /vehicles/me
@@ -333,16 +515,27 @@ Request:
 ```json
 {
   "make": "Tesla",
-  "model": "Model 3",
-  "battery_capacity_kwh": 75.0,
-  "current_soc": 42,
-  "range_km": 180
+  "model": "Model 3 LR",
+  "battery_capacity_kwh": 82.0,
+  "current_soc": 55.0,
+  "range_km": 275.0
 }
 ```
 
-Expected response shape matches saved vehicle profile.
+Validation:
 
-Field mapping:
+```text
+make: required, 1-120 chars
+model: required, 1-120 chars
+battery_capacity_kwh: > 0 and <= 250
+current_soc: 0-100
+range_km: 0-2000
+extra fields: forbidden
+```
+
+Response shape matches `GET /vehicles/me`.
+
+Mobile mapping:
 
 ```text
 battery_capacity_kwh -> batteryCapacity
@@ -352,14 +545,12 @@ range_km -> rangeLeft
 
 Mobile behavior:
 
-- Profile → Manage Vehicle reads and writes this backend profile.
-- Home battery display should reflect saved `current_soc`.
-- Charging Request should use saved `current_soc` and `battery_capacity_kwh`.
-- Do not use hardcoded `mockVehicle` values when saved vehicle data exists.
+- Home battery ring should reflect saved `current_soc`.
+- Charging Request should use saved `current_soc` and `battery_capacity_kwh` where applicable.
 
 ---
 
-## 6. System endpoint
+## 7. System endpoints
 
 ### Health
 
@@ -382,13 +573,22 @@ Response:
 
 Mobile behavior:
 
-- Use for backend/runtime availability checks.
+- Use for backend/runtime availability checks if needed.
 - Do not crash if unavailable.
 - Do not retry aggressively.
 
+Other runtime endpoints exist for dashboard/operator/debug use, not normal mobile UI:
+
+```text
+GET /runtime/status
+GET /runtime/state
+GET /runtime/events
+GET /runtime/recommendations/recent
+```
+
 ---
 
-## 7. Recommendations
+## 8. Recommendations
 
 ### Mobile recommendations
 
@@ -401,25 +601,74 @@ Request:
 
 ```json
 {
-  "target_soc": 80,
+  "client_request_id": "mobile_abc123",
+  "latitude": 56.462,
+  "longitude": -2.9707,
+  "battery_level": 45,
+  "target_battery_level": 80,
+  "battery_kwh": 82,
+  "vehicle_profile_id": "uuid-or-profile-key",
+  "vehicle_max_ac_kw": 11,
+  "vehicle_max_dc_kw": 150,
+  "requested_energy_kwh": null,
   "preference_mode": "cheapest",
-  "charger_type": "any"
+  "connector_type": "Any",
+  "latest_finish_minutes_from_now": 90,
+  "zone_id": null,
+  "metadata": {}
 }
 ```
 
-Accepted values:
+Validation/defaults:
 
 ```text
-preference_mode: cheapest | fastest | closest
-charger_type: any | ac | dc
+client_request_id: optional, max 255 chars
+latitude: optional float
+longitude: optional float
+battery_level: optional, 0-100
+target_battery_level: optional, 0-100
+battery_kwh: optional, default 60.0, > 0
+vehicle_profile_id: optional, max 255 chars
+vehicle_max_ac_kw: optional, default 11.0, >= 0
+vehicle_max_dc_kw: optional, default 150.0, >= 0
+requested_energy_kwh: optional, >= 0
+preference_mode: closest | cheapest | fastest, default fastest; normalized by backend
+connector_type: string, default Any, max 100 chars
+latest_finish_minutes_from_now: default 90, 5-1440
+zone_id: optional, max 255 chars
+metadata: object, default {}
+extra fields: forbidden
 ```
 
-Vehicle data behavior:
+Additional backend rule:
 
-- Backend/mobile recommendation input should use the saved vehicle profile where applicable.
-- Current charge and battery capacity should come from saved vehicle data, not mock state.
+```text
+If both battery_level and target_battery_level are supplied, target_battery_level must be greater than battery_level.
+```
 
-Response:
+Failure cases:
+
+```text
+400 target battery level must be greater than current battery level
+401 missing/invalid bearer token
+409 simulator runtime is not started
+422 validation error
+```
+
+Backend mapping into simulator/runtime request:
+
+```text
+battery_level -> current_soc
+target_battery_level -> target_soc
+battery_kwh -> battery_kwh
+connector_type -> charger_type
+latest_finish_minutes_from_now -> latest_finish_ts
+metadata.source -> mobile_app
+metadata.user_id -> current user id
+source_type -> external_live
+```
+
+Response is the shared simulator `RecommendationResponse`, with typical fields:
 
 ```json
 {
@@ -457,15 +706,23 @@ Response:
 
 Mobile behavior:
 
-- Use `top_recommendation` as primary recommendation.
+- Use `top_recommendation` as the primary recommendation.
 - Use `alternatives` as alternative cards.
 - Preserve `request_id`, `client_request_id`, selected `station_id`, and selected rank for reservation.
 - Do not calculate recommendations locally.
-- Do not automatically retry this POST request because duplicate live requests can pollute the simulator runtime.
+- Do not automatically retry this POST request because duplicate live requests can pollute runtime/request history.
+
+### Live external recommendations
+
+```text
+POST /recommendations
+```
+
+This accepts the lower-level `ExternalChargingRequest` contract from `ev_core`. It is for simulator/runtime integration and debugging, not the normal mobile UI path.
 
 ---
 
-## 8. Reservations
+## 9. Reservations
 
 ### Create reservation
 
@@ -492,18 +749,34 @@ Request:
 }
 ```
 
+Validation/defaults:
+
+```text
+station_id: required, 2-255 chars
+client_request_id: optional, max 255 chars
+request_id: optional, max 255 chars
+recommendation_rank: optional, >= 1
+reserved_start_at: required datetime
+reserved_until: optional datetime; defaults to reserved_start_at + 15 minutes
+estimated_cost_gbp: optional, >= 0
+estimated_duration_minutes: optional, >= 0
+charger_label: optional, max 100 chars
+distance_km: optional, >= 0
+score: optional float
+extra fields: forbidden
+```
+
 Response:
 
 ```json
 {
   "reservation_id": "uuid",
-  "user_id": "uuid",
+  "status": "confirmed",
   "station_id": "gellatly_street_car_park_dundee",
   "station_name": "Gellatly Street Car Park, Dundee",
   "client_request_id": "mobile_abc123",
   "request_id": "external_abc123",
   "recommendation_rank": 1,
-  "status": "confirmed",
   "reserved_start_at": "2026-05-23T19:30:00Z",
   "reserved_until": "2026-05-23T20:00:00Z",
   "cancelled_at": null,
@@ -516,10 +789,18 @@ Response:
 }
 ```
 
+Failure cases:
+
+```text
+401 missing/invalid bearer token
+404 station not found
+422 validation error
+```
+
 Mobile behavior:
 
 - Show confirmation screen after success.
-- Store no local-only reservation state.
+- Store no local-only reservation state as source of truth.
 - Read reservation history from backend.
 
 ### List my reservations
@@ -540,7 +821,7 @@ Response:
 Backend behavior:
 
 - Reconciles expired confirmed reservations.
-- Confirmed reservations past `reserved_until + grace period` become `expired`.
+- Confirmed reservations past `reserved_until + 10 minutes` become `expired`.
 
 ### Cancel reservation
 
@@ -549,24 +830,46 @@ PATCH /reservations/{reservation_id}/cancel
 Authorization: Bearer <access_token>
 ```
 
+Response:
+
+```json
+{
+  "reservation_id": "uuid",
+  "status": "cancelled"
+}
+```
+
+Failure cases:
+
+```text
+404 reservation not found
+409 reservation already cancelled
+```
+
 Mobile behavior:
 
-- Use only if cancellation UI is added.
+- Use only if cancellation UI is enabled.
 - Cancelled reservations should no longer appear as waiting reservations.
 
 ---
 
-## 9. Charging sessions
+## 10. Charging sessions
 
-Mobile can only read charging sessions.
-
-Mobile must not start or complete sessions directly.
+Normal mobile UI should read sessions only. Charging lifecycle should be changed by internal charger/simulator/admin events.
 
 ### List my charging sessions
 
 ```text
 GET /sessions/me
 Authorization: Bearer <access_token>
+```
+
+Optional query:
+
+```text
+?status=active
+?status=completed
+?status=stale_active
 ```
 
 Response:
@@ -596,9 +899,9 @@ Response:
 
 Backend behavior:
 
-- Reconciles stale active sessions.
-- Active sessions older than estimated duration plus grace become `stale_active`.
-- If no estimate exists, default stale threshold applies.
+- Reconciles stale active sessions before returning data.
+- Active sessions older than `estimated_duration_minutes + 30 minutes` become `stale_active`.
+- If no estimate exists, the default stale threshold is 180 minutes.
 
 ### Get active charging session
 
@@ -607,7 +910,7 @@ GET /sessions/active
 Authorization: Bearer <access_token>
 ```
 
-Response:
+Response when no active session:
 
 ```json
 {
@@ -615,7 +918,7 @@ Response:
 }
 ```
 
-or:
+Response when active:
 
 ```json
 {
@@ -638,19 +941,66 @@ or:
 }
 ```
 
+### User-auth session mutation endpoints present in backend
+
+These endpoints exist in code but should not be used by the normal mobile product journey unless deliberately enabling a demo/admin/manual flow.
+
+#### Start charging session
+
+```text
+POST /sessions
+Authorization: Bearer <access_token>
+```
+
+Request:
+
+```json
+{
+  "station_id": "gellatly_street_car_park_dundee",
+  "reservation_id": "uuid",
+  "client_request_id": "mobile_abc123",
+  "request_id": "external_abc123",
+  "started_at": "2026-05-23T19:10:25Z",
+  "connector_type": "rapid",
+  "charger_power_kw": 50.0
+}
+```
+
+#### Complete charging session
+
+```text
+PATCH /sessions/{session_id}/complete
+Authorization: Bearer <access_token>
+```
+
+Request:
+
+```json
+{
+  "ended_at": "2026-05-23T19:40:25Z",
+  "energy_kwh": 18.5,
+  "cost_total": 7.4
+}
+```
+
+Documentation rule:
+
+- Keep these documented as backend-present endpoints.
+- Keep product wording clear that mobile users should not manually control charging lifecycle in the intended production-style flow.
+
 ---
 
-## 10. Internal charger-event endpoints
+## 11. Internal charger-event endpoints
 
-These endpoints are not for the mobile app UI.
-
-They represent charger/provider/simulator/admin events.
+These endpoints are not for the mobile app UI. They represent charger/provider/simulator/admin events.
 
 Authentication:
 
 ```text
 X-Charger-Event-Secret: <internal-secret>
 ```
+
+The mobile app must never include `CHARGER_EVENT_SECRET` and must never call `/charger-events/*`.
 
 ### Start session from charger event
 
@@ -669,32 +1019,31 @@ Request:
 }
 ```
 
-Response:
+Validation/defaults:
 
-```json
-{
-  "session_id": "uuid",
-  "status": "active",
-  "station_id": "gellatly_street_car_park_dundee",
-  "station_name": "Gellatly Street Car Park, Dundee",
-  "reservation_id": "uuid",
-  "client_request_id": "mobile_abc123",
-  "request_id": "external_abc123",
-  "started_at": "2026-05-23T19:10:25Z",
-  "ended_at": null,
-  "energy_kwh": 0,
-  "cost_total": null,
-  "connector_type": "rapid",
-  "charger_power_kw": 50,
-  "created_at": "2026-05-23T19:10:25Z"
-}
+```text
+reservation_id: required
+started_at: optional; defaults to now
+connector_type: optional, max 100 chars
+charger_power_kw: optional, >= 0
+extra fields: forbidden
 ```
+
+Response shape: `ChargingSessionRead`.
+
+Backend behavior:
+
+- Finds the reservation by ID.
+- Rejects cancelled, expired, or completed reservations.
+- Reconciles confirmed reservations past `reserved_until + 10 minutes` to `expired` and rejects start.
+- Returns existing active session for the reservation if one already exists.
+- Otherwise creates an active session and changes reservation status to `active`.
 
 Failure cases:
 
 ```text
 401 invalid charger event secret
-404 reservation not found
+404 invalid reservation ID / reservation not found
 409 reservation cancelled
 409 reservation expired
 409 reservation already completed
@@ -716,6 +1065,21 @@ Request:
 }
 ```
 
+Validation/defaults:
+
+```text
+ended_at: optional; defaults to now
+energy_kwh: required, >= 0
+cost_total: optional, >= 0
+extra fields: forbidden
+```
+
+Backend behavior:
+
+- Marks the session `completed`.
+- Sets `ended_at`, `energy_kwh`, and `cost_total`.
+- If linked to a reservation, marks that reservation `completed`.
+
 Failure cases:
 
 ```text
@@ -726,7 +1090,32 @@ Failure cases:
 
 ---
 
-## 11. Lifecycle statuses
+## 12. Stations endpoints
+
+These endpoints exist in backend. Normal mobile recommendation/reservation flow usually does not need to manage stations directly.
+
+```text
+GET    /stations
+GET    /stations/{station_id}
+POST   /stations
+PUT    /stations/{station_id}
+DELETE /stations/{station_id}
+```
+
+List filters:
+
+```text
+zone_id: optional
+available_only: default false
+public_only: default true
+include_excluded: default false
+```
+
+Station write endpoints are not protected by auth in the uploaded code. Treat them as admin/demo/backoffice endpoints and protect/restrict before any public production deployment.
+
+---
+
+## 13. Lifecycle statuses
 
 Reservation statuses:
 
@@ -758,31 +1147,45 @@ stale_active session -> Attention Needed
 
 ---
 
-## 12. Security rules
+## 14. Security rules
 
 - JWT protects user endpoints.
-- Refresh tokens are opaque and stored securely.
-- Google ID tokens must be verified by the backend before creating/linking app accounts.
-- Password reset tokens are short-lived and one-time use.
+- Refresh tokens are opaque and stored hashed server-side.
+- Refresh token rotation happens on `/auth/refresh`.
+- Logout revokes by refresh token and does not require a bearer token.
+- Google login requires a valid Google ID token and configured Google web client ID.
+- Password reset stores reset-token hashes only.
+- Password reset should not return `development_reset_token` outside local/dev workflows.
 - Charger-event secret protects internal charger/simulator endpoints.
 - Mobile app must not include charger-event secret.
 - Mobile app must not call `/charger-events/*`.
 - Deployed production should replace all default secrets.
-- Android signing key and passwords must stay outside Git.
-- Resend API key and sending-domain configuration must stay outside Git.
+- Station write endpoints should be protected or removed from public exposure before production hardening.
+
+Configuration values that must come from private deployment env, not Git:
+
+```text
+DATABASE_URL
+JWT_SECRET_KEY
+CHARGER_EVENT_SECRET
+GOOGLE_WEB_CLIENT_ID
+SMTP_HOST / SMTP credentials
+SMTP_FROM_EMAIL
+Android signing passwords / keystore
+```
 
 ---
 
-## 13. Error handling
+## 15. Error handling
 
 Mobile should handle:
 
 ```text
 400 bad request
-401 unauthorized / token expired
-403 forbidden
+401 unauthorized / token expired / invalid Google token
+403 forbidden / inactive user
 404 not found
-409 lifecycle conflict
+409 lifecycle conflict / duplicate registration / runtime not started
 422 validation error
 500 backend error
 ```
@@ -793,42 +1196,42 @@ Behavior:
 - Do not expose stack traces.
 - Do not retry non-idempotent POST requests automatically.
 - For token expiry, try refresh once, then sign out if refresh fails.
-- For Google auth failure, show a generic sign-in failure and allow email/password fallback.
-- For password reset request, avoid account-existence wording.
+- Do not reveal whether a password reset email belongs to an existing account.
 
 ---
 
-## 14. Smoke-test expectation
+## 16. Smoke-test expectation
 
-A valid local lifecycle smoke test should verify:
+A valid lifecycle smoke test should verify:
 
 ```text
 register/login
-Google sign-in backend token exchange where available
-request password reset email
-open reset-link and set new password
-create/update vehicle profile
-create recommendation request using saved vehicle data
+refresh token
+logout by refresh token
+Google login when Google client ID is configured
+password reset request creates email/link behavior
+password reset confirm accepts link token and revokes old refresh tokens
+GET /vehicles/me creates/returns vehicle profile
+PUT /vehicles/me updates vehicle profile
+mobile recommendation request validates target > current SOC
 create reservation
 charger event starts session
 sessions/me shows active/completed state
 charger event completes session
 expired reservation blocks charger start
 stale active session reconciles to stale_active
-logout revokes refresh token without requiring bearer token
 ```
 
----
-
-## 15. v0.1.6 APK post-install checklist
+APK release smoke test should additionally verify:
 
 ```text
-Sign in with email/password
-Sign up with email/password
+install ev-smart-charging-v0.1.6.apk
+email/password sign up
+email/password sign in
 Continue with Google
-Request password reset
-Open the reset-link email
-Set a new password and sign in again
+request password reset
+open reset-link email
+set new password and sign in again
 Profile -> Manage Vehicle
 Profile -> App Settings
 Profile -> Notifications
@@ -838,15 +1241,3 @@ Reserve a charger
 View Sessions
 Log out
 ```
-
----
-
-## 16. Open contract items to verify from code/OpenAPI
-
-The following should be checked against `/api/openapi.json` or the `apps/api` route files before final contract freeze:
-
-- Exact Google auth endpoint path. This document records it as `POST /auth/google` based on common backend naming and v0.1.6 release notes.
-- Exact Google auth request field names if the backend uses `idToken`, `credential`, or another field instead of `id_token`.
-- Whether user response includes provider/auth metadata such as `auth_provider`, `google_sub`, or `is_google_linked`.
-- Whether password reset request returns only a generic message or also additional development-only fields in non-production mode.
-- Whether `GET /auth/me` includes extra profile fields.
