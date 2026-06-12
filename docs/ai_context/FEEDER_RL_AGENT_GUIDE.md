@@ -2,6 +2,13 @@
 
 This guide provides the EV-side engineering team with the technical environment details, data schema requirements, step-by-step integration workflow, and final evaluation benchmark results for the trained **MaskablePPO Feeder Station Selector** model checkpoint.
 
+## Repo Audit Note (2026-06-13)
+
+- The feeder checkpoints are present in this checkout under `models/rl_feeder/` and `models/rl_feeder_final/`.
+- The required DigitalTwin feeder RL data package is not present under `data/processed/evside_feeder_rl/` or `outputs/evside_feeder_rl/`.
+- The app-facing policy hook `rl_maskable_ppo_feeder` is registered, but it still needs feeder observation/action-mask/station-id runtime context before it can perform true checkpoint inference in the normal recommendation path.
+- Without that context or data package, the feeder policy falls back to deterministic weighted scoring.
+
 ---
 
 ## 1. Evaluation Results (Checkpoint vs. Baselines)

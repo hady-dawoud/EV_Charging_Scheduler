@@ -1,5 +1,53 @@
 # RL Readiness Report
 
+## 2026-06-13 Post-Merge Runtime Readiness
+
+Current verdict: the repo has an RL/grid-advisory scaffold and tracked checkpoints, but it is not fully MARL-ready and the feeder checkpoint path is not fully runnable from repo-local artifacts alone.
+
+What is ready:
+
+- The older single-agent Dundee station-selection scaffold exists under `packages/ev_core/src/ev_core/rl/`.
+- The newer feeder public-EV scaffold exists under `packages/ev_core/src/ev_core/rl_feeder/`.
+- Grid-advisory contracts, replay lookup, disabled/recorded/http/runtime-http clients, and feature mapping exist under `packages/ev_core/src/ev_core/grid_advisory/`.
+- Checkpoint-backed recommender policies exist:
+  - `rl_maskable_ppo` in `recommender/rl_policy.py`
+  - `rl_maskable_ppo_feeder` in `recommender/feeder_rl_policy.py`
+- `PolicyRegistry` registers both checkpoint-backed policy names along with deterministic policies.
+- The current mobile/API response contracts remain unchanged.
+- RL checkpoints are present in this checkout:
+  - `models/rl/maskable_ppo_station_selector.zip`
+  - `models/rl_feeder/maskable_ppo_feeder_station_selector.zip`
+  - `models/rl_feeder_final/maskable_ppo_feeder_station_selector.zip`
+
+What is not ready:
+
+- Full MARL is not implemented.
+- The default app/API policy is still deterministic `weighted_score` unless runtime configuration selects another registered policy.
+- The feeder policy cannot do true checkpoint inference from the normal app flow until the runtime builds and passes `feeder_observation`, `feeder_action_mask`, and `feeder_station_ids`.
+- The feeder runtime data package is missing from this checkout:
+  - `data/processed/evside_feeder_rl/manifest.json`
+  - `data/processed/evside_feeder_rl/feature_stats.json`
+  - `data/processed/evside_feeder_rl/feeder_ev_action_catalog.csv` or `.parquet`
+  - `data/processed/evside_feeder_rl/feeder_request_priors.csv` or `.parquet`
+  - `data/processed/evside_feeder_rl/feeder_grid_advisory_replay.csv` or `.parquet`
+- `outputs/evside_feeder_rl/`, the fallback/default local path used by feeder training scripts outside a DigitalTwin parent checkout, is also missing.
+- `sb3_contrib`, `stable_baselines3`, `torch`, and `gymnasium` remain optional runtime/training dependencies rather than base app/API dependencies.
+
+Forecasting status:
+
+- Forecasting artifacts are present under `models/forecasting/load_kw_30min/`.
+- The current runtime still uses `ForecastProvider` interfaces and table-backed/zero providers; no code path loads `lstm_huber_load_kw_30min.keras` into recommendations.
+- A pretrained RL checkpoint cannot directly benefit from newly appended forecast observation features unless it was trained with that same observation shape.
+- The first valid forecasting smoke path should either expose forecasts without changing recommendations, use forecast output as a separate heuristic/future-congestion term, or retrain a small RL model with forecast features.
+
+Recommended next integration path:
+
+1. Decide the canonical repo-local feeder data package path and copy or generate the missing feeder package there.
+2. Add a feeder observation-context adapter for app/runtime recommendations.
+3. Smoke-test `rl_maskable_ppo_feeder` with `RL_FEEDER_CHECKPOINT_PATH` and deterministic fallback enabled.
+4. Decide whether tracked model artifacts should remain normal Git files or move to Git LFS/release assets.
+5. Keep MARL out of the app path until single-agent and feeder checkpoint paths are reproducible with explicit artifacts and fallback tests.
+
 ## Verification Snapshot
 
 - Branch verified: `MARL`
@@ -104,16 +152,16 @@ Target path:
 
 ```text
 offline training
--> checkpoint saved outside git
--> RL/MARL policy class loads checkpoint
+-> checkpoint available under the agreed artifact path
+-> RL policy class loads checkpoint
 -> policy registered in PolicyRegistry
 -> RecommendationService can select it like other policies
--> fallback to deterministic policy if checkpoint missing
+-> fallback to deterministic policy if checkpoint/context/dependencies are missing
 ```
 
-The first checkpoint-backed policy should be single-agent MaskablePPO. MARL should come later, after single-agent training/evaluation/fallback behavior is stable. The future policy should consume the same candidate contexts built by `DundeeEnv`/`CandidateBuilder` and return the same `RecommendationOption` / `RecommendationResponse` shape already used by the app.
+The first checkpoint-backed policies are single-agent MaskablePPO hooks. MARL should come later, after single-agent/feeder training, evaluation, artifact loading, and fallback behavior are stable. Checkpoint-backed policies should consume the same candidate contexts built by `DundeeEnv`/`CandidateBuilder` or explicitly documented feeder observation context and return the same `RecommendationOption` / `RecommendationResponse` shape already used by the app.
 
-Offline training can run on Colab/Kaggle if it installs this repo and imports the repo environment/scenario sampler directly. Checkpoints and large run outputs should remain outside git; later PRs should commit only the lightweight loader, registry wiring, config, and evaluation scripts.
+Offline training can run on Colab/Kaggle if it installs this repo and imports the repo environment/scenario sampler directly. The current branch tracks selected model artifacts in Git; future PRs still need to decide whether continued checkpoint storage should use normal Git, Git LFS, release assets, or an external artifact store.
 
 ## Why Masked RL, Not Plain DQN
 
@@ -437,7 +485,6 @@ Readiness scaffolding now includes centralized config contracts:
 - future checkpoint inference can be configured via `RLDeploymentConfig` (`RL_POLICY_CHECKPOINT_PATH`, `RL_POLICY_FAIL_CLOSED`, `RL_FALLBACK_POLICY_NAME`)
 
 What is still intentionally not implemented:
-- no checkpoint-backed policy inference
-- no MaskablePPO training implementation
+- no full app-flow feeder checkpoint inference without feeder observation context
 - no MARL implementation
 - no benchmark dependency integration (EV2Gym/SustainGym remain future adapters)

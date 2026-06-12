@@ -1,5 +1,38 @@
 # Open Questions
 
+## Runtime Artifacts And Model Loading
+
+- Where should the feeder RL runtime data package live in this repo?
+  - Candidate repo-local path: `data/processed/evside_feeder_rl/`.
+  - Existing feeder training script fallback path: `outputs/evside_feeder_rl/`.
+  - Current truth: neither path exists in this checkout.
+  - Decision needed: choose one canonical path for committed/runtime-visible feeder package files and update scripts/config/docs consistently.
+
+- Should RL model zips be committed with Git LFS?
+  - Current truth: the RL checkpoint zips are tracked by normal Git.
+  - Current truth: `.gitattributes` only configures Git LFS for `data/interim/*.csv`.
+  - Decision needed: keep these small checkpoints in normal Git, move them to Git LFS, or publish them as release/external artifacts and keep only placeholders/config in Git.
+
+- Should forecasting artifacts be committed?
+  - Current truth: `models/forecasting/load_kw_30min/lstm_huber_load_kw_30min.keras`, scalers, and metadata are tracked by normal Git.
+  - Decision needed: keep the selected production/smoke model in Git, move to Git LFS, or use an external model registry/release asset.
+  - Decision needed: whether optional comparison models should stay external or be tracked for reproducibility.
+
+- Should forecast output affect `weighted_score` first or only RL after retraining?
+  - Current truth: no runtime provider loads the Keras forecasting artifact into recommendations.
+  - Constraint: app/API/mobile response shape should remain unchanged.
+  - Constraint: a pretrained RL checkpoint cannot safely consume newly appended forecast observation features unless it was trained with that exact feature shape.
+  - Decision needed: add forecast as a separate heuristic/future-congestion penalty first, expose forecasts without changing ranking, or retrain a forecast-aware RL smoke model.
+
+- Which exact forecast provider schema should be used?
+  - Current provider protocol supports background load, price, and PV series over timestamps.
+  - Current trained artifact target is `load_kw_30min`, with 30-minute frequency, `lookback=48`, `feature_count=148`, and one-step horizon.
+  - Decision needed: define how runtime 15-minute simulator timestamps map to the 30-minute model, how features are assembled, how scalers are loaded, and whether forecasts are citywide, transformer-level, feeder-level, or station-context features.
+
+- Should `archive/` be the standard local-only staging area for external snapshots?
+  - Current truth: `archive/` is ignored by Git.
+  - Decision needed: whether artifact-copy instructions should point to `archive/` only for source snapshots, while canonical runtime paths live under `models/` and `data/processed/evside_feeder_rl/`.
+
 ## Request Contract
 
 - Is `request_timestamp` required for mobile/live requests?
@@ -73,7 +106,7 @@
 
 - How should forecasting plug into RL?
   - Current truth: PR2 adds a `ForecastFeatureSnapshot` placeholder with default `source="none"`.
-  - Current truth: no forecasting model is implemented in this PR.
+  - Current truth: forecasting model artifacts are present under `models/forecasting/load_kw_30min/`, but no model-backed `ForecastProvider` loads them into runtime or RL observations yet.
   - Current truth: background load is optional for EV-arrival forecasting, but it is required for true grid-headroom forecasting because transformer headroom depends on non-EV load too.
   - Still open: the exact observation schema for forecast features and whether single-agent RL and future MARL agents should consume the same forecast channels.
 
@@ -148,8 +181,8 @@
 
 - What MARL framework/checkpoint format should be used?
   - Current scope: do not add MARL before the single-agent learned-policy path is proven.
-  - Intended plug-in architecture is policy-based: offline training -> checkpoint outside git -> checkpoint-backed policy class -> `PolicyRegistry` registration -> `RecommendationService` selection -> deterministic fallback if checkpoint is missing.
-  - First learned model should be single-agent MaskablePPO. MARL comes later after the single-agent path has stable evaluation and fallback behavior.
+  - Intended plug-in architecture is policy-based: offline training -> checkpoint under the agreed artifact path -> checkpoint-backed policy class -> `PolicyRegistry` registration -> `RecommendationService` selection -> deterministic fallback if checkpoint/context/dependencies are missing.
+  - First learned models are single-agent MaskablePPO hooks. MARL comes later after the single-agent and feeder paths have stable evaluation, artifact loading, runtime context, and fallback behavior.
   - Still open: final MARL framework/checkpoint format. Likely options remain RLlib, PettingZoo/SuperSuit, CleanRL-style PyTorch modules, Stable-Baselines-style wrappers where applicable, or a custom PyTorch policy.
 
 - What is the observation/action contract for MARL inference?
@@ -165,7 +198,8 @@
 - Can offline training happen outside this repo workspace?
   - Yes, on Colab/Kaggle or similar, if it installs and imports this repo code and trains against the repo environment/scenario sampler.
   - Current truth: `ev_core.rl_training` now provides the intended import-safe offline boundary for that workflow.
-  - Checkpoints and large run artifacts should stay outside git; only lightweight loader/config/evaluation code should be committed later.
+  - Current truth: selected checkpoint/model artifacts are tracked in Git on this branch.
+  - Still open: whether future checkpoints and large run artifacts should stay in normal Git, move to Git LFS, use release assets, or stay in an external artifact store.
 
 
 ## Configuration Rollout

@@ -35,6 +35,7 @@ data/processed/background_load_15min.csv
 data/processed/routing/*.graphml
 data/processed/routing/*.gpkg
 data/processed/routing/*.osm
+archive/
 
 # Ignore generated runtime outputs
 outputs/runtime/

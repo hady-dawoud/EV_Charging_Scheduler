@@ -4,7 +4,11 @@ import pytest
 
 from ev_core.config import path_from_env
 from ev_core.config.pricing import PricingConfig, pricing_config_from_env
-from ev_core.config.recommendation import RecommendationConfig, recommendation_config_from_env
+from ev_core.config.recommendation import (
+    KNOWN_RECOMMENDATION_POLICIES,
+    RecommendationConfig,
+    recommendation_config_from_env,
+)
 from ev_core.config.routing import RoutingConfig, routing_config_from_env
 from ev_core.config.topology import topology_config_from_env
 
@@ -13,6 +17,11 @@ def test_defaults_for_routing_recommendation_pricing() -> None:
     assert RoutingConfig().provider_name == 'simple_distance'
     assert RecommendationConfig().policy_name == 'weighted_score'
     assert PricingConfig().dynamic_pricing_enabled is True
+
+
+def test_known_recommendation_policies_include_checkpoint_backed_hooks() -> None:
+    assert 'rl_maskable_ppo' in KNOWN_RECOMMENDATION_POLICIES
+    assert 'rl_maskable_ppo_feeder' in KNOWN_RECOMMENDATION_POLICIES
 
 
 def test_topology_defaults_to_none(monkeypatch: pytest.MonkeyPatch) -> None:

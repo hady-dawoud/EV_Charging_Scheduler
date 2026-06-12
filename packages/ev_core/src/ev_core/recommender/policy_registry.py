@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from .baseline_policies import CheapestPolicy, ClosestPolicy, FastestPolicy, OverloadAwarePolicy, WeightedScorePolicy
+from .feeder_rl_policy import FeederMaskablePPORuntimePolicy
 from .policies import RecommendationPolicy
+from .rl_policy import MaskablePPORuntimePolicy
 
 
 class PolicyRegistry:
@@ -16,6 +18,8 @@ class PolicyRegistry:
         CheapestPolicy.name: CheapestPolicy,
         FastestPolicy.name: FastestPolicy,
         OverloadAwarePolicy.name: OverloadAwarePolicy,
+        MaskablePPORuntimePolicy.name: MaskablePPORuntimePolicy,
+        FeederMaskablePPORuntimePolicy.name: FeederMaskablePPORuntimePolicy,
     }
 
     def get(self, policy_name: str | None = None) -> RecommendationPolicy:

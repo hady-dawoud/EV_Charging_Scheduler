@@ -4,7 +4,15 @@ import os
 from dataclasses import dataclass
 
 KNOWN_RECOMMENDATION_POLICIES = frozenset(
-    {'weighted_score', 'closest', 'cheapest', 'fastest', 'overload_aware'}
+    {
+        'weighted_score',
+        'closest',
+        'cheapest',
+        'fastest',
+        'overload_aware',
+        'rl_maskable_ppo',
+        'rl_maskable_ppo_feeder',
+    }
 )
 
 
