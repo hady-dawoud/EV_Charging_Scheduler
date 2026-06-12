@@ -13,6 +13,11 @@ export type LoginRequest = {
   device_id: string;
 };
 
+export type GoogleLoginRequest = {
+  idToken: string;
+  deviceId: string;
+};
+
 export type RegisterRequest = {
   full_name: string;
   email: string;
@@ -37,6 +42,21 @@ export type AuthTokens = {
 
 export type AuthResponse = AuthTokens & {
   user: User;
+};
+
+export type DistanceUnit = 'km' | 'mi';
+export type CurrencyCode = 'GBP' | 'EGP';
+
+export type NotificationPreferences = {
+  reservationReminders: boolean;
+  chargingSessionUpdates: boolean;
+  recommendationAlerts: boolean;
+};
+
+export type AppPreferences = {
+  distanceUnit: DistanceUnit;
+  currency: CurrencyCode;
+  notifications: NotificationPreferences;
 };
 
 export interface Vehicle {
@@ -224,6 +244,9 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string; email?: string } | undefined;
   ManageVehicle: undefined;
+  AppSettings: undefined;
+  NotificationSettings: undefined;
+  PrivacySecurity: undefined;
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };

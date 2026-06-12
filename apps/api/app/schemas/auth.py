@@ -76,3 +76,11 @@ class PasswordResetConfirmRequest(BaseModel):
 
 class PasswordResetConfirmResponse(BaseModel):
     success: bool
+
+
+
+class GoogleLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id_token: str = Field(..., min_length=20)
+    device_id: str | None = Field(default=None, max_length=255)

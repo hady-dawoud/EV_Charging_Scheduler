@@ -13,11 +13,13 @@ import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
+import { signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../stores/authStore';
 
 export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [email, setEmail] = useState('alex.mercer@example.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +47,29 @@ export default function LoginScreen({ navigation }: any) {
       setError('Invalid email or password.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+    clearAuthMessage();
+
+    try {
+      const idToken = await signInWithGoogle();
+      const session = await api.loginWithGoogle({
+        idToken,
+        deviceId: 'mobile-app-google',
+      });
+
+      await authStorage.saveRefreshToken(session.refreshToken);
+      setSession(session.user, session.accessToken);
+      navigation.replace('Main');
+    } catch (e) {
+      console.error(e);
+      setError('Google sign-in could not be completed.');
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -125,11 +150,17 @@ export default function LoginScreen({ navigation }: any) {
       </View>
 
       <View style={styles.socialRow}>
-        <TouchableOpacity style={styles.socialBtn}>
-          <Text style={styles.socialBtnText}>Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialBtn}>
-          <Text style={styles.socialBtnText}>Apple</Text>
+        <TouchableOpacity
+          style={styles.socialBtn}
+          onPress={handleGoogleLogin}
+          disabled={isGoogleLoading}
+          activeOpacity={0.85}
+        >
+          {isGoogleLoading ? (
+            <ActivityIndicator color={theme.colors.text} />
+          ) : (
+            <Text style={styles.socialBtnText}>Google</Text>
+          )}
         </TouchableOpacity>
       </View>
 

@@ -14,11 +14,13 @@ import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
+import { signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../stores/authStore';
 
 export default function SignupScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [fullName, setFullName] = useState('Alex Mercer');
   const [email, setEmail] = useState('alex.mercer@example.com');
   const [password, setPassword] = useState('password123');
@@ -44,6 +46,28 @@ export default function SignupScreen({ navigation }: any) {
       setError('Could not create account. Try another email or check the password.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+
+    try {
+      const idToken = await signInWithGoogle();
+      const session = await api.loginWithGoogle({
+        idToken,
+        deviceId: 'mobile-app-google',
+      });
+
+      await authStorage.saveRefreshToken(session.refreshToken);
+      setSession(session.user, session.accessToken);
+      navigation.replace('Main');
+    } catch (e) {
+      console.error(e);
+      setError('Google sign-up could not be completed.');
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -119,6 +143,25 @@ export default function SignupScreen({ navigation }: any) {
             <Text style={styles.primaryBtnText}>Sign Up</Text>
           )}
         </NeonButton>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>Or continue with</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.socialBtn}
+          onPress={handleGoogleSignup}
+          disabled={isGoogleLoading}
+          activeOpacity={0.85}
+        >
+          {isGoogleLoading ? (
+            <ActivityIndicator color={theme.colors.text} />
+          ) : (
+            <Text style={styles.socialBtnText}>Google</Text>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.signinRow}>
           <Text style={styles.signinText}>Already have an account?</Text>
@@ -204,6 +247,35 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
+    paddingHorizontal: theme.spacing.md,
+  },
+  socialBtn: {
+    height: 56,
+    backgroundColor: theme.colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  socialBtnText: {
+    color: theme.colors.text,
+    fontWeight: '600',
   },
   signinRow: {
     flexDirection: 'row',

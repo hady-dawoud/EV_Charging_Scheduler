@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -19,9 +19,37 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import StationDetailsScreen from './src/screens/StationDetailsScreen';
 import ReservationConfirmScreen from './src/screens/ReservationConfirmScreen';
 import ManageVehicleScreen from './src/screens/ManageVehicleScreen';
+import AppSettingsScreen from './src/screens/AppSettingsScreen';
+import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
+import PrivacySecurityScreen from './src/screens/PrivacySecurityScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+const handlePasswordResetLink = () => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('reset_token');
+
+  if (!resetToken || !navigationRef.isReady()) {
+    return;
+  }
+
+  navigationRef.reset({
+    index: 0,
+    routes: [
+      {
+        name: 'ResetPassword',
+        params: { token: resetToken },
+      },
+    ],
+  });
+
+  window.history.replaceState({}, document.title, window.location.pathname);
+};
 
 export default function App() {
   const expireSession = useAuthStore((state) => state.expireSession);
@@ -47,6 +75,7 @@ export default function App() {
     <View style={styles.root}>
       <NavigationContainer
         ref={navigationRef}
+        onReady={handlePasswordResetLink}
         theme={{
           dark: true,
           colors: {
@@ -76,6 +105,9 @@ export default function App() {
           <Stack.Screen name="StationDetails" component={StationDetailsScreen} />
           <Stack.Screen name="ReservationConfirm" component={ReservationConfirmScreen} />
           <Stack.Screen name="ManageVehicle" component={ManageVehicleScreen} />
+          <Stack.Screen name="AppSettings" component={AppSettingsScreen} />
+          <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+          <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

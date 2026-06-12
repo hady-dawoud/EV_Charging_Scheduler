@@ -8,6 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.auth import (
     AuthResponse,
+    GoogleLoginRequest,
     LoginRequest,
     LogoutRequest,
     LogoutResponse,
@@ -24,10 +25,12 @@ from app.services.auth_service import (
     EmailAlreadyRegisteredError,
     InactiveUserError,
     InvalidCredentialsError,
+    InvalidGoogleTokenError,
     InvalidPasswordResetTokenError,
     InvalidRefreshTokenError,
     build_user_read,
     confirm_password_reset,
+    login_google_user,
     login_user,
     logout_user,
     refresh_tokens,
@@ -84,6 +87,32 @@ def login(
         ) from exc
 
 
+
+
+
+
+@router.post(
+    "/google",
+    response_model=AuthResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Login user with Google",
+)
+def google_login(
+    request: GoogleLoginRequest,
+    db: Session = Depends(get_db),
+) -> AuthResponse:
+    try:
+        return login_google_user(db, request)
+    except InvalidGoogleTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+    except InactiveUserError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(exc),
+        ) from exc
 
 
 @router.post(
