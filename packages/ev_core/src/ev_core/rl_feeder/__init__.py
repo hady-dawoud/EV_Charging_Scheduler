@@ -1,8 +1,6 @@
 """Feeder-aligned RL components backed by DigitalTwin public-EV assets."""
 
 from .contracts import FeederAction, FeederEpisodeScenario, FeederRequest
-from .env import FeederStationSelectionEnv
-from .repository import DigitalTwinFeederRLRepository
 
 __all__ = [
     "DigitalTwinFeederRLRepository",
@@ -11,3 +9,15 @@ __all__ = [
     "FeederRequest",
     "FeederStationSelectionEnv",
 ]
+
+
+def __getattr__(name: str):
+    if name == "DigitalTwinFeederRLRepository":
+        from .repository import DigitalTwinFeederRLRepository
+
+        return DigitalTwinFeederRLRepository
+    if name == "FeederStationSelectionEnv":
+        from .env import FeederStationSelectionEnv
+
+        return FeederStationSelectionEnv
+    raise AttributeError(name)

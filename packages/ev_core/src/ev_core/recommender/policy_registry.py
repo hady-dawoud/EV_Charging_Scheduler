@@ -6,6 +6,13 @@ from .baseline_policies import CheapestPolicy, ClosestPolicy, FastestPolicy, Ove
 from .feeder_rl_policy import FeederMaskablePPORuntimePolicy
 from .policies import RecommendationPolicy
 from .rl_policy import MaskablePPORuntimePolicy
+from .rl_safety_filter import (
+    RLSafetyCheapestPolicy,
+    RLSafetyClosestPolicy,
+    RLSafetyFastestPolicy,
+    RLSafetyPreferencePolicy,
+    RLSafetyWeightedPolicy,
+)
 
 
 class PolicyRegistry:
@@ -20,6 +27,11 @@ class PolicyRegistry:
         OverloadAwarePolicy.name: OverloadAwarePolicy,
         MaskablePPORuntimePolicy.name: MaskablePPORuntimePolicy,
         FeederMaskablePPORuntimePolicy.name: FeederMaskablePPORuntimePolicy,
+        RLSafetyClosestPolicy.name: RLSafetyClosestPolicy,
+        RLSafetyCheapestPolicy.name: RLSafetyCheapestPolicy,
+        RLSafetyFastestPolicy.name: RLSafetyFastestPolicy,
+        RLSafetyWeightedPolicy.name: RLSafetyWeightedPolicy,
+        RLSafetyPreferencePolicy.name: RLSafetyPreferencePolicy,
     }
 
     def get(self, policy_name: str | None = None) -> RecommendationPolicy:

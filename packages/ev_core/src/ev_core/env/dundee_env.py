@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, date, datetime, time, timedelta
-from typing import Any
+from typing import Any, Mapping
 from uuid import uuid4
 
 from ev_core.contracts.events import RuntimeEvent
@@ -17,12 +17,14 @@ from ev_core.contracts.responses import (
     StationStateSnapshot,
     TransformerStateSnapshot,
 )
+from ev_core.config.recommendation import is_rl_safety_policy
 from ev_core.data.repositories import DundeeDataBundle
 from ev_core.forecasting.provider import ForecastProvider, ForecastRequest, NullForecastProvider
 from ev_core.pricing.dundee_tariffs import build_dundee_tariff_metadata
 from ev_core.pricing.dynamic_pricing import DynamicPricingInput, DynamicPricingResult, calculate_dynamic_price
 from ev_core.recommender.candidates import CandidateBuilder
 from ev_core.recommender.eligibility import StationEligibilityFilter
+from ev_core.recommender.feeder_runtime_context import FEEDER_POLICY_NAME, build_feeder_runtime_context
 from ev_core.recommender.ranker import CandidateContext
 from ev_core.recommender.service import RecommendationService
 from ev_core.routing.providers import RouteEstimate, RoutingProvider
@@ -50,6 +52,27 @@ from .entities import (
 )
 from .environment import SimulationEnvironment, StepResult
 from .reward import RewardBreakdown
+
+
+RL_SAFETY_RUNTIME_CONTEXT_KEYS = (
+    "rl_safety_filter_enabled",
+    "rl_safety_filter_mode",
+    "rl_safety_filter_strict",
+    "rl_safety_filter_penalty_weight",
+    "rl_safety_block_unsafe",
+    "rl_safety_mapping_mode",
+)
+
+
+def policy_requires_feeder_context(
+    policy_name: str | None,
+    metadata: Mapping[str, Any] | None = None,
+) -> bool:
+    return bool(
+        policy_name == FEEDER_POLICY_NAME
+        or is_rl_safety_policy(policy_name)
+        or (metadata or {}).get("rl_safety_filter_enabled")
+    )
 
 
 def _coerce_bool(value: Any, *, default: bool) -> bool:
@@ -394,11 +417,39 @@ class DundeeEnv(SimulationEnvironment):
         self,
         request: SimulationRequest | ExternalChargingRequest,
         recommendation_policy_name: str | None = None,
+        policy_selection_metadata: dict | None = None,
     ) -> RecommendationResponse:
         """Rank Dundee stations for the provided request against the current state."""
 
         simulation_request = request if isinstance(request, SimulationRequest) else self._build_simulation_request_from_external(request)
         contexts = self._build_candidate_contexts(simulation_request)
+        runtime_context = {"simulated_timestamp": self.current_time}
+        response_metadata = dict(policy_selection_metadata or {})
+        runtime_context.update(
+            {
+                key: response_metadata[key]
+                for key in RL_SAFETY_RUNTIME_CONTEXT_KEYS
+                if key in response_metadata
+            }
+        )
+        forecast_metadata = {
+            str(key): value
+            for key, value in response_metadata.items()
+            if str(key).startswith("forecast_")
+        }
+        if forecast_metadata:
+            runtime_context["forecast_metadata"] = forecast_metadata
+        if policy_requires_feeder_context(
+            recommendation_policy_name,
+            response_metadata,
+        ):
+            feeder_context = build_feeder_runtime_context(
+                simulation_request,
+                feeder_rl_data_dir=response_metadata.get("feeder_data_dir"),
+            )
+            runtime_context.update(feeder_context.runtime_context)
+            runtime_context.update(feeder_context.metadata)
+            response_metadata.update(feeder_context.metadata)
         response = self.recommendation_service.recommend(
             request_id=simulation_request.request_id,
             client_request_id=simulation_request.client_request_id,
@@ -408,6 +459,8 @@ class DundeeEnv(SimulationEnvironment):
             preference_mode=simulation_request.preference_mode,
             candidate_contexts=contexts,
             policy_name=recommendation_policy_name,
+            policy_selection_metadata=response_metadata,
+            runtime_context=runtime_context,
         )
         top_station = response.top_recommendation.station_id if response.top_recommendation is not None else None
         top_transformer = response.top_recommendation.transformer_id if response.top_recommendation is not None else None
@@ -427,6 +480,8 @@ class DundeeEnv(SimulationEnvironment):
                 "top_station_id": top_station,
                 "preference_mode": simulation_request.preference_mode,
                 "recommendation_policy_name": recommendation_policy_name,
+                "policy_source": response_metadata.get("policy_source"),
+                "feeder_context_available": response_metadata.get("feeder_context_available"),
             },
         )
         return response
@@ -1509,4 +1564,4 @@ class DundeeEnv(SimulationEnvironment):
         return simple_distance_km(lat_a, lon_a, lat_b, lon_b)
 
 
-__all__ = ["DundeeEnv"]
+__all__ = ["DundeeEnv", "policy_requires_feeder_context"]
