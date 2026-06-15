@@ -444,6 +444,17 @@ export const api = {
     return response.session;
   },
 
+  mockCompleteChargingSession: async (
+    sessionId: string
+  ): Promise<ApiChargingSession> => {
+    return requestJsonWithAuthRetry<ApiChargingSession>(
+      `/sessions/${sessionId}/mock-complete`,
+      {
+        method: 'POST',
+      }
+    );
+  },
+
 
   createReservation: async (
     payload: CreateReservationRequest
@@ -460,6 +471,28 @@ export const api = {
     });
 
     return response.reservations;
+  },
+
+  cancelReservation: async (
+    reservationId: string
+  ): Promise<{ reservation_id: string; status: string }> => {
+    return requestJsonWithAuthRetry<{ reservation_id: string; status: string }>(
+      `/reservations/${reservationId}/cancel`,
+      {
+        method: 'PATCH',
+      }
+    );
+  },
+
+  confirmReservationStart: async (
+    reservationId: string
+  ): Promise<ApiChargingSession> => {
+    return requestJsonWithAuthRetry<ApiChargingSession>(
+      `/reservations/${reservationId}/confirm-start`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
 };

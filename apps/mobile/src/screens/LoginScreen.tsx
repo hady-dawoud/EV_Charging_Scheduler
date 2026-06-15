@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { NeonButton } from '../components/NeonButton';
+import { GoogleLogo } from '../components/GoogleLogo';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
@@ -159,7 +160,10 @@ export default function LoginScreen({ navigation }: any) {
           {isGoogleLoading ? (
             <ActivityIndicator color={theme.colors.text} />
           ) : (
-            <Text style={styles.socialBtnText}>Google</Text>
+            <View style={styles.socialBtnContent}>
+              <GoogleLogo size={20} />
+              <Text style={styles.socialBtnText}>Google</Text>
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -276,6 +280,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.md,
     marginBottom: 'auto',
+  },
+  socialBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
   },
   socialBtn: {
     flex: 1,

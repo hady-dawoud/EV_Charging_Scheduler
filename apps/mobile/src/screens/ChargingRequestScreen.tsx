@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
+import { api } from '../services/api';
 import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
 import {
@@ -28,10 +29,51 @@ export default function ChargingRequestScreen({ navigation }: Props) {
   const activeVehicle = vehicle ?? fallbackVehicle;
   const minTargetSoC = Math.min(100, activeVehicle.currentSoC + TARGET_SOC_STEP);
   const [targetSoC, setTargetSoC] = useState(Math.max(80, minTargetSoC));
+  const [activeSessionWarning, setActiveSessionWarning] = useState<string | null>(null);
 
   useEffect(() => {
     loadVehicle();
   }, [loadVehicle]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkActiveSession = async () => {
+      try {
+        const [session, reservations] = await Promise.all([
+          api.getActiveChargingSession(),
+          api.getMyReservations(),
+        ]);
+
+        const openReservation = reservations.find(
+          (item) =>
+            (item.status === 'confirmed' || item.status === 'active') &&
+            !item.cancelled_at
+        );
+
+        if (isMounted && session) {
+          setActiveSessionWarning(
+            'You already have an active charging session. Stop it before requesting another charger.'
+          );
+          return;
+        }
+
+        if (isMounted && openReservation) {
+          setActiveSessionWarning(
+            'You already have a reserved charger. Start or cancel it before requesting another charger.'
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void checkActiveSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setTargetSoC((current) => Math.max(current, minTargetSoC));
@@ -42,6 +84,10 @@ export default function ChargingRequestScreen({ navigation }: Props) {
     useState<RecommendationChargerType>('any');
 
   const handleFindRecommendations = () => {
+    if (activeSessionWarning) {
+      return;
+    }
+
     const safeTargetSoC = Math.max(targetSoC, minTargetSoC);
 
     navigation.navigate('LoadingRecommendations', {
@@ -137,13 +183,21 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           </View>
         </View>
 
+        {activeSessionWarning ? (
+          <View style={[styles.activeSessionBlock, webStyles.glass]}>
+            <Text style={styles.activeSessionBlockTitle}>Active session in progress</Text>
+            <Text style={styles.activeSessionBlockText}>{activeSessionWarning}</Text>
+          </View>
+        ) : null}
+
         <NeonButton
-          buttonStyle={styles.primaryBtn}
+          buttonStyle={[styles.primaryBtn, activeSessionWarning && styles.primaryBtnDisabled]}
           onPress={handleFindRecommendations}
+          disabled={Boolean(activeSessionWarning)}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
-          <Text style={styles.primaryBtnText}>Find Best Options</Text>
+          <Text style={styles.primaryBtnText}>{activeSessionWarning ? 'Session Active' : 'Find Best Options'}</Text>
         </NeonButton>
       </ScrollView>
     </SafeAreaView>
@@ -215,6 +269,27 @@ const styles = StyleSheet.create({
   },
   typeBtnActive: { backgroundColor: 'rgba(0,255,0,0.1)', borderColor: theme.colors.primary },
   typeBtnText: { color: theme.colors.textMuted, fontSize: 11, fontWeight: 'bold' },
+  activeSessionBlock: {
+    ...theme.glass,
+    borderRadius: theme.radii.xl,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    borderColor: 'rgba(245,158,11,0.32)',
+  },
+  activeSessionBlockTitle: {
+    color: '#f59e0b',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  activeSessionBlockText: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.55,
+  },
   primaryBtn: {
     height: 56, backgroundColor: theme.colors.primary,
     borderRadius: theme.radii.lg, flexDirection: 'row',

@@ -19,10 +19,12 @@ from app.services.charging_sessions_service import (
     ChargingSessionAlreadyCompletedError,
     ChargingSessionNotFoundError,
     ChargingSessionReservationNotFoundError,
+    ChargingSessionStopNotAllowedError,
     ChargingSessionStationNotFoundError,
     complete_charging_session,
     get_active_charging_session,
     list_my_charging_sessions,
+    mock_complete_charging_session,
     start_charging_session,
 )
 
@@ -97,6 +99,41 @@ def get_my_active_charging_session(
             current_user=current_user,
         )
     )
+
+
+
+@router.post(
+    "/{session_id}/mock-complete",
+    response_model=ChargingSessionRead,
+    status_code=status.HTTP_200_OK,
+    summary="Stop active mock charging session",
+)
+def mock_complete_my_charging_session(
+    session_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ChargingSessionRead:
+    try:
+        return mock_complete_charging_session(
+            db,
+            current_user=current_user,
+            session_id=session_id,
+        )
+    except ChargingSessionNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except ChargingSessionAlreadyCompletedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except ChargingSessionStopNotAllowedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
 
 
 @router.patch(
