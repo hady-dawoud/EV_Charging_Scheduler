@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
+from app.schemas.charging_sessions import ChargingSessionRead
 from app.schemas.reservations import (
     ReservationCancelResponse,
     ReservationCreate,
@@ -15,10 +16,14 @@ from app.schemas.reservations import (
     ReservationsResponse,
 )
 from app.services.reservations_service import (
+    ReservationActiveSessionError,
     ReservationAlreadyCancelledError,
     ReservationNotFoundError,
+    ReservationOpenReservationError,
+    ReservationStartNotAllowedError,
     ReservationStationNotFoundError,
     cancel_reservation,
+    confirm_reservation_start,
     create_reservation,
     list_my_reservations,
 )
@@ -51,6 +56,16 @@ def create_my_reservation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
+    except ReservationActiveSessionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except ReservationOpenReservationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get(
@@ -69,6 +84,36 @@ def get_my_reservations(
             current_user=current_user,
         )
     )
+
+
+
+@router.post(
+    "/{reservation_id}/confirm-start",
+    response_model=ChargingSessionRead,
+    status_code=status.HTTP_200_OK,
+    summary="Confirm reservation start",
+)
+def confirm_my_reservation_start(
+    reservation_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ChargingSessionRead:
+    try:
+        return confirm_reservation_start(
+            db,
+            current_user=current_user,
+            reservation_id=reservation_id,
+        )
+    except ReservationNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except ReservationStartNotAllowedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
 
 
 @router.patch(

@@ -46,6 +46,31 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
       setError(null);
 
       try {
+        const [activeSession, reservations] = await Promise.all([
+          api.getActiveChargingSession(),
+          api.getMyReservations(),
+        ]);
+
+        const openReservation = reservations.find(
+          (item) =>
+            (item.status === 'confirmed' || item.status === 'active') &&
+            !item.cancelled_at
+        );
+
+        if (activeSession) {
+          if (isMounted) {
+            setError('You already have an active charging session. Stop it before reserving another charger.');
+          }
+          return;
+        }
+
+        if (openReservation) {
+          if (isMounted) {
+            setError('You already have a reserved charger. Start or cancel it before reserving another charger.');
+          }
+          return;
+        }
+
         const now = new Date();
         const reservedUntil = new Date(now.getTime() + 15 * 60 * 1000);
 
