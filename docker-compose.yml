@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: ev_smart_charging
       POSTGRES_USER: ev_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -36,9 +36,22 @@ services:
       --interval-seconds 2
     volumes:
       - ./outputs/runtime:/app/outputs/runtime
-      - ./data:/app/data
+      - ./data:/app/data:ro
+      - ./models/rl_feeder_final:/app/models/rl_feeder_final:ro
     environment:
-      - PYTHONPATH=/app:/app/packages/ev_core/src
+      PYTHONPATH: /app:/app/packages/ev_core/src
+      RECOMMENDATION_POLICY_NAME: ${RECOMMENDATION_POLICY_NAME:-rl_safety_preference}
+      RL_SAFETY_FILTER_ENABLED: ${RL_SAFETY_FILTER_ENABLED:-true}
+      RL_SAFETY_FILTER_MODE: ${RL_SAFETY_FILTER_MODE:-penalty}
+      RL_SAFETY_FILTER_STRICT: ${RL_SAFETY_FILTER_STRICT:-true}
+      RL_SAFETY_BLOCK_UNSAFE: ${RL_SAFETY_BLOCK_UNSAFE:-false}
+      RL_SAFETY_FILTER_PENALTY_WEIGHT: ${RL_SAFETY_FILTER_PENALTY_WEIGHT:-0.25}
+      RL_SAFETY_MAPPING_MODE: ${RL_SAFETY_MAPPING_MODE:-stable_ordinal_demo_bridge}
+      RL_FEEDER_CHECKPOINT_PATH: /app/models/rl_feeder_final/maskable_ppo_feeder_station_selector.zip
+      FEEDER_RL_DATA_DIR: /app/data/processed/evside_feeder_rl
+      GRID_ADVISORY_MODE: ${GRID_ADVISORY_MODE:-recorded}
+      GRID_ADVISORY_REPLAY_DIR: /app/data/processed/evside_feeder_rl
+      RL_POLICY_FAIL_CLOSED: ${RL_POLICY_FAIL_CLOSED:-true}
     restart: unless-stopped
 
   api:
@@ -50,26 +63,38 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./outputs/runtime:/app/outputs/runtime
-      - ./data:/app/data
+      - ./data:/app/data:ro
+      - ./models/rl_feeder_final:/app/models/rl_feeder_final:ro
     environment:
-      - PYTHONPATH=/app:/app/packages/ev_core/src
-      - CORS_ORIGINS=http://20.216.14.193:3000,http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_to_a_long_random_secret}
-      - RECOMMENDATION_POLICY_NAME=weighted_score
-      - DYNAMIC_PRICING_ENABLED=true
-      - ROUTING_PROVIDER_NAME=simple_distance
-      - OSMNX_GRAPH_PATH=data/processed/routing/dundee_drive.graphml
-      - CHARGER_EVENT_SECRET=${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}
-      - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-}
-      - PASSWORD_RESET_EMAIL_ENABLED=${PASSWORD_RESET_EMAIL_ENABLED:-false}
-      - PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT=${PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT:-true}
-      - SMTP_HOST=${SMTP_HOST:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USERNAME=${SMTP_USERNAME:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-no-reply@smartevcharging.local}
-      - SMTP_USE_STARTTLS=${SMTP_USE_STARTTLS:-true}
+      PYTHONPATH: /app:/app/packages/ev_core/src
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173}
+      DATABASE_URL: postgresql+psycopg://ev_user:${POSTGRES_PASSWORD:-change_me}@postgres:5432/ev_smart_charging
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change_me_to_a_long_random_secret}
+      RECOMMENDATION_POLICY_NAME: ${RECOMMENDATION_POLICY_NAME:-rl_safety_preference}
+      RL_SAFETY_FILTER_ENABLED: ${RL_SAFETY_FILTER_ENABLED:-true}
+      RL_SAFETY_FILTER_MODE: ${RL_SAFETY_FILTER_MODE:-penalty}
+      RL_SAFETY_FILTER_STRICT: ${RL_SAFETY_FILTER_STRICT:-true}
+      RL_SAFETY_BLOCK_UNSAFE: ${RL_SAFETY_BLOCK_UNSAFE:-false}
+      RL_SAFETY_FILTER_PENALTY_WEIGHT: ${RL_SAFETY_FILTER_PENALTY_WEIGHT:-0.25}
+      RL_SAFETY_MAPPING_MODE: ${RL_SAFETY_MAPPING_MODE:-stable_ordinal_demo_bridge}
+      RL_FEEDER_CHECKPOINT_PATH: /app/models/rl_feeder_final/maskable_ppo_feeder_station_selector.zip
+      FEEDER_RL_DATA_DIR: /app/data/processed/evside_feeder_rl
+      GRID_ADVISORY_MODE: ${GRID_ADVISORY_MODE:-recorded}
+      GRID_ADVISORY_REPLAY_DIR: /app/data/processed/evside_feeder_rl
+      RL_POLICY_FAIL_CLOSED: ${RL_POLICY_FAIL_CLOSED:-true}
+      DYNAMIC_PRICING_ENABLED: ${DYNAMIC_PRICING_ENABLED:-true}
+      ROUTING_PROVIDER_NAME: ${ROUTING_PROVIDER_NAME:-simple_distance}
+      OSMNX_GRAPH_PATH: ${OSMNX_GRAPH_PATH:-data/processed/routing/dundee_drive.graphml}
+      CHARGER_EVENT_SECRET: ${CHARGER_EVENT_SECRET:-change_me_charger_event_secret}
+      GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
+      PASSWORD_RESET_EMAIL_ENABLED: ${PASSWORD_RESET_EMAIL_ENABLED:-false}
+      PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT: ${PASSWORD_RESET_RETURN_TOKEN_FOR_DEVELOPMENT:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-no-reply@smartevcharging.local}
+      SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,9 +111,16 @@ services:
       - "127.0.0.1:8501:8501"
     volumes:
       - ./outputs/runtime:/app/outputs/runtime
-      - ./data:/app/data
+      - ./data:/app/data:ro
+      - ./models/rl_feeder_final:/app/models/rl_feeder_final:ro
     environment:
-      - PYTHONPATH=/app:/app/packages/ev_core/src
+      PYTHONPATH: /app:/app/packages/ev_core/src
+      RECOMMENDATION_POLICY_NAME: ${RECOMMENDATION_POLICY_NAME:-rl_safety_preference}
+      RL_SAFETY_FILTER_ENABLED: ${RL_SAFETY_FILTER_ENABLED:-true}
+      RL_SAFETY_FILTER_STRICT: ${RL_SAFETY_FILTER_STRICT:-true}
+      RL_FEEDER_CHECKPOINT_PATH: /app/models/rl_feeder_final/maskable_ppo_feeder_station_selector.zip
+      FEEDER_RL_DATA_DIR: /app/data/processed/evside_feeder_rl
+      RL_POLICY_FAIL_CLOSED: ${RL_POLICY_FAIL_CLOSED:-true}
     depends_on:
       - runtime
     restart: unless-stopped
@@ -98,8 +130,8 @@ services:
       context: .
       dockerfile: Dockerfile.mobile
       args:
-        EXPO_PUBLIC_API_BASE_URL: https://smartevcharging.uaenorth.cloudapp.azure.com/api
-        VITE_API_BASE_URL: https://smartevcharging.uaenorth.cloudapp.azure.com/api
+        EXPO_PUBLIC_API_BASE_URL: ${EXPO_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     container_name: ev_mobile
     ports:
       - "127.0.0.1:3000:80"

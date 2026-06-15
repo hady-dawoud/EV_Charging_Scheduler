@@ -24,6 +24,20 @@ Strict success requires real checkpoint inference with no fallback. The stable
 ordinal bridge remains nonphysical app/demo mapping; primary grid-performance
 evidence remains feeder-evaluator evidence.
 
+## Deployment artifacts
+
+Check that the strict feeder RL metadata, parquet data, and checkpoint are
+present:
+
+```powershell
+python scripts\verification\check_deployment_artifacts.py
+python scripts\verification\check_deployment_artifacts.py --json
+uv run --with pandas --with pyarrow python scripts\verification\check_deployment_artifacts.py --json --check-parquet
+```
+
+The checker reports only repository-relative paths and rejects unmaterialized
+Git LFS pointer files. Run `git lfs pull` after cloning before strict startup.
+
 ## Tracked text health
 
 Audit tracked source, test, configuration, script, and documentation files for

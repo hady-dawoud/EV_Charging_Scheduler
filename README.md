@@ -389,6 +389,26 @@ The repo includes Dockerfiles for:
 - dashboard: `Dockerfile.dashboard`
 - mobile web build: `Dockerfile.mobile`
 
+Strict feeder RL deployment uses Git LFS for the three feeder parquet files
+and the final feeder checkpoint. Materialize and validate them before building:
+
+```powershell
+git lfs install
+git lfs pull
+python scripts\verification\check_deployment_artifacts.py --json
+uv run --with pandas --with pyarrow python scripts\verification\check_deployment_artifacts.py --json --check-parquet
+```
+
+Create a local environment file from the secret-free template:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Compose uses the `postgres` service name inside containers, mounts the feeder
+data and final checkpoint read-only, enables strict no-fallback RL safety by
+default, and builds the mobile web app against `http://localhost:8000`.
+
 Run the stack with:
 
 ```powershell
