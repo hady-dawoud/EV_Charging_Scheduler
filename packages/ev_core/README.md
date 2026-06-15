@@ -1,16 +1,18 @@
 # ev_core
 
-Standalone Python scaffolding for the EV-side data, preprocessing, forecasting,
-simulation, and recommendation layers.
+Reusable Python package for the EV-side data, preprocessing, forecasting,
+simulation, recommendation, and feeder RL integration layers.
 
 ## Why this exists
 
-This package is intentionally separate from the current mocked backend and
-mobile app workflow in `apps/api` and `apps/mobile`.
+This package remains independent of the API and mobile presentation layers, but
+its contracts, Dundee environment, recommendation service, and policy registry
+are used by the simulator/runtime integration.
 
-- It does not change or extend the running FastAPI routes.
-- It does not change or extend the current Expo/React Native screens.
-- It is not wired into the app flow yet.
+- API/mobile request and response contracts remain stable.
+- The default recommendation policy remains deterministic `weighted_score`.
+- Checkpoint-backed feeder and hybrid RL safety policies are optional and load
+  Torch/Stable-Baselines3 only when explicitly selected.
 
 ## Intended package layout
 
@@ -22,10 +24,17 @@ mobile app workflow in `apps/api` and `apps/mobile`.
   15-minute internal time base.
 - `forecasting`: provider interfaces and dummy implementations for background
   load, price, and optional PV forecasts.
-- `recommender`: future ranking and service layer placeholders.
+- `recommender`: deterministic rankers, feeder context/prediction, and hybrid
+  RL safety wrappers.
 - `utils`: small shared helpers such as logging and time-base utilities.
 
 ## Current scope
 
-Only safe placeholders, typed models, and TODO-friendly stubs are included
-here. No production logic has been implemented yet.
+PR 6.2 implements opt-in RL safety filtering while preserving the existing
+preference rankers. Penalty mode adjusts only normalized ranking scores. Block
+mode removes eligible unsafe candidates according to fail-open/fail-closed
+configuration. The `stable_ordinal_demo_bridge` is deterministic but explicitly
+nonphysical and is suitable only for app/demo evidence.
+
+Runtime setup and verification are documented in
+`docs/ev_side/PR_6_2_RL_SAFETY_RUNTIME_RUNBOOK.md`.
