@@ -227,8 +227,8 @@ class FeederStationSelectionEnv((gym.Env if gym is not None else object)):
         if action.charger_kw <= 0.0 or action.public_ev_capacity_kw <= 0.0:
             return False
         if _prefers_dc(request):
-            return action.connector_type in {"dc", "rapid", "ultra_rapid", "any"} or action.charger_kw >= 43.0
-        return action.connector_type in {"ac", "dc", "rapid", "ultra_rapid", "any"}
+            return _canonical_connector_type(action.connector_type) in {"dc", "rapid", "ultra_rapid", "any"} or action.charger_kw >= 43.0
+        return _canonical_connector_type(action.connector_type) in {"ac", "dc", "rapid", "ultra_rapid", "any"}
 
     def _build_info(
         self,
@@ -262,7 +262,22 @@ class FeederStationSelectionEnv((gym.Env if gym is not None else object)):
 
 
 def _prefers_dc(request: FeederRequest) -> bool:
-    return str(request.charger_type_preference).strip().lower() in {"dc", "rapid", "ultra_rapid"}
+    return _canonical_connector_type(request.charger_type_preference) in {"dc", "rapid", "ultra_rapid"}
+
+
+def _canonical_connector_type(value: object) -> str:
+    normalized = str(value or "any").strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in {"", "any"}:
+        return "any"
+    if normalized in {"ac", "type_2", "type2"}:
+        return "ac"
+    if normalized in {"dc", "dc_fast", "ccs", "ccs2", "chademo", "tesla_supercharger"}:
+        return "dc"
+    if normalized in {"rapid", "fast", "rapid_dc"}:
+        return "rapid"
+    if normalized in {"ultrarapid", "ultra_rapid", "ultra_rapid_dc"}:
+        return "ultra_rapid"
+    return normalized
 
 
 __all__ = ["FeederStationSelectionEnv"]

@@ -75,6 +75,7 @@ class FeederObservationBuilder:
         ]
         for index, action in enumerate(self.actions):
             advisory = grid_advisories.get(action.station_id)
+            connector_type = _canonical_connector_type(action.connector_type)
             values.extend(
                 [
                     1.0 if action.secondary_area_id == request.secondary_area_id else 0.0,
@@ -82,8 +83,8 @@ class FeederObservationBuilder:
                     _clip01(_as_float(action.p_base_kw) / max(self.power_scale_kw, 1.0)),
                     _clip01(_as_float(action.public_ev_capacity_kw) / max(self.power_scale_kw, 1.0)),
                     _clip01(_as_float(action.charger_kw) / max(self.power_scale_kw, 1.0)),
-                    1.0 if action.connector_type in {"ac", "any"} else 0.0,
-                    1.0 if action.connector_type in {"dc", "rapid", "ultra_rapid", "any"} else 0.0,
+                    1.0 if connector_type in {"ac", "any"} else 0.0,
+                    1.0 if connector_type in {"dc", "rapid", "ultra_rapid", "any"} else 0.0,
                     *self._grid_features(advisory),
                 ]
             )
@@ -170,6 +171,21 @@ def _clip01(value: float) -> float:
     if not math.isfinite(value):
         return 0.0
     return min(max(value, 0.0), 1.0)
+
+
+def _canonical_connector_type(value: object) -> str:
+    normalized = str(value or "any").strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in {"", "any"}:
+        return "any"
+    if normalized in {"ac", "type_2", "type2"}:
+        return "ac"
+    if normalized in {"dc", "dc_fast", "ccs", "ccs2", "chademo", "tesla_supercharger"}:
+        return "dc"
+    if normalized in {"rapid", "fast", "rapid_dc"}:
+        return "rapid"
+    if normalized in {"ultrarapid", "ultra_rapid", "ultra_rapid_dc"}:
+        return "ultra_rapid"
+    return normalized
 
 
 def _stats_max(stats: Mapping[str, Any], group: str, column: str, default: float) -> float:

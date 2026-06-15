@@ -62,7 +62,19 @@ def build_feeder_runtime_context(
         feeder_request = _to_feeder_request(request, selected_area, area_strategy=area_strategy)
         action_mask = [_is_action_valid_for_request(action, feeder_request) for action in actions]
         valid_actions = [action for action, valid in zip(actions, action_mask) if valid]
-        connector_strategy = "compatible_request_charger" if valid_actions else "incompatible_request_charger"
+        connector_bridge_used = False
+        if not valid_actions and _allow_stable_ordinal_connector_bridge():
+            bridge_action_mask = [_is_action_valid_for_area(action, feeder_request) for action in actions]
+            bridge_valid_actions = [action for action, valid in zip(actions, bridge_action_mask) if valid]
+            if bridge_valid_actions:
+                action_mask = bridge_action_mask
+                valid_actions = bridge_valid_actions
+                connector_bridge_used = True
+        connector_strategy = (
+            "stable_ordinal_demo_bridge_connector_unscoped"
+            if connector_bridge_used
+            else "compatible_request_charger" if valid_actions else "incompatible_request_charger"
+        )
         advisory_mode = grid_advisory_mode or os.getenv("GRID_ADVISORY_MODE", "recorded")
         client = grid_advisory_client or _default_grid_client(
             mode=advisory_mode,
@@ -94,6 +106,7 @@ def build_feeder_runtime_context(
                 "feeder_area_strategy": area_strategy,
                 "feeder_connector_strategy": connector_strategy,
                 "feeder_connector_compatible": bool(valid_actions),
+                "feeder_connector_bridge_used": connector_bridge_used,
                 "replay_coverage_status": (
                     "covered"
                     if selected_area in replay_area_ids
@@ -258,9 +271,27 @@ def _select_secondary_area(
     if metadata_area is not None and str(metadata_area) in action_area_ids:
         return str(metadata_area), "request_metadata"
 
+    requested_type = _canonical_charger_type(
+        _getattr(request, "charger_type_preference") or _getattr(request, "charger_type") or "any"
+    )
+    compatible_actions: list[FeederAction] = []
+    if requested_type != "any":
+        compatible_actions = [action for action in actions if _action_connector_compatible(action, request)]
+        nearest_compatible = _nearest_action_area(request, compatible_actions)
+        if nearest_compatible is not None:
+            return nearest_compatible, "nearest_connector_compatible_action_catalog"
+
     nearest = _nearest_action_area(request, actions)
     if nearest is not None:
         return nearest, "nearest_action_catalog"
+
+    if requested_type != "any":
+        compatible_area_ids = sorted({action.secondary_area_id for action in compatible_actions})
+        compatible_covered = sorted(set(compatible_area_ids).intersection(replay_area_ids))
+        if compatible_covered:
+            return _stable_choice(compatible_covered, _request_seed_text(request)), "deterministic_connector_compatible_replay_covered_area"
+        if compatible_area_ids:
+            return _stable_choice(compatible_area_ids, _request_seed_text(request)), "deterministic_connector_compatible_action_catalog_area"
 
     covered = sorted(set(action_area_ids).intersection(replay_area_ids))
     if covered:
@@ -301,7 +332,9 @@ def _to_feeder_request(
     target_soc = _normalize_soc(_getattr(request, "target_soc"), default=min(current_soc + requested_energy / max(battery_kwh, 1.0), 0.95))
     if target_soc <= current_soc:
         target_soc = min(current_soc + max(requested_energy / max(battery_kwh, 1.0), 0.05), 1.0)
-    charger_type = str(_getattr(request, "charger_type_preference") or _getattr(request, "charger_type") or "any").lower()
+    charger_type = _canonical_charger_type(
+        _getattr(request, "charger_type_preference") or _getattr(request, "charger_type") or "any"
+    )
     return FeederRequest(
         request_id=str(_getattr(request, "request_id") or _getattr(request, "client_request_id") or "runtime-request"),
         secondary_area_id=secondary_area_id,
@@ -431,13 +464,39 @@ def _proposal_for_action(request: FeederRequest, action: FeederAction) -> GridSc
 
 
 def _is_action_valid_for_request(action: FeederAction, request: FeederRequest) -> bool:
+    if not _is_action_valid_for_area(action, request):
+        return False
+    return _action_connector_compatible(action, request)
+
+
+def _is_action_valid_for_area(action: FeederAction, request: FeederRequest) -> bool:
     if action.secondary_area_id != request.secondary_area_id:
         return False
     if action.charger_kw <= 0.0 or action.public_ev_capacity_kw <= 0.0:
         return False
-    if _prefers_dc(request):
-        return action.connector_type in {"dc", "rapid", "ultra_rapid", "ultrarapid", "any"} or action.charger_kw >= 43.0
-    return action.connector_type in {"ac", "dc", "rapid", "ultra_rapid", "ultrarapid", "any"}
+    return True
+
+
+def _action_connector_compatible(action: FeederAction, request: Any) -> bool:
+    connector_type = _canonical_charger_type(action.connector_type)
+    if _request_prefers_dc(request):
+        return connector_type in {"dc", "rapid", "ultra_rapid", "any"} or action.charger_kw >= 43.0
+    requested_type = _canonical_charger_type(
+        _getattr(request, "charger_type_preference") or _getattr(request, "charger_type") or "any"
+    )
+    if requested_type == "ac":
+        return connector_type in {"ac", "any"}
+    return connector_type in {"ac", "dc", "rapid", "ultra_rapid", "any"}
+
+
+def _request_prefers_dc(request: Any) -> bool:
+    return _canonical_charger_type(
+        _getattr(request, "charger_type_preference") or _getattr(request, "charger_type") or "any"
+    ) in {"dc", "rapid", "ultra_rapid"}
+
+
+def _allow_stable_ordinal_connector_bridge() -> bool:
+    return os.getenv("RL_SAFETY_MAPPING_MODE", "").strip().lower() == "stable_ordinal_demo_bridge"
 
 
 def _advisory_metadata(advisories: Iterable[GridAdvisoryResponse]) -> dict[str, Any]:
@@ -494,7 +553,22 @@ def _normalize_soc(value: Any, *, default: float) -> float:
 
 
 def _prefers_dc(request: FeederRequest) -> bool:
-    return str(request.charger_type_preference).strip().lower() in {"dc", "rapid", "ultra_rapid", "ultrarapid"}
+    return _request_prefers_dc(request)
+
+
+def _canonical_charger_type(value: object) -> str:
+    normalized = str(value or "any").strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in {"", "any"}:
+        return "any"
+    if normalized in {"ac", "type_2", "type2"}:
+        return "ac"
+    if normalized in {"dc", "dc_fast", "ccs", "ccs2", "chademo", "tesla_supercharger"}:
+        return "dc"
+    if normalized in {"rapid", "fast", "rapid_dc"}:
+        return "rapid"
+    if normalized in {"ultrarapid", "ultra_rapid", "ultra_rapid_dc"}:
+        return "ultra_rapid"
+    return normalized
 
 
 def _getattr(value: Any, name: str) -> Any:

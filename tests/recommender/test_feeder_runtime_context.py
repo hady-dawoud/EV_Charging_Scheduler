@@ -46,15 +46,25 @@ class FakeGridClient:
         ]
 
 
-def action(station_id: str, area_id: str, connector_type: str = "ac") -> FeederAction:
+def action(
+    station_id: str,
+    area_id: str,
+    connector_type: str = "ac",
+    *,
+    charger_kw: float = 22.0,
+    latitude: float | None = None,
+    longitude: float | None = None,
+) -> FeederAction:
     return FeederAction(
         station_id=station_id,
         secondary_area_id=area_id,
         demand_point_id=f"demand-{station_id}",
         node_id=f"node-{station_id}",
-        charger_kw=22.0,
-        public_ev_capacity_kw=22.0,
+        charger_kw=charger_kw,
+        public_ev_capacity_kw=charger_kw,
         connector_type=connector_type,
+        latitude=latitude,
+        longitude=longitude,
     )
 
 
@@ -124,6 +134,71 @@ def test_adapter_reports_zero_valid_actions_for_incompatible_charger() -> None:
     assert result.runtime_context["feeder_action_mask"] == [False]
     assert result.metadata["feeder_valid_action_count"] == 0
     assert result.metadata["feeder_connector_strategy"] == "incompatible_request_charger"
+
+
+def test_adapter_keeps_demo_bridge_actions_when_feeder_catalog_is_connector_unscoped(monkeypatch) -> None:
+    monkeypatch.setenv("RL_SAFETY_MAPPING_MODE", "stable_ordinal_demo_bridge")
+
+    result = build_feeder_runtime_context(
+        request(charger_type="dc", metadata={"secondary_area_id": "area-a"}),
+        repository=FakeRepository([action("station-a", "area-a", connector_type="ac")]),
+        grid_advisory_client=FakeGridClient(),
+    )
+
+    assert result.context_available is True
+    assert result.runtime_context["feeder_action_mask"] == [True]
+    assert result.metadata["feeder_valid_action_count"] == 1
+    assert result.metadata["feeder_connector_strategy"] == "stable_ordinal_demo_bridge_connector_unscoped"
+    assert result.metadata["feeder_connector_compatible"] is True
+    assert result.metadata["feeder_connector_bridge_used"] is True
+
+
+def test_adapter_selects_nearest_connector_compatible_area_for_dc_request() -> None:
+    grid_client = FakeGridClient()
+    result = build_feeder_runtime_context(
+        request(charger_type="rapid"),
+        repository=FakeRepository(
+            [
+                action("ac-near", "area-a", connector_type="ac", latitude=56.462, longitude=-2.9707),
+                action(
+                    "rapid-nearby",
+                    "area-b",
+                    connector_type="rapid",
+                    charger_kw=50.0,
+                    latitude=56.463,
+                    longitude=-2.9707,
+                ),
+            ]
+        ),
+        grid_advisory_client=grid_client,
+    )
+
+    assert result.context_available is True
+    assert result.runtime_context["feeder_action_mask"] == [False, True]
+    assert result.metadata["feeder_valid_action_count"] == 1
+    assert result.metadata["feeder_connector_strategy"] == "compatible_request_charger"
+    assert result.metadata["feeder_connector_compatible"] is True
+    assert result.metadata["feeder_selected_secondary_area_id"] == "area-b"
+    assert result.metadata["feeder_area_strategy"] == "nearest_connector_compatible_action_catalog"
+    assert [proposal.station_id for proposal in grid_client.proposals] == ["rapid-nearby"]
+
+
+def test_adapter_canonicalizes_spaced_dc_request_and_connector_aliases() -> None:
+    result = build_feeder_runtime_context(
+        request(charger_type="Ultra Rapid", metadata={"secondary_area_id": "area-a"}),
+        repository=FakeRepository(
+            [
+                action("ac", "area-a", connector_type="ac"),
+                action("dc-fast", "area-a", connector_type="dc-fast", charger_kw=22.0),
+            ]
+        ),
+        grid_advisory_client=FakeGridClient(),
+    )
+
+    assert result.context_available is True
+    assert result.runtime_context["feeder_action_mask"] == [False, True]
+    assert result.metadata["feeder_valid_action_count"] == 1
+    assert result.metadata["feeder_connector_strategy"] == "compatible_request_charger"
 
 
 def test_adapter_reports_missing_artifacts_without_raising(tmp_path) -> None:

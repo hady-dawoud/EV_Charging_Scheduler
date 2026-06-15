@@ -51,6 +51,8 @@ class DynamicPricingResult:
     load_ratio: float
     headroom_ratio: float
     reason: str
+    queue_multiplier: float = 1.0
+    utilization_multiplier: float = 1.0
 
 
 def calculate_dynamic_price(input_: DynamicPricingInput) -> DynamicPricingResult:
@@ -80,6 +82,8 @@ def calculate_dynamic_price(input_: DynamicPricingInput) -> DynamicPricingResult
             load_ratio=load_ratio,
             headroom_ratio=headroom_ratio,
             reason="dynamic_pricing_disabled",
+            queue_multiplier=1.0,
+            utilization_multiplier=1.0,
         )
 
     transformer_multiplier = NEUTRAL_MULTIPLIER
@@ -100,6 +104,8 @@ def calculate_dynamic_price(input_: DynamicPricingInput) -> DynamicPricingResult
 
     queue_component = min(max(int(input_.station_queue_length), 0) * QUEUE_MULTIPLIER_PER_VEHICLE, MAX_QUEUE_MULTIPLIER)
     utilization_component = min(max(float(input_.station_utilization), 0.0) * UTILIZATION_MULTIPLIER_FACTOR, MAX_UTILIZATION_MULTIPLIER)
+    queue_multiplier = 1.0 + queue_component
+    utilization_multiplier = 1.0 + utilization_component
     congestion_multiplier = 1.0 + queue_component + utilization_component
 
     total_multiplier = _clamp(transformer_multiplier * congestion_multiplier, MIN_TOTAL_MULTIPLIER, MAX_TOTAL_MULTIPLIER)
@@ -114,6 +120,8 @@ def calculate_dynamic_price(input_: DynamicPricingInput) -> DynamicPricingResult
         load_ratio=load_ratio,
         headroom_ratio=headroom_ratio,
         reason=reason,
+        queue_multiplier=queue_multiplier,
+        utilization_multiplier=utilization_multiplier,
     )
 
 
