@@ -44,7 +44,7 @@ Repository folders under `G:\OMAR\Graduation Project`,
 corruption/recovery evidence only. Do not use them for development, Git
 operations, dependency resolution, or runtime artifact discovery.
 
-## Required Local Artifacts
+## Required Deployment Artifacts
 
 The checkpoint is expected at:
 
@@ -62,14 +62,24 @@ data/processed/evside_feeder_rl/feeder_request_priors.parquet
 data/processed/evside_feeder_rl/feeder_grid_advisory_replay.parquet
 ```
 
-The replay directory is ignored by Git. Keep these files local and uncommitted
-unless a later change deliberately introduces Git LFS or an artifact registry.
-Never replace missing artifacts with fabricated data to make strict verification
-pass.
+`manifest.json` and `feature_stats.json` are tracked as normal Git text files.
+The three parquet files and the strict checkpoint are tracked with Git LFS.
+After cloning, materialize them before starting strict mode:
+
+```powershell
+git lfs install
+git lfs pull
+python scripts\verification\check_deployment_artifacts.py --json
+uv run --with pandas --with pyarrow python scripts\verification\check_deployment_artifacts.py --json --check-parquet
+```
+
+The Docker services mount `data/` and `models/rl_feeder_final/` read-only.
+Never replace missing artifacts with fabricated data to make strict
+verification pass.
 
 ## Configuration
 
-Use `.env.feeder_rl_demo.example` as the secret-free opt-in template. The
+Use `.env.feeder_rl_demo.example` as the secret-free strict template. The
 recommended physical mode is `exact_only`, where unmatched candidates remain
 unmapped and unpenalized with diagnostics.
 
@@ -119,7 +129,8 @@ Run strict checkpoint verification:
 uv run --with pyarrow --with pydantic --with numpy --with torch --with stable-baselines3 --with sb3-contrib python scripts\verification\verify_rl_safety_preference_ranking.py --strict
 ```
 
-Strict success requires checkpoint availability, a 2200-feature observation,
+Strict success requires materialized Git LFS objects, checkpoint availability,
+a 2200-feature observation,
 the expected action mask/catalog alignment, and `fallback_used=false`.
 
 Run the Phase E/PR 6.2 regression:
@@ -131,6 +142,31 @@ uv run --with pytest --with pydantic --with numpy pytest tests\recommender\test_
 The existing end-to-end simulator/API commands remain in the root `README.md`.
 Loading the feeder demo environment is an explicit opt-in; those commands keep
 their deterministic behavior otherwise.
+
+## Local Docker Deployment
+
+The compose stack uses `postgres` for container-to-container database access.
+The mobile web build defaults to `http://localhost:8000`, while the dashboard
+shares `outputs/runtime/` with the runtime and API containers.
+
+```powershell
+Copy-Item .env.example .env
+git lfs pull
+python scripts\verification\check_deployment_artifacts.py
+docker compose config
+docker compose up --build
+```
+
+Local endpoints:
+
+```text
+mobile web: http://localhost:3000
+API:        http://localhost:8000
+dashboard:  http://localhost:8501
+```
+
+Override `EXPO_PUBLIC_API_BASE_URL` and `VITE_API_BASE_URL` before building
+when the browser reaches the API through another host or reverse proxy.
 
 ## Repository Health
 
