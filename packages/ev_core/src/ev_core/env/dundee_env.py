@@ -1,4 +1,4 @@
-﻿"""Dundee-specific request-driven charging environment."""
+"""Dundee-specific request-driven charging environment."""
 
 from __future__ import annotations
 
