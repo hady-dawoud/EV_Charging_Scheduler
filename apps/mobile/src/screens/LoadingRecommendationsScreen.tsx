@@ -64,7 +64,10 @@ export default function LoadingRecommendationsScreen({
       .getRecommendations(request)
       .then((result) => {
         console.log('Recommendations API result:', result);
-        navigation.replace('Results', { result });
+        navigation.replace('Results', {
+          result,
+          selectedLocationName: request.locationName,
+        });
       })
       .catch((err) => {
         const message =

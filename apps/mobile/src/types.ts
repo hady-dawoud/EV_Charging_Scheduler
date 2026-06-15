@@ -108,6 +108,10 @@ export type MobileRecommendationRequest = {
   chargerType: RecommendationChargerType;
   vehicleCurrentSoC: number;
   vehicleBatteryCapacity: number;
+  locationId: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
 };
 
 export type ApiRecommendationOption = {
@@ -158,6 +162,9 @@ export type UiStationRecommendation = {
   score: number;
   chargerLabel: string;
   reasonTags: string[];
+  latitude?: number | null;
+  longitude?: number | null;
+  address?: string | null;
 };
 
 
@@ -250,7 +257,7 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
-  Results: { result: ApiRecommendationsResponse };
-  StationDetails: { station?: UiStationRecommendation } | undefined;
-  ReservationConfirm: { station: UiStationRecommendation };
+  Results: { result: ApiRecommendationsResponse; selectedLocationName?: string };
+  StationDetails: { station?: UiStationRecommendation; selectedLocationName?: string } | undefined;
+  ReservationConfirm: { station: UiStationRecommendation; selectedLocationName?: string };
 };

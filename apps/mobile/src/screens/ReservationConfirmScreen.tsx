@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react-native';
@@ -14,6 +15,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
 import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
+import { buildGoogleMapsUrl, getStationMapLocation } from '../data/demoLocations';
 import type { ApiReservation, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReservationConfirm'>;
@@ -33,7 +35,14 @@ const formatReservationTime = (iso: string) => {
 };
 
 export default function ReservationConfirmScreen({ navigation, route }: Props) {
-  const { station } = route.params;
+  const { station, selectedLocationName } = route.params;
+  const stationLocation = getStationMapLocation({
+    stationId: station.id,
+    stationName: station.name,
+    zoneId: station.zoneId,
+    latitude: station.latitude,
+    longitude: station.longitude,
+  });
   const [reservation, setReservation] = useState<ApiReservation | null>(null);
   const [isCreating, setIsCreating] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,11 +119,17 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
     };
   }, [station.id]);
 
+  const handleOpenGoogleMaps = () => {
+    const url = buildGoogleMapsUrl(stationLocation, station.name);
+    void Linking.openURL(url);
+  };
+
   const details = useMemo(() => {
     const reservedAtIso = reservation?.reserved_start_at ?? new Date().toISOString();
 
     return [
       { label: 'Station', value: reservation?.station_name ?? station.name },
+      { label: 'Location', value: stationLocation.address },
       { label: 'Reserved At', value: formatReservationTime(reservedAtIso) },
       {
         label: 'Est. Duration',
@@ -126,7 +141,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
         highlight: true,
       },
     ];
-  }, [reservation, station]);
+  }, [reservation, station, stationLocation.address]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -156,6 +171,11 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
           <Text style={styles.successSub}>
             {error ?? `Your spot at ${reservation?.station_name ?? station.name} has been secured.`}
           </Text>
+          {!error && selectedLocationName ? (
+            <Text style={styles.confirmationOriginText}>
+              Recommended from {selectedLocationName}
+            </Text>
+          ) : null}
         </View>
 
         <View style={[styles.detailsCard, webStyles.glass]}>
@@ -174,6 +194,16 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.mapsBtn, (isCreating || Boolean(error)) && styles.disabledBtn]}
+            onPress={handleOpenGoogleMaps}
+            disabled={isCreating || Boolean(error)}
+            activeOpacity={0.85}
+          >
+            <MapPin color={theme.colors.primary} size={20} />
+            <Text style={styles.mapsBtnText}>Open in Google Maps</Text>
+          </TouchableOpacity>
+
           <NeonButton
             glow="small"
             buttonStyle={[styles.navBtn, isCreating && styles.disabledBtn]}
@@ -250,7 +280,30 @@ const styles = StyleSheet.create({
   },
   detailLabel: { color: theme.colors.textMuted, fontSize: 14 },
   detailValue: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold', flexShrink: 1, textAlign: 'right' },
+  confirmationOriginText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: theme.spacing.sm,
+    textAlign: 'center',
+  },
   actions: { gap: theme.spacing.md },
+  mapsBtn: {
+    height: 56,
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+  },
+  mapsBtnText: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
   navBtnFrame: {
     marginBottom: theme.spacing.md,
   },

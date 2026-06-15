@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme, webStyles } from '../theme';
+import { getStationMapLocation } from '../data/demoLocations';
 import {
   ApiRecommendationOption,
   RootStackParamList,
@@ -44,22 +45,40 @@ const getSpeedLabel = (chargerLabel: string) => {
 
 const mapOptionToUiStation = (
   option: ApiRecommendationOption
-): UiStationRecommendation => ({
-  id: asString(option.station_id, 'unknown_station'),
-  name: asString(option.station_name, 'Unknown station'),
-  zoneId: asString(option.zone_id, 'unknown_zone'),
-  transformerId: asString(option.transformer_id, 'unknown_transformer'),
-  distanceKm: asNumber(option.distance_km),
-  estimatedWaitMinutes: asNumber(option.estimated_wait_minutes),
-  estimatedDurationMinutes: asNumber(option.estimated_duration_minutes),
-  estimatedCostGbp: asNumber(option.estimated_cost_gbp),
-  headroomKw: asNumber(option.transformer_headroom_kw),
-  queueLength: asNumber(option.current_queue),
-  utilization: asNumber(option.utilization),
-  score: asNumber(option.score),
-  chargerLabel: asString(option.metadata?.connector_mix_total, 'rapid'),
-  reasonTags: asStringArray(option.reason_tags),
-});
+): UiStationRecommendation => {
+  const id = asString(option.station_id, 'unknown_station');
+  const name = asString(option.station_name, 'Unknown station');
+  const zoneId = asString(option.zone_id, 'unknown_zone');
+  const latitude = asNumber(option.metadata?.latitude, Number.NaN);
+  const longitude = asNumber(option.metadata?.longitude, Number.NaN);
+  const mapLocation = getStationMapLocation({
+    stationId: id,
+    stationName: name,
+    zoneId,
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+  });
+
+  return {
+    id,
+    name,
+    zoneId,
+    transformerId: asString(option.transformer_id, 'unknown_transformer'),
+    distanceKm: asNumber(option.distance_km),
+    estimatedWaitMinutes: asNumber(option.estimated_wait_minutes),
+    estimatedDurationMinutes: asNumber(option.estimated_duration_minutes),
+    estimatedCostGbp: asNumber(option.estimated_cost_gbp),
+    headroomKw: asNumber(option.transformer_headroom_kw),
+    queueLength: asNumber(option.current_queue),
+    utilization: asNumber(option.utilization),
+    score: asNumber(option.score),
+    chargerLabel: asString(option.metadata?.connector_mix_total, 'rapid'),
+    reasonTags: asStringArray(option.reason_tags),
+    latitude: mapLocation.latitude,
+    longitude: mapLocation.longitude,
+    address: mapLocation.address,
+  };
+};
 
 const formatMinutes = (minutes: number) => `${Math.round(asNumber(minutes))} min`;
 const formatCurrency = (gbp: number) => `£${asNumber(gbp).toFixed(2)}`;
@@ -109,6 +128,7 @@ function StationOptionCard({
 
 export default function ResultsScreen({ navigation, route }: Props) {
   const bundle = route.params?.result ?? null;
+  const selectedLocationName = route.params?.selectedLocationName;
 
   const top =
     bundle?.top_recommendation != null
@@ -155,7 +175,7 @@ export default function ResultsScreen({ navigation, route }: Props) {
             <StationOptionCard
               station={top}
               highlighted
-              onPress={() => navigation.navigate('StationDetails', { station: top })}
+              onPress={() => navigation.navigate('StationDetails', { station: top, selectedLocationName })}
             />
           </View>
         ) : (
@@ -179,7 +199,7 @@ export default function ResultsScreen({ navigation, route }: Props) {
               <StationOptionCard
                 key={station.id}
                 station={station}
-                onPress={() => navigation.navigate('StationDetails', { station })}
+                onPress={() => navigation.navigate('StationDetails', { station, selectedLocationName })}
               />
             ))
           )}

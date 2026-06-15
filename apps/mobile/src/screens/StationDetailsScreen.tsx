@@ -18,6 +18,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
+import { buildStaticMapUrl, getStationMapLocation } from '../data/demoLocations';
 import { RootStackParamList, UiStationRecommendation } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StationDetails'>;
@@ -37,6 +38,9 @@ const fallbackStation: UiStationRecommendation = {
   score: 0.7521,
   chargerLabel: 'ultra_rapid',
   reasonTags: ['nearby', 'low_wait', 'high_headroom', 'low_cost'],
+  latitude: 56.4602,
+  longitude: -2.9714,
+  address: 'Greenmarket, Dundee',
 };
 
 const formatDistance = (km: number) => `${km.toFixed(1)} km`;
@@ -47,12 +51,21 @@ const formatZoneName = (zoneId: string) =>
 
 export default function StationDetailsScreen({ navigation, route }: Props) {
   const station = route.params?.station ?? fallbackStation;
+  const selectedLocationName = route.params?.selectedLocationName;
+  const stationLocation = getStationMapLocation({
+    stationId: station.id,
+    stationName: station.name,
+    zoneId: station.zoneId,
+    latitude: station.latitude,
+    longitude: station.longitude,
+  });
+  const mapUrl = buildStaticMapUrl(stationLocation);
 
   return (
     <View style={styles.container}>
       <View style={styles.mapBg}>
         <Image
-          source={{ uri: 'https://picsum.photos/seed/map-dark/800/1200' }}
+          source={{ uri: mapUrl }}
           style={styles.mapImage}
           blurRadius={2}
         />
@@ -112,7 +125,7 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
         <NeonButton
           glow="small"
           buttonStyle={styles.reserveBtn}
-          onPress={() => navigation.navigate('ReservationConfirm', { station })}
+          onPress={() => navigation.navigate('ReservationConfirm', { station, selectedLocationName })}
           activeOpacity={0.85}
         >
           <Navigation color="#000" size={20} />
@@ -209,6 +222,13 @@ const styles = StyleSheet.create({
   stationName: { color: theme.colors.text, fontSize: 28, fontWeight: 'bold', marginBottom: 6 },
   providerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: theme.spacing.xl },
   providerText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
+  routeOriginText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
   statsGrid: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl },
   statCard: {
     ...theme.glass,

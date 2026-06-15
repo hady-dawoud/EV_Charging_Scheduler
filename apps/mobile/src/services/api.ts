@@ -403,8 +403,8 @@ export const api = {
     request: MobileRecommendationRequest
   ): Promise<ApiRecommendationsResponse> => {
     const payload = {
-      latitude: 56.462,
-      longitude: -2.9707,
+      latitude: request.latitude,
+      longitude: request.longitude,
       battery_level: request.vehicleCurrentSoC,
       target_battery_level: request.targetSoc,
       battery_kwh: request.vehicleBatteryCapacity,
@@ -419,6 +419,8 @@ export const api = {
       zone_id: 'zone_central_waterfront',
       metadata: {
         channel: 'mobile-app',
+        selected_location_id: request.locationId,
+        selected_location_name: request.locationName,
       },
     };
 
