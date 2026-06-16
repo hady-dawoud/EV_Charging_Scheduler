@@ -30,6 +30,24 @@ const asString = (value: unknown, fallback = '') =>
 const asStringArray = (value: unknown) =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 
+const getMetadataString = (
+  metadata: Record<string, unknown> | undefined,
+  keys: string[],
+  fallback = ''
+) => {
+  if (!metadata) return fallback;
+
+  for (const key of keys) {
+    const value = metadata[key];
+
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return fallback;
+};
+
 const getMetadataNumber = (
   metadata: Record<string, unknown> | undefined,
   keys: string[]
@@ -115,7 +133,12 @@ const mapOptionToUiStation = (
     queueLength: asNumber(option.current_queue),
     utilization: asNumber(option.utilization),
     score: asNumber(option.score),
-    chargerLabel: asString(option.metadata?.connector_mix_total, 'rapid'),
+    chargerLabel: getMetadataString(option.metadata, [
+      'selected_connector_type',
+      'tariff_class',
+      'connector_type',
+      'connector_mix_total',
+    ], 'rapid'),
     reasonTags: asStringArray(option.reason_tags),
     latitude: mapLocation.isExact ? mapLocation.latitude : null,
     longitude: mapLocation.isExact ? mapLocation.longitude : null,
