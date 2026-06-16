@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -16,8 +16,13 @@ import {
   Activity,
 } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { WebView } from 'react-native-webview';
 import { NeonButton } from '../components/NeonButton';
+import { api } from '../services/api';
+import { useSettingsStore } from '../stores/settingsStore';
+import { formatCurrencyAmount, formatDistanceKm } from '../utils/preferencesFormat';
 import { theme, webStyles } from '../theme';
+import { buildGoogleMapsEmbedUrl, getStationMapLocation } from '../data/demoLocations';
 import { RootStackParamList, UiStationRecommendation } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StationDetails'>;
@@ -37,35 +42,94 @@ const fallbackStation: UiStationRecommendation = {
   score: 0.7521,
   chargerLabel: 'ultra_rapid',
   reasonTags: ['nearby', 'low_wait', 'high_headroom', 'low_cost'],
+  latitude: 56.4602,
+  longitude: -2.9714,
+  address: 'Greenmarket, Dundee',
 };
 
-const formatDistance = (km: number) => `${km.toFixed(1)} km`;
 const formatMinutes = (minutes: number) => `${minutes} min`;
 const formatCurrency = (gbp: number) => `£${gbp.toFixed(2)}`;
 const formatZoneName = (zoneId: string) =>
   zoneId.replace('zone_', '').replaceAll('_', ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 
 export default function StationDetailsScreen({ navigation, route }: Props) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const station = route.params?.station ?? fallbackStation;
+  const [exactStationLocation, setExactStationLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address: string;
+    isExact: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api
+      .getStation(station.id)
+      .then((apiStation) => {
+        if (!isMounted) return;
+
+        setExactStationLocation({
+          latitude: apiStation.latitude,
+          longitude: apiStation.longitude,
+          address:
+            apiStation.postcode != null && apiStation.postcode.length > 0
+              ? `${apiStation.station_name}, ${apiStation.postcode}`
+              : apiStation.station_name,
+          isExact: true,
+        });
+      })
+      .catch((error) => {
+        console.error('Could not load exact station location', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [station.id]);
+  const selectedLocationName = route.params?.selectedLocationName;
+  const selectedLocationLatitude = route.params?.selectedLocationLatitude;
+  const selectedLocationLongitude = route.params?.selectedLocationLongitude;
+  const stationLocation =
+    exactStationLocation ??
+    getStationMapLocation({
+      stationId: station.id,
+      stationName: station.name,
+      zoneId: station.zoneId,
+      latitude: station.latitude,
+      longitude: station.longitude,
+    });
+  const destinationLabel = `${station.name}, ${stationLocation.address}`;
+  const mapUrl = buildGoogleMapsEmbedUrl(stationLocation);
 
   return (
     <View style={styles.container}>
       <View style={styles.mapBg}>
-        <Image
-          source={{ uri: 'https://picsum.photos/seed/map-dark/800/1200' }}
-          style={styles.mapImage}
-          blurRadius={2}
-        />
-        <View style={styles.mapOverlay} />
-        <View style={styles.markerWrapper}>
-          <View style={styles.markerPing} />
-          <View style={[styles.markerIcon, webStyles.neonGlow]}>
-            <Zap color={theme.colors.primary} fill={theme.colors.primary} size={20} />
+        {Platform.OS === 'web' ? (
+          <View style={styles.mapImage}>
+            {React.createElement('iframe', {
+              key: mapUrl,
+              src: mapUrl,
+              title: `${station.name} map`,
+              style: {
+                border: 0,
+                width: '100%',
+                height: '100%',
+              },
+              loading: 'lazy',
+            })}
           </View>
-          <View style={[styles.markerLabel, webStyles.glass]}>
-            <Text style={styles.markerText}>{station.name}</Text>
-          </View>
-        </View>
+        ) : (
+          <WebView
+            key={mapUrl}
+            source={{ uri: mapUrl }}
+            style={styles.mapImage}
+            javaScriptEnabled
+            domStorageEnabled
+          />
+        )}
+
       </View>
 
       <SafeAreaView style={styles.topNav}>
@@ -85,7 +149,7 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
         <View style={styles.providerRow}>
           <Navigation color={theme.colors.textMuted} fill={theme.colors.textMuted} size={13} />
           <Text style={styles.providerText}>
-            {formatZoneName(station.zoneId)} · {formatDistance(station.distanceKm)} away
+            {formatZoneName(station.zoneId)} · {formatDistanceKm(station.distanceKm, preferences.distanceUnit)} away
           </Text>
         </View>
 
@@ -99,7 +163,7 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
           <View style={[styles.statCard, webStyles.glass]}>
             <DollarSign color="#eab308" size={20} />
             <Text style={styles.statSub}>EST. COST</Text>
-            <Text style={styles.statVal}>{formatCurrency(station.estimatedCostGbp)}</Text>
+            <Text style={styles.statVal}>{formatCurrencyAmount(station.estimatedCostGbp, preferences.currency)}</Text>
           </View>
 
           <View style={[styles.statCard, webStyles.glass]}>
@@ -112,7 +176,19 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
         <NeonButton
           glow="small"
           buttonStyle={styles.reserveBtn}
-          onPress={() => navigation.navigate('ReservationConfirm', { station })}
+          onPress={() =>
+            navigation.navigate('ReservationConfirm', {
+              station: {
+                ...station,
+                latitude: stationLocation.latitude,
+                longitude: stationLocation.longitude,
+                address: stationLocation.address,
+              },
+              selectedLocationName,
+              selectedLocationLatitude,
+              selectedLocationLongitude,
+            })
+          }
           activeOpacity={0.85}
         >
           <Navigation color="#000" size={20} />
@@ -126,41 +202,7 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surface },
   mapBg: { ...StyleSheet.absoluteFill },
-  mapImage: { width: '100%', height: '100%', opacity: 0.4 },
-  mapOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,11,13,0.3)' },
-  markerWrapper: {
-    position: 'absolute',
-    top: '33%',
-    left: '50%',
-    transform: [{ translateX: -24 }, { translateY: -24 }],
-    alignItems: 'center',
-  },
-  markerPing: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0,255,0,0.2)',
-  },
-  markerIcon: {
-    ...theme.neonGlow,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.background,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerLabel: {
-    marginTop: 8,
-    backgroundColor: 'rgba(10,11,13,0.8)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  markerText: { color: theme.colors.primary, fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 },
+  mapImage: { width: '100%', height: '100%', opacity: 0.82 },
   topNav: {
     position: 'absolute',
     top: 0,
@@ -209,6 +251,19 @@ const styles = StyleSheet.create({
   stationName: { color: theme.colors.text, fontSize: 28, fontWeight: 'bold', marginBottom: 6 },
   providerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: theme.spacing.xl },
   providerText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
+  routeOriginText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  coordinateWarningText: {
+    color: '#f59e0b',
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: theme.spacing.lg,
+  },
   statsGrid: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl },
   statCard: {
     ...theme.glass,

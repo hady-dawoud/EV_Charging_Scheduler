@@ -3,13 +3,17 @@ from __future__ import annotations
 import sys
 import types
 from datetime import datetime, timedelta
+import importlib
 
 import pytest
 
 for module_name in ("numpy", "pandas"):
-    module = types.ModuleType(module_name)
-    module.DataFrame = object
-    sys.modules.setdefault(module_name, module)
+    try:
+        importlib.import_module(module_name)
+    except ImportError:
+        module = types.ModuleType(module_name)
+        module.DataFrame = object
+        sys.modules.setdefault(module_name, module)
 
 from ev_core.env.entities import SimulationRequest, Station, StationRuntimeState
 from ev_core.recommender.candidates import CandidateBuilder

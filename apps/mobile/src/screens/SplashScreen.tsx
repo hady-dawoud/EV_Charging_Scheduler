@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
+import zapRouteLogo from '../assets/branding/zaproute-logo-wide.png';
+import type { ImageSourcePropType } from 'react-native';
 import {
   View,
   Text,
@@ -8,11 +10,10 @@ import {
   Platform,
   ActivityIndicator,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Zap } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { Shadow } from 'react-native-shadow-2';
 import { NeonButton } from '../components/NeonButton';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
@@ -20,6 +21,10 @@ import { authStorage } from '../services/authStorage';
 import { useAuthStore } from '../stores/authStore';
 
 const isWeb = Platform.OS === 'web';
+const zapRouteLogoSource: ImageSourcePropType =
+  Platform.OS === 'web'
+    ? { uri: zapRouteLogo as string }
+    : (zapRouteLogo as unknown as ImageSourcePropType);
 const SPLASH_GLOW_SIZE = 384;
 const SPLASH_GLOW_BLUR = 100;
 const NATIVE_GLOW_EXTRA = 116;
@@ -147,45 +152,14 @@ export default function SplashScreen({ navigation }: any) {
           { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={styles.iconGlowFrame}>
-          {isWeb ? (
-            <View style={[styles.iconBox, webStyles.neonGlow]}>
-              <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
-            </View>
-          ) : (
-            <Shadow
-                distance={8}
-                startColor="rgba(0, 255, 0, 0.1)"
-                endColor="rgba(0, 255, 0, 0)"
-                offset={[0, 0]}
-                style={styles.iconShadow}
-              >
-              <Shadow
-                distance={6}
-                startColor="rgba(0, 255, 0, 0.25)"
-                endColor="rgba(0, 255, 0, 0)"
-                offset={[0, 0]}
-                style={styles.iconShadow}
-              >
-                <Shadow
-                  distance={4}
-                  startColor="rgba(0, 255, 0, 0.39)"
-                  endColor="rgba(0, 255, 0, 0)"
-                  offset={[0, 0]}
-                  style={styles.iconShadow}
-                >
-                  <View style={[styles.iconBox, styles.nativeIconBox]}>
-                    <Zap color={theme.colors.primary} fill={theme.colors.primary} size={48} />
-                  </View>
-                </Shadow>
-              </Shadow>
-            </Shadow>
-          )}
+        <Image
+          source={zapRouteLogoSource}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
+        <View style={styles.taglinePill}>
+          <Text style={styles.taglineText}>TAP. ZAP. GO.</Text>
         </View>
-        <Text style={styles.title}>EV APP</Text>
-        <Text style={styles.subtitle}>
-          Smart EV Charging, Optimized for Cost, Time, and Grid Load
-        </Text>
       </Animated.View>
 
       {isCheckingSession ? (
@@ -250,6 +224,27 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginBottom: 80,
+  },
+  splashLogo: {
+    width: 320,
+    height: 120,
+    marginBottom: theme.spacing.md,
+  },
+  taglinePill: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(144, 254, 127, 0.34)',
+    backgroundColor: 'rgba(14, 35, 32, 0.72)',
+    marginTop: theme.spacing.xs,
+  },
+  taglineText: {
+    color: theme.colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
   },
   iconGlowFrame: {
     width: 96,

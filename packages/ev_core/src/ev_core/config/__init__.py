@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .deployment import RLDeploymentConfig, rl_deployment_config_from_env
+from .forecasting import ForecastingConfig, forecasting_config_from_env
 from .paths import ProjectPathsConfig, default_project_paths
 from .pricing import PricingConfig, pricing_config_from_env
 from .recommendation import RecommendationConfig, recommendation_config_from_env
@@ -23,6 +24,7 @@ class EVSmartChargingConfig:
     topology: TopologyConfig
     rl_training: RLTrainingConfig
     forecast_training: ForecastTrainingConfig
+    forecasting: ForecastingConfig
     rl_deployment: RLDeploymentConfig
 
 
@@ -48,6 +50,7 @@ def default_config(repo_root: Path | str | None = None) -> EVSmartChargingConfig
         topology=TopologyConfig(),
         rl_training=RLTrainingConfig(),
         forecast_training=ForecastTrainingConfig(),
+        forecasting=ForecastingConfig(),
         rl_deployment=RLDeploymentConfig(),
     )
 
@@ -62,6 +65,7 @@ def config_from_env(repo_root: Path | str | None = None) -> EVSmartChargingConfi
         topology=topology_config_from_env(),
         rl_training=rl_training_config_from_env(),
         forecast_training=ForecastTrainingConfig(),
+        forecasting=forecasting_config_from_env(),
         rl_deployment=rl_deployment_config_from_env(),
     )
 
@@ -70,6 +74,7 @@ __all__ = [
     'DigitalTwinRuntimeConfig',
     'EVSmartChargingConfig',
     'ForecastTrainingConfig',
+    'ForecastingConfig',
     'PricingConfig',
     'ProjectPathsConfig',
     'RLDeploymentConfig',
@@ -81,5 +86,6 @@ __all__ = [
     'config_from_env',
     'default_config',
     'default_project_paths',
+    'forecasting_config_from_env',
     'path_from_env',
 ]

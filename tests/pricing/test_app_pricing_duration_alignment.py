@@ -141,6 +141,30 @@ def test_dynamic_stress_increases_final_app_cost() -> None:
     assert low_stress.estimated_cost_gbp < high_stress.estimated_cost_gbp
 
 
+def test_dynamic_pricing_metadata_exposes_transformer_and_crowding_components() -> None:
+    target = station(
+        "ac-fast",
+        connectors=(
+            ChargingConnector("ac-22-a", 22.0, connector_type="ac"),
+            ChargingConnector("ac-22-b", 22.0, connector_type="ac"),
+        ),
+    )
+    env = env_with_stations((target,), background_load_kw=95.0, transformer_capacity_kw=100.0)
+    env.stations_runtime[target.station_id].queue_request_ids.extend(["queued-1", "queued-2"])
+    env.stations_runtime[target.station_id].active_session_ids.append("active-1")
+
+    candidate = candidates_for(env, external_request(charger_type="AC"))[0]
+
+    assert candidate.metadata["tariff_model"] == "dundee_tariff_plus_dynamic_overlay"
+    assert candidate.metadata["tariff_reason"] == "very_high_transformer_load"
+    assert candidate.metadata["dynamic_price_gbp_per_kwh"] == candidate.metadata["final_price_per_kwh"]
+    assert candidate.metadata["price_multiplier"] == candidate.metadata["total_dynamic_multiplier"]
+    assert candidate.metadata["transformer_stress_multiplier"] > 1.0
+    assert candidate.metadata["crowding_multiplier"] > 1.0
+    assert candidate.metadata["queue_multiplier"] > 1.0
+    assert candidate.metadata["utilization_multiplier"] > 1.0
+
+
 def test_estimated_cost_matches_final_price_times_requested_energy() -> None:
     env = env_with_stations(
         (station("ultra", connectors=(ChargingConnector("ultra-150", 150.0, connector_type="ultra_rapid"),)),)

@@ -1,4 +1,4 @@
-﻿"""Lightweight IO helpers for standalone EV-core datasets."""
+"""Lightweight IO helpers for standalone EV-core datasets."""
 
 from __future__ import annotations
 

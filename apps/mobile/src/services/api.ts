@@ -8,6 +8,7 @@ import type {
   ApiRecommendationsResponse,
   ApiReservationsResponse,
   ApiReservation,
+  ApiStation,
   AuthResponse,
   AuthTokens,
   LoginRequest,
@@ -399,12 +400,21 @@ export const api = {
     accessTokenMemory = null;
   },
 
+  getStation: async (stationId: string): Promise<ApiStation> => {
+    return requestJsonWithAuthRetry<ApiStation>(
+      `/stations/${encodeURIComponent(stationId)}`,
+      {
+        method: 'GET',
+      }
+    );
+  },
+
   getRecommendations: async (
     request: MobileRecommendationRequest
   ): Promise<ApiRecommendationsResponse> => {
     const payload = {
-      latitude: 56.462,
-      longitude: -2.9707,
+      latitude: request.latitude,
+      longitude: request.longitude,
       battery_level: request.vehicleCurrentSoC,
       target_battery_level: request.targetSoc,
       battery_kwh: request.vehicleBatteryCapacity,
@@ -419,6 +429,8 @@ export const api = {
       zone_id: 'zone_central_waterfront',
       metadata: {
         channel: 'mobile-app',
+        selected_location_id: request.locationId,
+        selected_location_name: request.locationName,
       },
     };
 
@@ -444,6 +456,17 @@ export const api = {
     return response.session;
   },
 
+  mockCompleteChargingSession: async (
+    sessionId: string
+  ): Promise<ApiChargingSession> => {
+    return requestJsonWithAuthRetry<ApiChargingSession>(
+      `/sessions/${sessionId}/mock-complete`,
+      {
+        method: 'POST',
+      }
+    );
+  },
+
 
   createReservation: async (
     payload: CreateReservationRequest
@@ -460,6 +483,28 @@ export const api = {
     });
 
     return response.reservations;
+  },
+
+  cancelReservation: async (
+    reservationId: string
+  ): Promise<{ reservation_id: string; status: string }> => {
+    return requestJsonWithAuthRetry<{ reservation_id: string; status: string }>(
+      `/reservations/${reservationId}/cancel`,
+      {
+        method: 'PATCH',
+      }
+    );
+  },
+
+  confirmReservationStart: async (
+    reservationId: string
+  ): Promise<ApiChargingSession> => {
+    return requestJsonWithAuthRetry<ApiChargingSession>(
+      `/reservations/${reservationId}/confirm-start`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
 };

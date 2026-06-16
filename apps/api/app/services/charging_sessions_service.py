@@ -14,7 +14,11 @@ from app.repositories.charging_sessions_repository import (
     list_charging_session_records_for_user,
     save_charging_session_record,
 )
-from app.repositories.reservations_repository import get_reservation_record_for_user
+from app.repositories.reservations_repository import (
+    get_reservation_record_by_id,
+    get_reservation_record_for_user,
+    save_reservation_record,
+)
 from app.repositories.stations_repository import get_station_record_by_id
 from app.schemas.charging_sessions import (
     ChargingSessionCompleteRequest,
@@ -36,6 +40,10 @@ class ChargingSessionReservationNotFoundError(ValueError):
 
 
 class ChargingSessionAlreadyCompletedError(ValueError):
+    pass
+
+
+class ChargingSessionStopNotAllowedError(ValueError):
     pass
 
 
@@ -230,4 +238,57 @@ def complete_charging_session(
 
     saved = save_charging_session_record(db, session)
 
+    if saved.reservation_id is not None:
+        reservation = get_reservation_record_by_id(
+            db,
+            reservation_id=saved.reservation_id,
+        )
+        if reservation is not None:
+            reservation.status = "completed"
+            save_reservation_record(db, reservation)
+
     return build_charging_session_read(db, saved)
+
+
+
+def mock_complete_charging_session(
+    db: Session,
+    *,
+    current_user: User,
+    session_id: uuid.UUID,
+) -> ChargingSessionRead:
+    session = get_charging_session_record_for_user(
+        db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise ChargingSessionNotFoundError("Charging session not found")
+
+    if session.status == "completed":
+        raise ChargingSessionAlreadyCompletedError("Charging session is already completed")
+
+    if session.status != "active":
+        raise ChargingSessionStopNotAllowedError(
+            f"Session cannot be stopped from status '{session.status}'"
+        )
+
+    ended_at = datetime.now(timezone.utc)
+    started_at = _ensure_timezone(session.started_at)
+    duration_hours = max(0, (ended_at - started_at).total_seconds() / 3600)
+
+    charger_power_kw = session.charger_power_kw or 22.0
+    energy_kwh = round(max(0.1, charger_power_kw * duration_hours), 3)
+    cost_total = round(energy_kwh * 0.45, 2)
+
+    return complete_charging_session(
+        db,
+        current_user=current_user,
+        session_id=session_id,
+        request=ChargingSessionCompleteRequest(
+            ended_at=ended_at,
+            energy_kwh=energy_kwh,
+            cost_total=cost_total,
+        ),
+    )

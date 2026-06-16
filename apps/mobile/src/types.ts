@@ -45,7 +45,7 @@ export type AuthResponse = AuthTokens & {
 };
 
 export type DistanceUnit = 'km' | 'mi';
-export type CurrencyCode = 'GBP' | 'EGP';
+export type CurrencyCode = 'GBP' | 'EUR';
 
 export type NotificationPreferences = {
   reservationReminders: boolean;
@@ -108,6 +108,21 @@ export type MobileRecommendationRequest = {
   chargerType: RecommendationChargerType;
   vehicleCurrentSoC: number;
   vehicleBatteryCapacity: number;
+  locationId: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+};
+
+
+export type ApiStation = {
+  station_id: string;
+  station_name: string;
+  postcode: string | null;
+  latitude: number;
+  longitude: number;
+  zone_id: string | null;
+  transformer_id: string | null;
 };
 
 export type ApiRecommendationOption = {
@@ -158,6 +173,9 @@ export type UiStationRecommendation = {
   score: number;
   chargerLabel: string;
   reasonTags: string[];
+  latitude?: number | null;
+  longitude?: number | null;
+  address?: string | null;
 };
 
 
@@ -250,7 +268,23 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabsParamList> | undefined;
   ChargingRequest: undefined;
   LoadingRecommendations: { request: MobileRecommendationRequest };
-  Results: { result: ApiRecommendationsResponse };
-  StationDetails: { station?: UiStationRecommendation } | undefined;
-  ReservationConfirm: { station: UiStationRecommendation };
+  Results: {
+    result: ApiRecommendationsResponse;
+    selectedLocationName?: string;
+    selectedLocationLatitude?: number;
+    selectedLocationLongitude?: number;
+  };
+  StationDetails: {
+    station?: UiStationRecommendation;
+    selectedLocationName?: string;
+    selectedLocationLatitude?: number;
+    selectedLocationLongitude?: number;
+  } | undefined;
+  ReservationConfirm: {
+    station: UiStationRecommendation;
+    existingReservation?: ApiReservation;
+    selectedLocationName?: string;
+    selectedLocationLatitude?: number;
+    selectedLocationLongitude?: number;
+  };
 };
