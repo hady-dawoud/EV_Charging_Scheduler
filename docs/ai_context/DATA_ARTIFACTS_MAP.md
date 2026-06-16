@@ -4,6 +4,74 @@ Primary loader: `packages/ev_core/src/ev_core/data/repositories.py`.
 
 `DundeeSimulationRepository.load_bundle()` loads a `DundeeDataBundle` with stations, transformers, zones, chargepoints, replay requests, request generator params, background load, prices, and PV profile.
 
+## Runtime Model Artifacts
+
+Current repo-local model artifact paths:
+
+- `models/rl/maskable_ppo_station_selector.zip`
+  - Present in this checkout and tracked by Git.
+  - Used by the older Dundee station-selection MaskablePPO path when `RL_POLICY_CHECKPOINT_PATH` points to it, or when future config sets this as the default checkpoint.
+- `models/rl_feeder/maskable_ppo_feeder_station_selector.zip`
+  - Present in this checkout and tracked by Git.
+  - Training/evaluation scripts use this as the default feeder checkpoint path for normal feeder runs.
+- `models/rl_feeder_final/maskable_ppo_feeder_station_selector.zip`
+  - Present in this checkout and tracked by Git.
+  - Documented by `FEEDER_RL_AGENT_GUIDE.md` as the final evaluated feeder checkpoint.
+- `models/forecasting/load_kw_30min/lstm_huber_load_kw_30min.keras`
+  - Present in this checkout and tracked by Git.
+  - Trained for `load_kw_30min`, with input shape `[48, 148]` and one-step target shape `[1]` per `load_kw_30min_training_metadata.json`.
+- `models/forecasting/load_kw_30min/load_kw_30min_feature_scaler.joblib`
+  - Present in this checkout and tracked by Git.
+- `models/forecasting/load_kw_30min/load_kw_30min_target_scaler.joblib`
+  - Present in this checkout and tracked by Git.
+- `models/forecasting/load_kw_30min/load_kw_30min_training_metadata.json`
+  - Present in this checkout and tracked by Git.
+
+Important storage status:
+
+- `.gitattributes` currently configures Git LFS only for `data/interim/*.csv`; these model artifacts are normal Git-tracked files, not LFS-tracked files.
+- `models/README.md` has been updated to describe the current tracked state. Older notes saying checkpoints are not committed are stale for this branch.
+- `archive/` is local-only and ignored by Git. Use it for external snapshots or scratch artifact comparisons, not as a source path.
+
+Expected optional comparison forecasting artifacts from the external forecasting run are not present in the repo-local `models/forecasting/load_kw_30min/` folder:
+
+- `bilstm_load_kw_30min.keras`
+- `bilstm_regularized_load_kw_30min.keras`
+- `lstm_load_kw_30min.keras`
+- `lstm_regularized_load_kw_30min.keras`
+
+The current runtime does not load the Keras forecasting model through `ForecastProvider`. Forecasting integration should happen later through a model-backed provider or a smoke-test path that exposes forecasts without changing current recommendation response shape.
+
+## Feeder RL Runtime Data Package
+
+Expected repo-local path proposed for the feeder RL runtime data package:
+
+```text
+data/processed/evside_feeder_rl/
+```
+
+Current workspace status: the directory is missing.
+
+Required files:
+
+- `manifest.json`
+- `feature_stats.json`
+- `feeder_ev_action_catalog.csv` or `feeder_ev_action_catalog.parquet`
+- `feeder_request_priors.csv` or `feeder_request_priors.parquet`
+- `feeder_grid_advisory_replay.csv` or `feeder_grid_advisory_replay.parquet`
+
+Related script default:
+
+- `scripts/rl_training/train_maskable_ppo_feeder_station_selector.py` searches for an external `DigitalTwin.2.0/outputs/evside_feeder_rl` package when the repo lives under a DigitalTwin parent, otherwise it falls back to `outputs/evside_feeder_rl`.
+- This checkout has neither `data/processed/evside_feeder_rl/` nor `outputs/evside_feeder_rl/`.
+- Until the package exists, feeder training/evaluation setup and runtime feeder policy inference cannot build real feeder observations from this repo alone.
+
+Audit helper:
+
+- `scripts/audit_runtime_artifacts.py` checks the required RL checkpoint, forecasting, and feeder data paths.
+- Default mode prints `PRESENT`/`MISSING` and exits `0`.
+- `--strict` exits `1` if anything is missing.
+
 ## Station Catalog
 
 - `data/processed/station_master.csv`

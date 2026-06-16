@@ -3,12 +3,16 @@ from __future__ import annotations
 import sys
 import types
 from datetime import datetime, timedelta
+import importlib
 from types import SimpleNamespace
 
 for module_name in ("numpy", "pandas"):
-    module = types.ModuleType(module_name)
-    module.DataFrame = object
-    sys.modules.setdefault(module_name, module)
+    try:
+        importlib.import_module(module_name)
+    except ImportError:
+        module = types.ModuleType(module_name)
+        module.DataFrame = object
+        sys.modules.setdefault(module_name, module)
 
 from ev_core.env.dundee_env import DundeeEnv
 from ev_core.env.entities import ChargingConnector, SimulationRequest, Station, StationRuntimeState

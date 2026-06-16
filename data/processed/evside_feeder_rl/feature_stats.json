@@ -1,0 +1,316 @@
+{
+  "schema": "feeder_rl_feature_stats_v1",
+  "created_at": "2026-06-04T23:09:47.048858+00:00",
+  "actions": {
+    "p_base_kw": {
+      "min": 2.7972,
+      "max": 16.7832,
+      "mean": 3.02710685,
+      "std": 1.65344783
+    },
+    "public_ev_capacity_kw": {
+      "min": 22.0,
+      "max": 22.0,
+      "mean": 22.0,
+      "std": 0.0
+    },
+    "charger_kw": {
+      "min": 22.0,
+      "max": 22.0,
+      "mean": 22.0,
+      "std": 0.0
+    },
+    "x": {
+      "min": 519500.69863416,
+      "max": 536531.96966613,
+      "mean": 528832.98932378,
+      "std": 5890.5774963
+    },
+    "y": {
+      "min": 176742.42314514,
+      "max": 186597.85389027,
+      "mean": 181750.86440255,
+      "std": 2299.65654322
+    }
+  },
+  "request_priors": {
+    "requested_energy_kwh": {
+      "min": 9.0,
+      "max": 18.0,
+      "mean": 13.0,
+      "std": 3.74165739
+    },
+    "duration_steps": {
+      "min": 1.0,
+      "max": 2.0,
+      "mean": 1.66666667,
+      "std": 0.47140452
+    },
+    "battery_kwh": {
+      "min": 28.0,
+      "max": 65.0,
+      "mean": 44.33333333,
+      "std": 15.41283736
+    },
+    "current_soc": {
+      "min": 0.22,
+      "max": 0.22,
+      "mean": 0.22,
+      "std": 0.0
+    },
+    "target_soc": {
+      "min": 0.445,
+      "max": 0.64857143,
+      "mean": 0.53016484,
+      "std": 0.08636779
+    },
+    "slack_minutes": {
+      "min": 90.0,
+      "max": 240.0,
+      "mean": 150.0,
+      "std": 64.80740698
+    },
+    "max_ac_kw": {
+      "min": 22.0,
+      "max": 22.0,
+      "mean": 22.0,
+      "std": 0.0
+    },
+    "max_dc_kw": {
+      "min": 50.0,
+      "max": 50.0,
+      "mean": 50.0,
+      "std": 0.0
+    },
+    "origin_x": {
+      "min": 519513.67750836,
+      "max": 536389.94532976,
+      "mean": 527891.86105195,
+      "std": 6131.45469606
+    },
+    "origin_y": {
+      "min": 176754.85595698,
+      "max": 186500.36208245,
+      "mean": 181390.64571717,
+      "std": 3177.10665767
+    }
+  },
+  "grid_replay": {
+    "v_min_pu": {
+      "min": 0.91753,
+      "max": 0.95968,
+      "mean": 0.9374789,
+      "std": 0.01184097
+    },
+    "max_line_loading_percent": {
+      "min": 62.7363,
+      "max": 107.3916,
+      "mean": 86.26317123,
+      "std": 12.54518514
+    },
+    "max_trafo_loading_percent": {
+      "min": 64.2627,
+      "max": 113.6955,
+      "mean": 90.30664795,
+      "std": 13.88733436
+    },
+    "stress_score": {
+      "min": 0.5832,
+      "max": 0.7214,
+      "mean": 0.65599315,
+      "std": 0.03882199
+    },
+    "baseline_v_min_pu": {
+      "min": 0.95721,
+      "max": 0.99176,
+      "mean": 0.97355877,
+      "std": 0.00970584
+    },
+    "post_v_min_pu": {
+      "min": 0.91753,
+      "max": 0.95968,
+      "mean": 0.9374789,
+      "std": 0.01184097
+    },
+    "delta_v_min_pu": {
+      "min": -0.03968,
+      "max": -0.03208,
+      "mean": -0.03607986,
+      "std": 0.00213513
+    },
+    "baseline_max_line_loading_percent": {
+      "min": 24.2451,
+      "max": 59.7792,
+      "mean": 42.96762329,
+      "std": 9.98293434
+    },
+    "post_max_line_loading_percent": {
+      "min": 62.7363,
+      "max": 107.3916,
+      "mean": 86.26317123,
+      "std": 12.54518514
+    },
+    "delta_max_line_loading_percent": {
+      "min": 38.4912,
+      "max": 47.6124,
+      "mean": 43.29554795,
+      "std": 2.56225137
+    },
+    "baseline_max_trafo_loading_percent": {
+      "min": 22.2723,
+      "max": 61.7547,
+      "mean": 43.0751411,
+      "std": 11.09215168
+    },
+    "post_max_trafo_loading_percent": {
+      "min": 64.2627,
+      "max": 113.6955,
+      "mean": 90.30664795,
+      "std": 13.88733436
+    },
+    "delta_max_trafo_loading_percent": {
+      "min": 41.9904,
+      "max": 51.9408,
+      "mean": 47.23150685,
+      "std": 2.79518331
+    },
+    "voltage_violation_count": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.5890411,
+      "std": 0.49200781
+    },
+    "line_overload_count": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.19178082,
+      "std": 0.39370159
+    },
+    "trafo_overload_count": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.30136986,
+      "std": 0.45885299
+    },
+    "bottleneck_margin_percent": {
+      "min": -13.6955,
+      "max": 1.968,
+      "mean": -1.71505616,
+      "std": 3.75058003
+    },
+    "max_allowed_kw": {
+      "min": 1.281474,
+      "max": 9.900496,
+      "mean": 2.78838497,
+      "std": 2.44452062
+    },
+    "curtailment_required_kw": {
+      "min": 12.099504,
+      "max": 20.718526,
+      "mean": 19.21161503,
+      "std": 2.44452062
+    },
+    "feasible_energy_kwh": {
+      "min": 2.562948,
+      "max": 19.800992,
+      "mean": 5.57676995,
+      "std": 4.88904124
+    },
+    "opf_feasible": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "opf_objective_value": {
+      "min": 1123.32264,
+      "max": 1590.82841,
+      "mean": 1459.59830678,
+      "std": 126.73463483
+    },
+    "opf_curtailment_kwh": {
+      "min": 24.199008,
+      "max": 41.437052,
+      "mean": 38.42323005,
+      "std": 4.88904124
+    },
+    "opf_cost_delta": {
+      "min": 6.744291,
+      "max": 9.607876,
+      "mean": 8.81850737,
+      "std": 0.77718466
+    },
+    "losses_kw": {
+      "min": 5.7572,
+      "max": 6.9319,
+      "mean": 6.37594178,
+      "std": 0.32998692
+    },
+    "delta_losses_kw": {
+      "min": 0.230947,
+      "max": 0.285674,
+      "mean": 0.25977329,
+      "std": 0.01537354
+    },
+    "voltage_sensitivity_pu_per_kw": {
+      "min": -0.00180364,
+      "max": -0.00145818,
+      "mean": -0.00163999,
+      "std": 9.705e-05
+    },
+    "loading_sensitivity_percent_per_kw": {
+      "min": 1.90865455,
+      "max": 2.36094545,
+      "mean": 2.14688667,
+      "std": 0.12705379
+    },
+    "ood_flag": {
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "uq_flag": {
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "confidence_score": {
+      "min": 0.58,
+      "max": 0.58,
+      "mean": 0.58,
+      "std": 0.0
+    },
+    "advisory_available": {
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0
+    },
+    "requested_energy_kwh": {
+      "min": 44.0,
+      "max": 44.0,
+      "mean": 44.0,
+      "std": 0.0
+    },
+    "charger_kw": {
+      "min": 22.0,
+      "max": 22.0,
+      "mean": 22.0,
+      "std": 0.0
+    },
+    "duration_steps": {
+      "min": 4.0,
+      "max": 4.0,
+      "mean": 4.0,
+      "std": 0.0
+    }
+  },
+  "normalization_policy": {
+    "soc": "0_to_1",
+    "power_kw": "divide_by_observed_or_domain_scale",
+    "loading_percent": "divide_by_100",
+    "voltage_pu": "kept_in_per_unit"
+  }
+}
