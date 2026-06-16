@@ -1,6 +1,6 @@
 {
   "name": "ev-smart-charging-mobile",
-  "version": "1.0.0",
+  "version": "0.1.7",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
