@@ -8,6 +8,7 @@ import type {
   ApiRecommendationsResponse,
   ApiReservationsResponse,
   ApiReservation,
+  ApiStation,
   AuthResponse,
   AuthTokens,
   LoginRequest,
@@ -397,6 +398,15 @@ export const api = {
     );
 
     accessTokenMemory = null;
+  },
+
+  getStation: async (stationId: string): Promise<ApiStation> => {
+    return requestJsonWithAuthRetry<ApiStation>(
+      `/stations/${encodeURIComponent(stationId)}`,
+      {
+        method: 'GET',
+      }
+    );
   },
 
   getRecommendations: async (

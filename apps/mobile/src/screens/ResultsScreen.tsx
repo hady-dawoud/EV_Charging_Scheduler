@@ -11,6 +11,8 @@ import { ChevronLeft } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { theme, webStyles } from '../theme';
 import { getStationMapLocation } from '../data/demoLocations';
+import { useSettingsStore } from '../stores/settingsStore';
+import { formatCurrencyAmount } from '../utils/preferencesFormat';
 import {
   ApiRecommendationOption,
   RootStackParamList,
@@ -27,6 +29,30 @@ const asString = (value: unknown, fallback = '') =>
 
 const asStringArray = (value: unknown) =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+
+const getMetadataNumber = (
+  metadata: Record<string, unknown> | undefined,
+  keys: string[]
+) => {
+  if (!metadata) return Number.NaN;
+
+  for (const key of keys) {
+    const value = metadata[key];
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return Number.NaN;
+};
 
 const getConnectionType = (chargerLabel: string) => {
   const normalized = chargerLabel.toLowerCase();
@@ -49,8 +75,25 @@ const mapOptionToUiStation = (
   const id = asString(option.station_id, 'unknown_station');
   const name = asString(option.station_name, 'Unknown station');
   const zoneId = asString(option.zone_id, 'unknown_zone');
-  const latitude = asNumber(option.metadata?.latitude, Number.NaN);
-  const longitude = asNumber(option.metadata?.longitude, Number.NaN);
+  const latitude = getMetadataNumber(option.metadata, [
+    'latitude',
+    'lat',
+    'station_latitude',
+    'station_lat',
+    'charger_latitude',
+    'charger_lat',
+  ]);
+  const longitude = getMetadataNumber(option.metadata, [
+    'longitude',
+    'lng',
+    'lon',
+    'station_longitude',
+    'station_lng',
+    'station_lon',
+    'charger_longitude',
+    'charger_lng',
+    'charger_lon',
+  ]);
   const mapLocation = getStationMapLocation({
     stationId: id,
     stationName: name,
@@ -74,8 +117,8 @@ const mapOptionToUiStation = (
     score: asNumber(option.score),
     chargerLabel: asString(option.metadata?.connector_mix_total, 'rapid'),
     reasonTags: asStringArray(option.reason_tags),
-    latitude: mapLocation.latitude,
-    longitude: mapLocation.longitude,
+    latitude: mapLocation.isExact ? mapLocation.latitude : null,
+    longitude: mapLocation.isExact ? mapLocation.longitude : null,
     address: mapLocation.address,
   };
 };
@@ -92,6 +135,7 @@ function StationOptionCard({
   highlighted?: boolean;
   onPress: () => void;
 }) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const connectionType = getConnectionType(station.chargerLabel);
   const speedLabel = getSpeedLabel(station.chargerLabel);
 
@@ -103,7 +147,7 @@ function StationOptionCard({
     >
       <View style={styles.optionHeader}>
         <Text style={styles.stationName}>{station.name}</Text>
-        <Text style={styles.price}>{formatCurrency(station.estimatedCostGbp)}</Text>
+        <Text style={styles.price}>{formatCurrencyAmount(station.estimatedCostGbp, preferences.currency)}</Text>
       </View>
 
       <View style={styles.optionGrid}>
@@ -129,6 +173,8 @@ function StationOptionCard({
 export default function ResultsScreen({ navigation, route }: Props) {
   const bundle = route.params?.result ?? null;
   const selectedLocationName = route.params?.selectedLocationName;
+  const selectedLocationLatitude = route.params?.selectedLocationLatitude;
+  const selectedLocationLongitude = route.params?.selectedLocationLongitude;
 
   const top =
     bundle?.top_recommendation != null
@@ -175,7 +221,12 @@ export default function ResultsScreen({ navigation, route }: Props) {
             <StationOptionCard
               station={top}
               highlighted
-              onPress={() => navigation.navigate('StationDetails', { station: top, selectedLocationName })}
+              onPress={() => navigation.navigate('StationDetails', {
+                station: top,
+                selectedLocationName,
+                selectedLocationLatitude,
+                selectedLocationLongitude,
+              })}
             />
           </View>
         ) : (
@@ -199,7 +250,12 @@ export default function ResultsScreen({ navigation, route }: Props) {
               <StationOptionCard
                 key={station.id}
                 station={station}
-                onPress={() => navigation.navigate('StationDetails', { station, selectedLocationName })}
+                onPress={() => navigation.navigate('StationDetails', {
+                    station,
+                    selectedLocationName,
+                    selectedLocationLatitude,
+                    selectedLocationLongitude,
+                  })}
               />
             ))
           )}

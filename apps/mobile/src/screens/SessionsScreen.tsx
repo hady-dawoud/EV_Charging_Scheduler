@@ -10,20 +10,16 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Shadow } from 'react-native-shadow-2';
-import { History, Zap, Clock, PoundSterling, CheckCircle, AlertTriangle } from 'lucide-react-native';
-
-import { api } from '../services/api';
-import { theme, webStyles } from '../theme';
-import type { ApiChargingSession, ApiReservation } from '../types';
+import type {NativeStackNavigationProp } from '@react-navigation/native-stack'; import { History, Zap, Clock, PoundSterling, Euro, CheckCircle, AlertTriangle } from 'lucide-react-native';  import { api } from '../services/api'; import { useSettingsStore } from '../stores/settingsStore'; import { formatCurrencyAmount } from '../utils/preferencesFormat'; import { theme, webStyles } from '../theme'; import type {ApiChargingSession, ApiReservation, RootStackParamList, UiStationRecommendation, CurrencyCode} from '../types';
 
 const isWeb = Platform.OS === 'web';
 
-const formatCurrency = (gbp: number | null | undefined) => {
-  if (gbp == null) return 'Cost pending';
-  return `£${gbp.toFixed(2)}`;
-};
+const formatCurrency = (
+  gbp: number | null | undefined,
+  currency: CurrencyCode
+) => formatCurrencyAmount(gbp, currency, 'Cost pending');
 
 const formatMinutes = (minutes: number | null | undefined) => {
   if (minutes == null) return 'Duration pending';
@@ -50,6 +46,27 @@ const estimateFromReservation = (reservation: ApiReservation) => ({
   estimatedCostGbp: reservation.estimated_cost_gbp,
   estimatedDurationMinutes: reservation.estimated_duration_minutes,
   chargerLabel: reservation.charger_label ?? 'Reserved',
+});
+
+type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
+
+const mapReservationToUiStation = (
+  reservation: ApiReservation
+): UiStationRecommendation => ({
+  id: reservation.station_id,
+  name: reservation.station_name,
+  zoneId: 'reserved_station',
+  transformerId: 'reserved_transformer',
+  distanceKm: reservation.distance_km ?? 0,
+  estimatedWaitMinutes: 0,
+  estimatedDurationMinutes: reservation.estimated_duration_minutes ?? 0,
+  estimatedCostGbp: reservation.estimated_cost_gbp ?? 0,
+  headroomKw: 0,
+  queueLength: 0,
+  utilization: 0,
+  score: reservation.score ?? 0,
+  chargerLabel: reservation.charger_label ?? 'Reserved',
+  reasonTags: ['reserved'],
 });
 
 const durationFromSession = (session: ApiChargingSession) => {
@@ -80,6 +97,7 @@ function CardCornerGlow() {
 }
 
 export default function SessionsScreen() {
+  const navigation = useNavigation<RootNavigation>();
   const [reservations, setReservations] = useState<ApiReservation[]>([]);
   const [sessions, setSessions] = useState<ApiChargingSession[]>([]);
   const [activeSession, setActiveSession] = useState<ApiChargingSession | null>(null);
@@ -336,6 +354,12 @@ export default function SessionsScreen() {
                   <ReservationCard
                     key={reservation.reservation_id}
                     reservation={reservation}
+                    onViewDetails={() =>
+                      navigation.navigate('ReservationConfirm', {
+                        station: mapReservationToUiStation(reservation),
+                        existingReservation: reservation,
+                      })
+                    }
                     onConfirmStart={handleConfirmStart}
                     onCancelReservation={handleCancelReservation}
                     isStarting={startingReservationId === reservation.reservation_id}
@@ -423,11 +447,19 @@ type ReservationCardProps = {
   reservation: ApiReservation;
   onConfirmStart?: (reservation: ApiReservation) => void;
   onCancelReservation?: (reservation: ApiReservation) => void;
+  onViewDetails?: () => void;
   isStarting?: boolean;
   isCanceling?: boolean;
 };
 
-function ReservationCard({ reservation, onConfirmStart, onCancelReservation, isStarting = false, isCanceling = false }: ReservationCardProps) {
+function ReservationCard({
+  reservation,
+  onConfirmStart,
+  onCancelReservation,
+  onViewDetails,
+  isStarting = false,
+  isCanceling = false,
+}: ReservationCardProps) {
   const estimate = estimateFromReservation(reservation);
 
   return (
@@ -449,23 +481,7 @@ function ReservationCard({ reservation, onConfirmStart, onCancelReservation, isS
         Confirm start when you are plugged in and ready to begin charging.
       </Text>
 
-      <View style={styles.reservationActionRow}>
-        {onCancelReservation ? (
-          <TouchableOpacity
-            style={[
-              styles.cancelReservationBtn,
-              (isCanceling || isStarting) && styles.reservationActionDisabled,
-            ]}
-            onPress={() => onCancelReservation(reservation)}
-            disabled={isCanceling || isStarting}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.cancelReservationBtnText}>
-              {isCanceling ? 'Canceling...' : 'Cancel'}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-
+      <View style={styles.reservationTopActionRow}>
         {onConfirmStart ? (
           <TouchableOpacity
             style={[
@@ -482,9 +498,40 @@ function ReservationCard({ reservation, onConfirmStart, onCancelReservation, isS
             </Text>
           </TouchableOpacity>
         ) : null}
+
+        {onViewDetails ? (
+          <TouchableOpacity
+            style={[
+              styles.moreDetailsBtn,
+              (isStarting || isCanceling) && styles.reservationActionDisabled,
+            ]}
+            onPress={onViewDetails}
+            disabled={isStarting || isCanceling}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.moreDetailsBtnText}>More Details</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
+      {onCancelReservation ? (
+        <TouchableOpacity
+          style={[
+            styles.cancelReservationBtn,
+            (isCanceling || isStarting) && styles.reservationActionDisabled,
+          ]}
+          onPress={() => onCancelReservation(reservation)}
+          disabled={isCanceling || isStarting}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.cancelReservationBtnText}>
+            {isCanceling ? 'Canceling...' : 'Cancel Reservation'}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
       <ReservationMeta reservation={reservation} />
+
     </View>
   );
 }
@@ -518,6 +565,7 @@ function ReservationMeta({
   reservation: ApiReservation;
   small?: boolean;
 }) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const estimate = estimateFromReservation(reservation);
   const textStyle = small ? styles.pastMetaText : styles.metaText;
   const iconSize = small ? 12 : 15;
@@ -525,8 +573,14 @@ function ReservationMeta({
   return (
     <View style={styles.metaRow}>
       <View style={styles.metaItem}>
-        <PoundSterling color={theme.colors.textMuted} size={iconSize} />
-        <Text style={textStyle}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+        {preferences.currency === 'EUR' ? (
+          <Euro color={theme.colors.textMuted} size={iconSize} />
+        ) : (
+          <PoundSterling color={theme.colors.textMuted} size={iconSize} />
+        )}
+        <Text style={textStyle}>
+          {formatCurrency(estimate.estimatedCostGbp, preferences.currency)}
+        </Text>
       </View>
 
       <View style={styles.metaItem}>
@@ -550,6 +604,7 @@ type ChargingSessionCardProps = {
 };
 
 function ChargingSessionCard({ session, reservation, onStopCharging, isStopping = false }: ChargingSessionCardProps) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const isActive = session.status === 'active';
   const isStale = session.status === 'stale_active';
 
@@ -557,7 +612,7 @@ function ChargingSessionCard({ session, reservation, onStopCharging, isStopping 
     <View style={isActive ? [styles.upcomingCard, webStyles.glass] : styles.pastCard}>
       <View style={styles.pastHeader}>
         <Text style={isActive ? styles.upcomingName : styles.pastName}>{session.station_name}</Text>
-        <Text style={styles.pastCost}>{formatCurrency(session.cost_total ?? reservation?.estimated_cost_gbp)}</Text>
+        <Text style={styles.pastCost}>{formatCurrency(session.cost_total ?? reservation?.estimated_cost_gbp, preferences.currency)}</Text>
       </View>
 
       {isActive ? (
@@ -696,17 +751,39 @@ const styles = StyleSheet.create({
   reservationActionRow: {
     flexDirection: 'row',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
   },
-  cancelReservationBtn: {
+  reservationTopActionRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  moreDetailsBtn: {
     flex: 1,
-    height: 42,
-    borderRadius: theme.radii.md,
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    height: 46,
+    borderRadius: theme.radii.lg,
+    backgroundColor: 'rgba(0,255,0,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.42)',
+    borderColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+  },
+  moreDetailsBtnText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  cancelReservationBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: theme.radii.lg,
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.50)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
   },
   cancelReservationBtnText: {
     color: '#f87171',
@@ -718,14 +795,14 @@ const styles = StyleSheet.create({
   },
   confirmStartBtn: {
     flex: 1,
-    height: 42,
-    borderRadius: theme.radii.md,
+    height: 46,
+    borderRadius: theme.radii.lg,
     backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
   },
   confirmStartBtnDisabled: {
     opacity: 0.65,
@@ -739,7 +816,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   reservedBadge: {
     backgroundColor: 'rgba(0,255,0,0.15)',
@@ -758,9 +835,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   warningText: { color: '#f59e0b', fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
-  metaRow: { flexDirection: 'row', gap: theme.spacing.lg, flexWrap: 'wrap' },
+  metaRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+    flexWrap: 'wrap',
+    paddingTop: theme.spacing.xs,
+  },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { color: '#d1d5db', fontSize: 13 },
+
   pastCard: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: theme.radii.xl,

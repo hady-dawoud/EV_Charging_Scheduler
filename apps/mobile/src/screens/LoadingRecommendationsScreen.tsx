@@ -67,6 +67,8 @@ export default function LoadingRecommendationsScreen({
         navigation.replace('Results', {
           result,
           selectedLocationName: request.locationName,
+          selectedLocationLatitude: request.latitude,
+          selectedLocationLongitude: request.longitude,
         });
       })
       .catch((err) => {

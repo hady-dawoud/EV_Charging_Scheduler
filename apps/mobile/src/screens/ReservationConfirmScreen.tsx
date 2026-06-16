@@ -9,13 +9,15 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react-native';
+import { ChevronLeft, CheckCircle, MapPin, Clock3 } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { NeonButton } from '../components/NeonButton';
 import { api } from '../services/api';
+import { useSettingsStore } from '../stores/settingsStore';
+import { formatCurrencyAmount } from '../utils/preferencesFormat';
 import { theme, webStyles } from '../theme';
-import { buildGoogleMapsUrl, getStationMapLocation } from '../data/demoLocations';
+import { buildGoogleMapsDirectionsUrl, getStationMapLocation } from '../data/demoLocations';
 import type { ApiReservation, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReservationConfirm'>;
@@ -35,22 +37,87 @@ const formatReservationTime = (iso: string) => {
 };
 
 export default function ReservationConfirmScreen({ navigation, route }: Props) {
-  const { station, selectedLocationName } = route.params;
-  const stationLocation = getStationMapLocation({
-    stationId: station.id,
-    stationName: station.name,
-    zoneId: station.zoneId,
-    latitude: station.latitude,
-    longitude: station.longitude,
-  });
-  const [reservation, setReservation] = useState<ApiReservation | null>(null);
-  const [isCreating, setIsCreating] = useState(true);
+  const preferences = useSettingsStore((state) => state.preferences);
+  const {
+    station,
+    existingReservation,
+    selectedLocationName,
+    selectedLocationLatitude,
+    selectedLocationLongitude,
+  } = route.params;
+
+  const [exactStationLocation, setExactStationLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address: string;
+    isExact: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api
+      .getStation(station.id)
+      .then((apiStation) => {
+        if (!isMounted) return;
+
+        setExactStationLocation({
+          latitude: apiStation.latitude,
+          longitude: apiStation.longitude,
+          address:
+            apiStation.postcode != null && apiStation.postcode.length > 0
+              ? `${apiStation.station_name}, ${apiStation.postcode}`
+              : apiStation.station_name,
+          isExact: true,
+        });
+      })
+      .catch((error) => {
+        console.error('Could not load exact station location', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [station.id, existingReservation]);
+  const stationLocation =
+    exactStationLocation ??
+    getStationMapLocation({
+      stationId: station.id,
+      stationName: station.name,
+      zoneId: station.zoneId,
+      latitude: station.latitude,
+      longitude: station.longitude,
+    });
+
+  const originLocation =
+    typeof selectedLocationLatitude === 'number' &&
+    Number.isFinite(selectedLocationLatitude) &&
+    typeof selectedLocationLongitude === 'number' &&
+    Number.isFinite(selectedLocationLongitude)
+      ? {
+          latitude: selectedLocationLatitude,
+          longitude: selectedLocationLongitude,
+        }
+      : undefined;
+
+  const destinationLabel = `${station.name}, ${stationLocation.address}`;
+  const [reservation, setReservation] = useState<ApiReservation | null>(
+    existingReservation ?? null
+  );
+  const [isCreating, setIsCreating] = useState(!existingReservation);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const createReservation = async () => {
+      if (existingReservation) {
+        setReservation(existingReservation);
+        setIsCreating(false);
+        setError(null);
+        return;
+      }
+
       setIsCreating(true);
       setError(null);
 
@@ -120,7 +187,25 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
   }, [station.id]);
 
   const handleOpenGoogleMaps = () => {
-    const url = buildGoogleMapsUrl(stationLocation, station.name);
+    const destinationLabel = `${station.name}, ${stationLocation.address}`;
+
+    const selectedOrigin =
+      typeof selectedLocationLatitude === 'number' &&
+      Number.isFinite(selectedLocationLatitude) &&
+      typeof selectedLocationLongitude === 'number' &&
+      Number.isFinite(selectedLocationLongitude)
+        ? {
+            latitude: selectedLocationLatitude,
+            longitude: selectedLocationLongitude,
+          }
+        : undefined;
+
+    const url = buildGoogleMapsDirectionsUrl(
+      stationLocation,
+      selectedOrigin,
+      destinationLabel
+    );
+
     void Linking.openURL(url);
   };
 
@@ -129,6 +214,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
 
     return [
       { label: 'Station', value: reservation?.station_name ?? station.name },
+      ...(selectedLocationName ? [{ label: 'From', value: selectedLocationName }] : []),
       { label: 'Location', value: stationLocation.address },
       { label: 'Reserved At', value: formatReservationTime(reservedAtIso) },
       {
@@ -137,11 +223,11 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
       },
       {
         label: 'Est. Cost',
-        value: formatCurrency(station.estimatedCostGbp),
+        value: formatCurrencyAmount(station.estimatedCostGbp, preferences.currency),
         highlight: true,
       },
     ];
-  }, [reservation, station, stationLocation.address]);
+  }, [reservation, station, stationLocation.address, selectedLocationName, preferences.currency]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -166,7 +252,9 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
               ? 'Creating Reservation'
               : error
                 ? 'Reservation Failed'
-                : 'Reservation Confirmed'}
+                : existingReservation
+                  ? 'Reservation Details'
+                  : 'Reservation Confirmed'}
           </Text>
           <Text style={styles.successSub}>
             {error ?? `Your spot at ${reservation?.station_name ?? station.name} has been secured.`}
@@ -195,14 +283,18 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.mapsBtn, (isCreating || Boolean(error)) && styles.disabledBtn]}
+            style={[
+              styles.mapsBtn,
+              (isCreating || Boolean(error)) && styles.disabledBtn,
+            ]}
             onPress={handleOpenGoogleMaps}
             disabled={isCreating || Boolean(error)}
             activeOpacity={0.85}
           >
             <MapPin color={theme.colors.primary} size={20} />
-            <Text style={styles.mapsBtnText}>Open in Google Maps</Text>
+            <Text style={styles.mapsBtnText}>Navigate with Google Maps</Text>
           </TouchableOpacity>
+
 
           <NeonButton
             glow="small"
@@ -212,7 +304,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
             disabled={isCreating}
             activeOpacity={0.85}
           >
-            <MapPin color="#000" size={20} />
+            <Clock3 color="#000" size={20} />
             <Text style={styles.navBtnText}>View Sessions</Text>
           </NeonButton>
 

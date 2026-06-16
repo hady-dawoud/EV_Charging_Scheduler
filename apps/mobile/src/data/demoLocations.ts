@@ -71,23 +71,39 @@ export type StationMapLocation = {
   latitude: number;
   longitude: number;
   address: string;
+  isExact: boolean;
 };
 
 const STATION_COORDINATE_LOOKUP: Record<string, StationMapLocation> = {
+  dundee_ice_arena: {
+    latitude: 56.4797,
+    longitude: -3.01346,
+    address: 'Dundee Ice Arena EV charger, Carlunie Road, Dundee DD2 3QN',
+    isExact: true,
+  },
+  dundee_ice_arena_dundee: {
+    latitude: 56.4797,
+    longitude: -3.01346,
+    address: 'Dundee Ice Arena EV charger, Carlunie Road, Dundee DD2 3QN',
+    isExact: true,
+  },
   greenmarket_150kw_bus_charger: {
     latitude: 56.4602,
     longitude: -2.9714,
     address: 'Greenmarket, Dundee',
+    isExact: false,
   },
   tx_central_market: {
     latitude: 56.4602,
     longitude: -2.9714,
     address: 'Greenmarket, Dundee',
+    isExact: false,
   },
   fallback_station: {
     latitude: 56.4602,
     longitude: -2.9714,
     address: 'Greenmarket, Dundee',
+    isExact: false,
   },
 };
 
@@ -96,26 +112,31 @@ const fallbackByZone: Record<string, StationMapLocation> = {
     latitude: 56.4578,
     longitude: -2.9670,
     address: 'Dundee Waterfront',
+    isExact: false,
   },
   zone_west_end: {
     latitude: 56.4572,
     longitude: -2.9825,
     address: 'University of Dundee / West End',
+    isExact: false,
   },
   zone_ninewells: {
     latitude: 56.4635,
     longitude: -3.0400,
     address: 'Ninewells Hospital, Dundee',
+    isExact: false,
   },
   zone_riverside: {
     latitude: 56.4525,
     longitude: -3.0258,
     address: 'Dundee Airport / Riverside',
+    isExact: false,
   },
   zone_broughty_ferry: {
     latitude: 56.4670,
     longitude: -2.8730,
     address: 'Broughty Ferry, Dundee',
+    isExact: false,
   },
 };
 
@@ -149,6 +170,7 @@ export const getStationMapLocation = ({
       latitude,
       longitude,
       address: stationName,
+      isExact: true,
     };
   }
 
@@ -161,13 +183,36 @@ export const getStationMapLocation = ({
       latitude: 56.4620,
       longitude: -2.9707,
       address: 'Dundee',
+      isExact: false,
     }
   );
 };
 
-export const buildGoogleMapsUrl = (location: StationMapLocation, label: string) => {
-  const encodedLabel = encodeURIComponent(label);
-  return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}&query_place_id=${encodedLabel}`;
+export const buildGoogleMapsUrl = (location: StationMapLocation) =>
+  `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+
+export const buildGoogleMapsDirectionsUrl = (
+  location: StationMapLocation,
+  origin?: { latitude: number; longitude: number },
+  destinationLabel?: string
+) => {
+  const destination = encodeURIComponent(
+    destinationLabel && destinationLabel.trim().length > 0
+      ? destinationLabel
+      : `${location.latitude},${location.longitude}`
+  );
+
+  if (origin) {
+    const start = encodeURIComponent(`${origin.latitude},${origin.longitude}`);
+    return `https://www.google.com/maps/dir/?api=1&origin=${start}&destination=${destination}&travelmode=driving&dir_action=navigate`;
+  }
+
+  return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving&dir_action=navigate`;
+};
+
+export const buildGoogleMapsEmbedUrl = (location: StationMapLocation) => {
+  const latLng = `${location.latitude},${location.longitude}`;
+  return `https://maps.google.com/maps?q=loc:${latLng}&ll=${latLng}&z=17&output=embed`;
 };
 
 export const buildStaticMapUrl = (location: StationMapLocation) =>

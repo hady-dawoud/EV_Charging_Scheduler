@@ -18,6 +18,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { NeonButton } from '../components/NeonButton';
 import { api } from '../services/api';
 import { theme, webStyles } from '../theme';
+import { useSettingsStore } from '../stores/settingsStore';
+import { formatDistanceKm } from '../utils/preferencesFormat';
 import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import type { ApiChargingSession, ApiReservation } from '../types';
 
@@ -31,6 +33,7 @@ const zapRouteLogoSource: ImageSourcePropType =
 const clampSoC = (value: number) => Math.max(0, Math.min(100, value));
 
 export default function HomeScreen({ navigation }: any) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const vehicle = useVehicleStore((state) => state.vehicle);
   const loadVehicle = useVehicleStore((state) => state.loadVehicle);
   const saveVehicle = useVehicleStore((state) => state.saveVehicle);
@@ -271,7 +274,7 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <View style={styles.ringInner}>
             <Text style={styles.batteryPct}>{draftSoC}%</Text>
-            <Text style={styles.batteryRange}>~{estimatedRangeLeft} km range</Text>
+            <Text style={styles.batteryRange}>~{formatDistanceKm(estimatedRangeLeft, preferences.distanceUnit, 'Distance pending', 0)} range</Text>
 
             {hasSocChange ? (
               <TouchableOpacity
