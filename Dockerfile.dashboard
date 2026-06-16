@@ -19,4 +19,4 @@ RUN python scripts/verification/check_deployment_artifacts.py --json
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "dashboards/sim_dashboard/app.py", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true"]
+CMD ["streamlit", "run", "dashboards/sim_dashboard/app.py", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true", "--server.baseUrlPath", "dashboard"]
