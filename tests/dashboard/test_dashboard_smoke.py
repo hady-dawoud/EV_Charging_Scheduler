@@ -127,12 +127,17 @@ def test_dashboard_uses_typed_json_request_response_fallback() -> None:
     )
 
     _, _, _, _, recommendations, external_requests, _, _ = dashboard_app.load_runtime_data(storage_root)
-    history_frame = dashboard_app.recommendation_history_frame(external_requests, recommendations)
+    history_frame = dashboard_app.recommendation_history_frame(
+        external_requests,
+        recommendations,
+        {"demo-user": "demo.user@example.edu"},
+    )
     candidate_frame = dashboard_app.recommendation_candidate_frame(recommendations[0])
 
     assert len(external_requests) == 1
     assert len(recommendations) == 1
     assert history_frame.iloc[0]["Status"] == "matched"
+    assert history_frame.iloc[0]["User"] == "demo.user@example.edu"
     assert history_frame.iloc[0]["Location"] == "Central Dundee"
     assert history_frame.iloc[0]["Grid/risk"] == "safe (0.880)"
     assert candidate_frame.iloc[0]["Station"] == "Greenmarket 150kW Bus Charger"
@@ -194,6 +199,204 @@ def test_station_activity_uses_persisted_station_status_artifacts() -> None:
     assert camperdown["Status"] == "Charging"
     assert camperdown["Active / Charging count"] == 1
     assert camperdown["Assigned / active request IDs"] == "camp-artifact-01"
+
+
+def test_station_activity_prefers_mobile_sessions_for_capacity_and_status() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("camperdown_country_park", "Camperdown Country Park"),
+        ],
+    )
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=[
+            {
+                "session_id": f"camp-0{index}",
+                "status": "active",
+                "station_id": "camperdown_country_park",
+                "station_name": "Camperdown Country Park",
+                "station_capacity": 5,
+            }
+            for index in range(5)
+        ],
+        open_reservations=[],
+        session_status_counts={"active": 5},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.station_activity_frame(
+        state,
+        mobile_activity=mobile_activity,
+        source_mode=dashboard_app.SOURCE_MOBILE_API,
+    )
+    camperdown = frame[frame["Station"] == "Camperdown Country Park"].iloc[0]
+
+    assert camperdown["Status"] == "Full"
+    assert camperdown["Active / Charging count"] == 5
+    assert camperdown["Capacity"] == "5"
+    assert camperdown["Free slots"] == "0"
+    assert dashboard_app.effective_charging_count(state.metrics, mobile_activity) == 5
+
+
+def test_mobile_active_sessions_are_counted_once() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("camperdown_country_park", "Camperdown Country Park"),
+        ],
+    )
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=[
+            _mobile_session("session-01", "camperdown_country_park", "Camperdown Country Park", station_capacity=5),
+            _mobile_session("session-01", "camperdown_country_park", "Camperdown Country Park", station_capacity=5),
+        ],
+        open_reservations=[],
+        session_status_counts={"active": 2},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.station_activity_frame(
+        state,
+        mobile_activity=mobile_activity,
+        source_mode=dashboard_app.SOURCE_MOBILE_API,
+    )
+    camperdown = frame[frame["Station"] == "Camperdown Country Park"].iloc[0]
+
+    assert dashboard_app.effective_charging_count(state.metrics, mobile_activity) == 1
+    assert camperdown["Active / Charging count"] == 1
+
+
+def test_mobile_only_station_activity_ignores_runtime_sessions() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("camperdown_country_park", "Camperdown Country Park"),
+        ],
+        active_sessions=[
+            _request_snapshot(
+                request_id="runtime-session-01",
+                status="charging",
+                station_id="camperdown_country_park",
+                station_name="Camperdown Country Park",
+            )
+        ],
+    )
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=[],
+        open_reservations=[],
+        session_status_counts={},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.station_activity_frame(
+        state,
+        mobile_activity=mobile_activity,
+        source_mode=dashboard_app.SOURCE_MOBILE_API,
+    )
+    camperdown = frame[frame["Station"] == "Camperdown Country Park"].iloc[0]
+
+    assert camperdown["Status"] == "Available"
+    assert camperdown["Active / Charging count"] == 0
+    assert dashboard_app.effective_active_request_count(state.metrics, mobile_activity) == 0
+
+
+def test_mobile_station_grouping_matches_confirmed_postgres_active_sessions() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=_confirmed_active_db_sessions(),
+        open_reservations=[],
+        session_status_counts={"active": 4},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.active_mobile_sessions_by_station_frame(mobile_activity)
+    counts_by_station = dict(zip(frame["Station"], frame["Active sessions"], strict=False))
+    metrics = _metrics_snapshot(datetime.fromisoformat("2024-06-10T15:00:00"))
+
+    assert dashboard_app.effective_charging_count(metrics, mobile_activity) == 4
+    assert counts_by_station["Dundee Railway Station"] == 1
+    assert counts_by_station["Dundee Taybridge Rail Station, South Union Street, Dundee"] == 2
+    assert counts_by_station["Alexander Street - Dundee"] == 1
+
+
+def test_mobile_station_activity_groups_by_charging_session_station_id() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("dundee_railway_station", "Dundee Railway Station"),
+            _station_snapshot(
+                "dundee_taybridge_rail_station_south_union_street_dundee",
+                "Dundee Taybridge Rail Station, South Union Street, Dundee",
+            ),
+            _station_snapshot("alexander_street_dundee", "Alexander Street - Dundee"),
+            _station_snapshot("mill_o_mains_primary_school", "Mill O Mains Primary School"),
+        ],
+    )
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=_confirmed_active_db_sessions(),
+        open_reservations=[
+            {
+                "reservation_id": "completed-reservation",
+                "status": "completed",
+                "station_id": "mill_o_mains_primary_school",
+                "station_name": "Mill O Mains Primary School",
+            }
+        ],
+        session_status_counts={"active": 4},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.station_activity_frame(
+        state,
+        mobile_activity=mobile_activity,
+        source_mode=dashboard_app.SOURCE_MOBILE_API,
+    )
+    counts_by_station = dict(zip(frame["Station"], frame["Active / Charging count"], strict=False))
+    statuses_by_station = dict(zip(frame["Station"], frame["Status"], strict=False))
+
+    assert counts_by_station["Dundee Railway Station"] == 1
+    assert counts_by_station["Dundee Taybridge Rail Station, South Union Street, Dundee"] == 2
+    assert counts_by_station["Alexander Street - Dundee"] == 1
+    assert counts_by_station["Mill O Mains Primary School"] == 0
+    assert statuses_by_station["Mill O Mains Primary School"] == "Available"
+
+
+def test_raw_active_session_rows_match_dashboard_diagnostics() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    mobile_activity = dashboard_app.MobileActivitySnapshot(
+        active_sessions=_confirmed_active_db_sessions(),
+        open_reservations=[],
+        session_status_counts={"active": 4},
+        user_emails_by_id={},
+        db_available=True,
+    )
+
+    frame = dashboard_app.raw_active_session_rows_frame(mobile_activity)
+
+    assert list(frame.columns) == ["session_id", "email", "station_id", "station_name", "reservation_id", "started_at"]
+    assert len(frame) == 4
+    assert frame.iloc[0]["station_id"] == "dundee_taybridge_rail_station_south_union_street_dundee"
+
+
+def test_mapped_station_details_do_not_claim_live_charging_state() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("camperdown_country_park", "Camperdown Country Park"),
+        ],
+    )
+    map_frame = dashboard_app.station_map_frame(state)
+    table_frame = dashboard_app.station_map_table_frame(map_frame)
+
+    assert "Charging" not in table_frame.columns
+    assert "Queued" not in table_frame.columns
+    assert "Runtime utilization" in table_frame.columns
+    assert "Runtime headroom kW" in table_frame.columns
 
 
 def test_recommendation_summary_keeps_full_station_and_cost_text() -> None:
@@ -291,6 +494,75 @@ def _request_snapshot(
         station_name=station_name,
         zone_id="zone_demo",
     )
+
+
+def _mobile_session(
+    session_id: str,
+    station_id: str,
+    station_name: str,
+    *,
+    station_capacity: int,
+) -> dict:
+    return {
+        "session_id": session_id,
+        "status": "active",
+        "station_id": station_id,
+        "station_name": station_name,
+        "station_capacity": station_capacity,
+        "user_email": f"{session_id}@example.edu",
+    }
+
+
+def _confirmed_active_db_sessions() -> list[dict]:
+    return [
+        _active_db_session(
+            "taybridge-02",
+            "dundee_taybridge_rail_station_south_union_street_dundee",
+            "Dundee Taybridge Rail Station, South Union Street, Dundee",
+            "driver2@example.edu",
+            "2026-06-19T10:03:00",
+        ),
+        _active_db_session(
+            "taybridge-01",
+            "dundee_taybridge_rail_station_south_union_street_dundee",
+            "Dundee Taybridge Rail Station, South Union Street, Dundee",
+            "driver1@example.edu",
+            "2026-06-19T10:02:00",
+        ),
+        _active_db_session(
+            "railway-01",
+            "dundee_railway_station",
+            "Dundee Railway Station",
+            "driver3@example.edu",
+            "2026-06-19T10:01:00",
+        ),
+        _active_db_session(
+            "alexander-01",
+            "alexander_street_dundee",
+            "Alexander Street - Dundee",
+            "driver4@example.edu",
+            "2026-06-19T10:00:00",
+        ),
+    ]
+
+
+def _active_db_session(
+    session_id: str,
+    station_id: str,
+    station_name: str,
+    email: str,
+    started_at: str,
+) -> dict:
+    return {
+        "session_id": session_id,
+        "status": "active",
+        "user_id": f"user-{session_id}",
+        "email": email,
+        "station_id": station_id,
+        "station_name": station_name,
+        "reservation_id": f"reservation-{session_id}",
+        "started_at": started_at,
+    }
 
 
 def _metrics_snapshot(timestamp: datetime) -> MetricsSnapshot:

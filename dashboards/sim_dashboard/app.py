@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, TypeVar
 
@@ -15,16 +18,10 @@ try:
 except ImportError:  # pragma: no cover - exercised by smoke tests without dashboard deps
     st = None
 
-try:
-    from streamlit_autorefresh import st_autorefresh
-except ImportError:
-    st_autorefresh = None
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from services.sim_runtime.runtime_manager import RuntimeManager  # noqa: E402
 from services.sim_runtime.storage import RuntimeStorage  # noqa: E402
 from ev_core.contracts.requests import ExternalChargingRequest  # noqa: E402
 from ev_core.contracts.responses import RecommendationResponse  # noqa: E402
@@ -32,22 +29,172 @@ from ev_core.contracts.responses import RecommendationResponse  # noqa: E402
 PydanticRecord = TypeVar("PydanticRecord", bound=BaseModel)
 RECENT_REQUEST_LIMIT = 20
 RECENT_RESPONSE_LIMIT = 20
+RUNTIME_CACHE_TTL_SECONDS = 10
+DB_CACHE_TTL_SECONDS = 10
+DB_CONNECT_TIMEOUT_SECONDS = 3
+DB_STATEMENT_TIMEOUT_MS = 3000
+SOURCE_MOBILE_API = "Mobile/API only"
+SOURCE_RUNTIME = "Runtime simulation only"
+SOURCE_COMBINED = "Combined"
+SOURCE_MODE_OPTIONS = [SOURCE_MOBILE_API, SOURCE_RUNTIME, SOURCE_COMBINED]
 
 
-def load_runtime_data(repo_root: Path):
+@dataclass(frozen=True)
+class MobileActivitySnapshot:
+    active_sessions: list[dict]
+    open_reservations: list[dict]
+    session_status_counts: dict[str, int]
+    user_emails_by_id: dict[str, str]
+    db_available: bool
+    error_message: str | None = None
+
+    @property
+    def active_session_count(self) -> int:
+        return len(deduplicated_records(self.active_sessions))
+
+
+def cache_data(ttl_seconds: int):
+    def decorator(function):
+        if st is None or not hasattr(st, "cache_data") or not streamlit_runtime_available():
+            return function
+        return st.cache_data(ttl=ttl_seconds, show_spinner=False)(function)
+
+    return decorator
+
+
+def streamlit_runtime_available() -> bool:
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+    except ImportError:
+        return False
+    return get_script_run_ctx(suppress_warning=True) is not None
+
+
+def start_timing(section_name: str) -> float:
+    print(f"[dashboard timing] {section_name} start")
+    return time.perf_counter()
+
+
+def finish_timing(section_name: str, section_started_at: float) -> None:
+    elapsed_seconds = time.perf_counter() - section_started_at
+    print(f"[dashboard timing] {section_name} {elapsed_seconds:.3f}s")
+
+
+def timed_section(section_name: str, section_call, fallback):
+    section_started_at = start_timing(section_name)
+    try:
+        section_value = section_call()
+    except Exception as exc:  # UI boundary: keep the remaining dashboard sections available.
+        elapsed_seconds = time.perf_counter() - section_started_at
+        print(f"[dashboard timing] {section_name} failed {elapsed_seconds:.3f}s {exc.__class__.__name__}")
+        if st is not None:
+            st.warning(f"{section_name} failed ({exc.__class__.__name__}). Continuing with the remaining sections.")
+        return fallback
+
+    finish_timing(section_name, section_started_at)
+    return section_value
+
+
+def skipped_section(section_name: str) -> None:
+    print(f"[dashboard timing] {section_name} skipped 0.000s")
+
+
+def load_runtime_data(repo_root: Path, *, include_optional: bool = True):
     storage = RuntimeStorage(repo_root)
-    state = storage.load_latest_state()
-    metrics = storage.load_latest_metrics()
-    metric_history = storage.get_metrics_history(limit=96)
-    external_requests = load_recent_external_requests(storage)
-    recommendations = load_recent_recommendations(storage)
-    events = storage.get_recent_events(limit=80)
-    status = storage.load_runtime_status()
+    state, metrics, status = load_cached_runtime_state(str(repo_root))
+    external_requests, recommendations = load_cached_recommendation_artifacts(str(repo_root))
+    if include_optional:
+        metric_history, events = load_cached_optional_runtime_artifacts(str(repo_root))
+    else:
+        metric_history, events = [], []
     return storage, state, metrics, metric_history, recommendations, external_requests, events, status
 
 
-def load_recent_external_requests(storage: RuntimeStorage) -> list[ExternalChargingRequest]:
-    external_requests = storage.get_recent_external_requests(limit=RECENT_REQUEST_LIMIT)
+@cache_data(RUNTIME_CACHE_TTL_SECONDS)
+def load_cached_runtime_state(repo_root_text: str):
+    storage = RuntimeStorage(Path(repo_root_text))
+    return storage.load_latest_state(), storage.load_latest_metrics(), storage.load_runtime_status()
+
+
+@cache_data(RUNTIME_CACHE_TTL_SECONDS)
+def load_cached_recommendation_artifacts(repo_root_text: str):
+    storage = RuntimeStorage(Path(repo_root_text))
+    external_requests = load_recent_external_requests(storage, limit=RECENT_REQUEST_LIMIT)
+    recommendations = load_recent_recommendations(storage, limit=RECENT_RESPONSE_LIMIT)
+    return external_requests, recommendations
+
+
+@cache_data(RUNTIME_CACHE_TTL_SECONDS)
+def load_cached_optional_runtime_artifacts(repo_root_text: str):
+    storage = RuntimeStorage(Path(repo_root_text))
+    metric_history = storage.get_metrics_history(limit=24)
+    events = storage.get_recent_events(limit=30)
+    return metric_history, events
+
+
+@cache_data(DB_CACHE_TTL_SECONDS)
+def load_mobile_activity_snapshot() -> MobileActivitySnapshot:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        return MobileActivitySnapshot([], [], {}, {}, db_available=False, error_message="DATABASE_URL is not configured.")
+
+    try:
+        from sqlalchemy import create_engine, text
+        from sqlalchemy.exc import SQLAlchemyError
+    except ImportError:
+        return MobileActivitySnapshot([], [], {}, {}, db_available=False, error_message="SQLAlchemy is not installed.")
+
+    engine = create_engine(database_url, pool_pre_ping=True, connect_args=db_connect_args(database_url))
+    try:
+        with engine.connect() as connection:
+            apply_db_statement_timeout(connection, database_url)
+            active_sessions = [dict(row) for row in connection.execute(text(ACTIVE_SESSIONS_SQL)).mappings().all()]
+            user_emails_by_id = {
+                str(row["user_id"]): str(row["email"])
+                for row in active_sessions
+                if row.get("user_id") and row.get("email")
+            }
+    except SQLAlchemyError as exc:
+        return MobileActivitySnapshot([], [], {}, {}, db_available=False, error_message=f"Database read failed: {exc.__class__.__name__}.")
+    finally:
+        engine.dispose()
+
+    session_status_counts = {"active": len(deduplicated_records(active_sessions))}
+    return MobileActivitySnapshot(active_sessions, [], session_status_counts, user_emails_by_id, db_available=True)
+
+
+def db_connect_args(database_url: str) -> dict:
+    if database_url.startswith("postgresql"):
+        return {"connect_timeout": DB_CONNECT_TIMEOUT_SECONDS}
+    return {}
+
+
+def apply_db_statement_timeout(connection, database_url: str) -> None:
+    if not database_url.startswith("postgresql"):
+        return
+    connection.exec_driver_sql(f"SET statement_timeout = {DB_STATEMENT_TIMEOUT_MS}")
+
+
+ACTIVE_SESSIONS_SQL = """
+SELECT
+    CAST(cs.session_id AS TEXT) AS session_id,
+    cs.status AS status,
+    CAST(cs.user_id AS TEXT) AS user_id,
+    u.email AS email,
+    cs.station_id AS station_id,
+    s.station_name AS station_name,
+    CAST(cs.reservation_id AS TEXT) AS reservation_id,
+    cs.started_at AS started_at
+FROM charging_sessions cs
+LEFT JOIN users u ON u.id = cs.user_id
+LEFT JOIN stations s ON s.station_id = cs.station_id
+WHERE cs.status = 'active'
+ORDER BY cs.started_at DESC
+"""
+
+
+def load_recent_external_requests(storage: RuntimeStorage, *, limit: int = RECENT_REQUEST_LIMIT) -> list[ExternalChargingRequest]:
+    external_requests = storage.get_recent_external_requests(limit=limit)
 
     if external_requests:
         return external_requests
@@ -55,12 +202,12 @@ def load_recent_external_requests(storage: RuntimeStorage) -> list[ExternalCharg
     return read_json_records(
         storage.artifacts.latest_external_requests_path,
         ExternalChargingRequest,
-        limit=RECENT_REQUEST_LIMIT,
+        limit=limit,
     )
 
 
-def load_recent_recommendations(storage: RuntimeStorage) -> list[RecommendationResponse]:
-    recommendations = storage.get_recent_recommendations(limit=RECENT_RESPONSE_LIMIT)
+def load_recent_recommendations(storage: RuntimeStorage, *, limit: int = RECENT_RESPONSE_LIMIT) -> list[RecommendationResponse]:
+    recommendations = storage.get_recent_recommendations(limit=limit)
 
     if recommendations:
         return recommendations
@@ -68,7 +215,7 @@ def load_recent_recommendations(storage: RuntimeStorage) -> list[RecommendationR
     return read_json_records(
         storage.artifacts.recent_recommendations_path,
         RecommendationResponse,
-        limit=RECENT_RESPONSE_LIMIT,
+        limit=limit,
     )
 
 
@@ -107,9 +254,12 @@ def render_dataframe(frame: pd.DataFrame) -> None:
     """Render dataframes across older and newer Streamlit versions."""
 
     try:
-        st.dataframe(frame, use_container_width=True)
+        st.dataframe(frame, width="stretch")
     except TypeError:
-        st.dataframe(frame)
+        try:
+            st.dataframe(frame, use_container_width=True)
+        except TypeError:
+            st.dataframe(frame)
 
 
 def metric_delta(completed_count: int, missed_count: int) -> str:
@@ -171,9 +321,21 @@ def score_text(score: float | None) -> str:
     return f"{score:.3f}"
 
 
-def station_activity_frame(state, external_requests: Iterable[Any] = (), recommendations: Iterable[Any] = ()) -> pd.DataFrame:
-    activity_by_station = station_activity_by_station(state, external_requests, recommendations)
-    station_rows = [station_activity_row(station, activity_by_station) for station in state.stations]
+def station_activity_frame(
+    state,
+    external_requests: Iterable[Any] = (),
+    recommendations: Iterable[Any] = (),
+    mobile_activity: MobileActivitySnapshot | None = None,
+    source_mode: str = SOURCE_RUNTIME,
+) -> pd.DataFrame:
+    activity_by_station = station_activity_by_station(
+        state,
+        external_requests,
+        recommendations,
+        mobile_activity,
+        source_mode,
+    )
+    station_rows = [station_activity_row(station, activity_by_station, source_mode) for station in state.stations]
 
     if not station_rows:
         return pd.DataFrame()
@@ -185,32 +347,61 @@ def station_activity_frame(state, external_requests: Iterable[Any] = (), recomme
     ).drop(columns=["Utilization ratio"])
 
 
-def station_activity_row(station, activity_by_station: dict[str, dict]) -> dict:
+def station_activity_row(station, activity_by_station: dict[str, dict], source_mode: str) -> dict:
     station_activity = activity_by_station.get(station.station_id, {})
-    active_count = activity_count_or_snapshot(station_activity, station, "active")
-    queued_count = activity_count_or_snapshot(station_activity, station, "queued")
+    active_count = activity_count_or_snapshot(station_activity, station, "active", source_mode)
+    queued_count = activity_count_or_snapshot(station_activity, station, "queued", source_mode)
+    station_capacity = station_capacity_value(station, station_activity)
+    free_slots = station_free_slots(active_count, station_capacity)
     assigned_request_ids = station_request_ids_text(station, station_activity)
     return {
-        "Station": station.station_name,
+        "Station": station_activity_display_name(station, station_activity, source_mode),
         "Zone": station.zone_id,
-        "Status": station_status_text(station, active_count, queued_count, station_activity),
+        "Source": station_activity_source_text(station_activity, source_mode),
+        "Status": effective_station_status(
+            station,
+            active_count,
+            queued_count,
+            station_activity,
+            station_capacity,
+            source_mode,
+        ),
         "Active / Charging count": active_count,
         "Queued count": queued_count,
+        "Capacity": capacity_text(station_capacity),
+        "Free slots": free_slots_text(free_slots),
         "Assigned / active request IDs": assigned_request_ids,
-        "Utilization": percentage_text(station.utilization),
+        "Runtime utilization": percentage_text(station.utilization),
         "Utilization ratio": station.utilization,
-        "Estimated wait": minutes_text(station.estimated_wait_minutes),
-        "Headroom": kw_text(station.transformer_headroom_kw),
+        "Runtime estimated wait": minutes_text(station.estimated_wait_minutes),
+        "Runtime headroom": kw_text(station.transformer_headroom_kw),
     }
 
 
-def station_activity_by_station(state, external_requests: Iterable[Any], recommendations: Iterable[Any]) -> dict[str, dict]:
+def station_activity_by_station(
+    state,
+    external_requests: Iterable[Any],
+    recommendations: Iterable[Any],
+    mobile_activity: MobileActivitySnapshot | None,
+    source_mode: str,
+) -> dict[str, dict]:
     station_lookup = station_identifier_lookup(state.stations)
     activity_by_station: dict[str, dict] = {}
 
-    add_station_records(activity_by_station, station_lookup, state.active_sessions, "active")
-    add_station_records(activity_by_station, station_lookup, getattr(state, "charging_requests", []), "active")
-    add_station_records(activity_by_station, station_lookup, getattr(state, "sessions", []), "active")
+    if source_mode in {SOURCE_MOBILE_API, SOURCE_COMBINED} and mobile_activity is not None:
+        add_mobile_active_records(activity_by_station, station_lookup, mobile_activity.active_sessions)
+        if source_mode == SOURCE_COMBINED:
+            add_mobile_reservation_records(activity_by_station, station_lookup, mobile_activity.open_reservations)
+
+    if source_mode == SOURCE_MOBILE_API:
+        return activity_by_station
+
+    if source_mode not in {SOURCE_RUNTIME, SOURCE_COMBINED}:
+        return activity_by_station
+
+    add_runtime_active_records(activity_by_station, station_lookup, state.active_sessions)
+    add_runtime_active_records(activity_by_station, station_lookup, getattr(state, "charging_requests", []))
+    add_runtime_active_records(activity_by_station, station_lookup, getattr(state, "sessions", []))
     add_station_records(activity_by_station, station_lookup, state.queued_requests, "queued")
     add_status_records(activity_by_station, station_lookup, state.active_requests)
     add_status_records(activity_by_station, station_lookup, external_requests)
@@ -226,17 +417,58 @@ def station_identifier_lookup(stations) -> dict[str, str]:
     return station_lookup
 
 
+def new_station_activity() -> dict:
+    return {
+        "mobile_active_ids": [],
+        "runtime_active_ids": [],
+        "queued_ids": [],
+        "assigned_ids": [],
+        "capacity": None,
+        "station_name": None,
+    }
+
+
+def add_mobile_active_records(activity_by_station: dict[str, dict], station_lookup: dict[str, str], records) -> None:
+    for record in deduplicated_records(records):
+        station_id = matched_mobile_session_station_id(record, station_lookup)
+        if station_id is None:
+            continue
+        station_activity = activity_by_station.setdefault(station_id, new_station_activity())
+        append_unique(station_activity["mobile_active_ids"], record_request_id(record))
+        remember_station_capacity(station_activity, record)
+        remember_mobile_station_name(station_activity, record, station_id)
+
+
+def add_mobile_reservation_records(activity_by_station: dict[str, dict], station_lookup: dict[str, str], records) -> None:
+    for record in records:
+        station_id = matched_station_id(record, station_lookup)
+        if station_id is None:
+            continue
+        station_activity = activity_by_station.setdefault(station_id, new_station_activity())
+        append_unique(station_activity["assigned_ids"], record_request_id(record))
+        remember_station_capacity(station_activity, record)
+
+
+def add_runtime_active_records(activity_by_station: dict[str, dict], station_lookup: dict[str, str], records) -> None:
+    for record in records:
+        station_id = matched_station_id(record, station_lookup)
+        if station_id is None:
+            continue
+        station_activity = activity_by_station.setdefault(station_id, new_station_activity())
+        append_unique(station_activity["runtime_active_ids"], record_request_id(record))
+
+
 def add_station_records(activity_by_station: dict[str, dict], station_lookup: dict[str, str], records, activity_kind: str) -> None:
     for record in records:
         station_id = matched_station_id(record, station_lookup)
         if station_id is None:
             continue
-        station_activity = activity_by_station.setdefault(station_id, {"active_ids": [], "queued_ids": [], "assigned_ids": []})
+        station_activity = activity_by_station.setdefault(station_id, new_station_activity())
         record_id = record_request_id(record)
         if activity_kind == "queued":
-            station_activity["queued_ids"].append(record_id)
+            append_unique(station_activity["queued_ids"], record_id)
         else:
-            station_activity["active_ids"].append(record_id)
+            append_unique(station_activity["runtime_active_ids"], record_id)
 
 
 def add_status_records(activity_by_station: dict[str, dict], station_lookup: dict[str, str], records) -> None:
@@ -245,8 +477,67 @@ def add_status_records(activity_by_station: dict[str, dict], station_lookup: dic
         activity_kind = record_activity_kind(record)
         if station_id is None or activity_kind is None:
             continue
-        station_activity = activity_by_station.setdefault(station_id, {"active_ids": [], "queued_ids": [], "assigned_ids": []})
-        station_activity[f"{activity_kind}_ids"].append(record_request_id(record))
+        station_activity = activity_by_station.setdefault(station_id, new_station_activity())
+        if activity_kind == "active":
+            append_unique(station_activity["runtime_active_ids"], record_request_id(record))
+        else:
+            append_unique(station_activity[f"{activity_kind}_ids"], record_request_id(record))
+
+
+def append_unique(text_values: list[str], text_value: str) -> None:
+    if text_value not in text_values:
+        text_values.append(text_value)
+
+
+def deduplicated_records(records) -> list:
+    deduplicated = []
+    seen_keys = set()
+    for record in records:
+        identity = activity_record_identity(record)
+        if identity in seen_keys:
+            continue
+        seen_keys.add(identity)
+        deduplicated.append(record)
+    return deduplicated
+
+
+def activity_record_identity(record) -> str:
+    session_id = first_record_value(record, "session_id")
+    if session_id:
+        return f"session:{session_id}"
+
+    reservation_id = first_record_value(record, "reservation_id")
+    if reservation_id:
+        return f"reservation:{reservation_id}"
+
+    request_id = first_record_value(record, "request_id", "client_request_id")
+    if request_id:
+        return f"request:{request_id}"
+
+    return f"object:{id(record)}"
+
+
+def remember_station_capacity(station_activity: dict, record) -> None:
+    capacity = positive_int_or_none(record_value(record, "station_capacity"))
+    if capacity is not None:
+        station_activity["capacity"] = capacity
+
+
+def remember_mobile_station_name(station_activity: dict, record, station_id: str) -> None:
+    station_activity["station_name"] = mobile_station_name(record, station_id)
+
+
+def station_activity_display_name(station, station_activity: dict, source_mode: str) -> str:
+    if source_mode in {SOURCE_MOBILE_API, SOURCE_COMBINED} and station_activity.get("mobile_active_ids"):
+        return str(station_activity.get("station_name") or station.station_id)
+    return station.station_name
+
+
+def matched_mobile_session_station_id(record, station_lookup: dict[str, str]) -> str | None:
+    station_id = record_value(record, "station_id")
+    if station_id in station_lookup:
+        return station_lookup[station_id]
+    return None
 
 
 def matched_station_id(record, station_lookup: dict[str, str]) -> str | None:
@@ -335,22 +626,39 @@ def normalize_station_name(station_name) -> str:
 
 
 def record_request_id(record) -> str:
-    request_id = first_record_value(record, "request_id", "client_request_id", "session_id", "reservation_id")
+    request_id = first_record_value(record, "session_id", "request_id", "client_request_id", "reservation_id")
     return str(request_id) if request_id else "unknown"
 
 
-def activity_count_or_snapshot(station_activity: dict, station, activity_kind: str) -> int:
-    activity_ids = station_activity.get(f"{activity_kind}_ids", [])
-    if activity_ids:
-        return len(activity_ids)
+def activity_count_or_snapshot(station_activity: dict, station, activity_kind: str, source_mode: str) -> int:
     if activity_kind == "queued":
+        if source_mode == SOURCE_MOBILE_API:
+            return 0
+        activity_ids = station_activity.get("queued_ids", [])
+        if activity_ids:
+            return len(activity_ids)
         return station.queue_length
+
+    mobile_active_ids = station_activity.get("mobile_active_ids", [])
+    if source_mode == SOURCE_MOBILE_API:
+        return len(mobile_active_ids)
+
+    if mobile_active_ids:
+        if source_mode == SOURCE_COMBINED:
+            return len(set([*mobile_active_ids, *station_activity.get("runtime_active_ids", [])]))
+        return len(mobile_active_ids)
+
+    runtime_active_ids = station_activity.get("runtime_active_ids", [])
+    if runtime_active_ids:
+        return len(runtime_active_ids)
+
     return station.active_sessions
 
 
 def station_request_ids_text(station, station_activity: dict) -> str:
     request_ids = [
-        *station_activity.get("active_ids", []),
+        *station_activity.get("mobile_active_ids", []),
+        *station_activity.get("runtime_active_ids", []),
         *station_activity.get("queued_ids", []),
         *station_activity.get("assigned_ids", []),
     ]
@@ -364,13 +672,34 @@ def station_request_ids_text(station, station_activity: dict) -> str:
     return ", ".join(short_identifier(request_id) for request_id in request_ids)
 
 
-def station_status_text(station, active_count: int, queued_count: int, station_activity: dict) -> str:
+def station_activity_source_text(station_activity: dict, source_mode: str) -> str:
+    has_mobile = bool(station_activity.get("mobile_active_ids") or station_activity.get("assigned_ids"))
+    has_runtime = bool(station_activity.get("runtime_active_ids") or station_activity.get("queued_ids"))
+
+    if source_mode == SOURCE_COMBINED:
+        if has_mobile and has_runtime:
+            return "Mobile/API + runtime"
+        if has_mobile:
+            return "Mobile/API"
+        if has_runtime:
+            return "Runtime simulation"
+        return "None"
+    if source_mode == SOURCE_MOBILE_API:
+        return "Mobile/API"
+    if source_mode == SOURCE_RUNTIME:
+        return "Runtime simulation"
+    return source_mode
+
+
+def station_status_text(station, active_count: int, queued_count: int, station_activity: dict, station_capacity: int | None) -> str:
     if getattr(station, "blocked", False):
         return "Blocked"
     if getattr(station, "offline", False):
         return "Offline"
     if getattr(station, "available", True) is False:
         return "Unavailable"
+    if station_capacity is not None and active_count >= station_capacity:
+        return "Full"
     if active_count > 0:
         return "Charging"
     if queued_count > 0:
@@ -378,6 +707,64 @@ def station_status_text(station, active_count: int, queued_count: int, station_a
     if station_activity.get("assigned_ids"):
         return "Active"
     return "Available"
+
+
+def effective_station_status(
+    station,
+    active_count: int,
+    queued_count: int,
+    station_activity: dict,
+    station_capacity: int | None,
+    source_mode: str,
+) -> str:
+    if source_mode == SOURCE_MOBILE_API and active_count == 0:
+        return "Available"
+
+    return station_status_text(station, active_count, queued_count, station_activity, station_capacity)
+
+
+def station_capacity_value(station, station_activity: dict) -> int | None:
+    activity_capacity = positive_int_or_none(station_activity.get("capacity"))
+    if activity_capacity is not None:
+        return activity_capacity
+
+    return positive_int_or_none(getattr(station, "cp_count_total", None))
+
+
+def station_free_slots(active_count: int, station_capacity: int | None) -> int | None:
+    if station_capacity is None:
+        return None
+
+    return max(station_capacity - active_count, 0)
+
+
+def positive_int_or_none(raw_value) -> int | None:
+    if raw_value is None:
+        return None
+
+    try:
+        parsed_value = int(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+    if parsed_value <= 0:
+        return None
+
+    return parsed_value
+
+
+def capacity_text(station_capacity: int | None) -> str:
+    if station_capacity is None:
+        return "Unknown"
+
+    return str(station_capacity)
+
+
+def free_slots_text(free_slots: int | None) -> str:
+    if free_slots is None:
+        return "Unknown"
+
+    return str(free_slots)
 
 
 def has_unassigned_mobile_activity(state, external_requests) -> bool:
@@ -510,7 +897,7 @@ def latest_external_frame(external_requests) -> pd.DataFrame:
     return pd.DataFrame(model_rows(external_requests[::-1]))
 
 
-def recommendation_matches(external_requests, recommendations) -> list[dict]:
+def recommendation_matches(external_requests, recommendations, user_emails_by_id: dict[str, str] | None = None) -> list[dict]:
     request_by_client_id = {
         request.client_request_id: request
         for request in external_requests
@@ -532,23 +919,23 @@ def recommendation_matches(external_requests, recommendations) -> list[dict]:
             request = request_by_runtime_id.get(response.request_id)
         if request is not None:
             matched_request_ids.add(id(request))
-        rows.append(recommendation_match_row(request, response))
+        rows.append(recommendation_match_row(request, response, user_emails_by_id or {}))
 
     for request in reversed(external_requests):
         if id(request) not in matched_request_ids:
-            rows.append(recommendation_match_row(request, None))
+            rows.append(recommendation_match_row(request, None, user_emails_by_id or {}))
 
     return rows
 
 
-def recommendation_match_row(request, response) -> dict:
+def recommendation_match_row(request, response, user_emails_by_id: dict[str, str]) -> dict:
     top_recommendation = None if response is None else response.top_recommendation
     option_metadata = {} if top_recommendation is None else top_recommendation.metadata
     request_metadata = {} if request is None else request.metadata
     candidate_count = 0 if response is None else len(response.alternatives) + (1 if top_recommendation else 0)
     return {
         "Request time": None if request is None else request.request_timestamp,
-        "User": request_metadata.get("user_id", "n/a"),
+        "User": request_user_text(request_metadata, user_emails_by_id),
         "Client request": "n/a" if request is None else short_identifier(request.client_request_id),
         "Runtime request": "n/a" if response is None else short_identifier(response.request_id),
         "Location": selected_location_text(request, response),
@@ -563,6 +950,18 @@ def recommendation_match_row(request, response) -> dict:
         "Grid/risk": risk_indicator_text(option_metadata, response),
         "Status": recommendation_status_text(request, response),
     }
+
+
+def request_user_text(request_metadata: dict, user_emails_by_id: dict[str, str]) -> str:
+    metadata_email = request_metadata.get("user_email") or request_metadata.get("email")
+    if metadata_email:
+        return str(metadata_email)
+
+    user_id = request_metadata.get("user_id")
+    if user_id is None:
+        return "n/a"
+
+    return user_emails_by_id.get(str(user_id), str(user_id))
 
 
 def recommendation_policy_text(response) -> str:
@@ -637,8 +1036,12 @@ def recommendation_status_text(request, response) -> str:
     return "matched"
 
 
-def recommendation_history_frame(external_requests, recommendations) -> pd.DataFrame:
-    rows = recommendation_matches(external_requests, recommendations)
+def recommendation_history_frame(
+    external_requests,
+    recommendations,
+    user_emails_by_id: dict[str, str] | None = None,
+) -> pd.DataFrame:
+    rows = recommendation_matches(external_requests, recommendations, user_emails_by_id)
 
     if not rows:
         return pd.DataFrame()
@@ -757,6 +1160,132 @@ def filtered_recommendation_history(
     return filtered_frame.head(latest_count)
 
 
+def session_status_frame(mobile_activity: MobileActivitySnapshot, metrics) -> pd.DataFrame:
+    if mobile_activity.db_available:
+        rows = [
+            {"Status": status_name, "Sessions": session_count}
+            for status_name, session_count in mobile_activity.session_status_counts.items()
+        ]
+        return pd.DataFrame(rows)
+
+    return pd.DataFrame(
+        [
+            {"Status": "runtime charging", "Sessions": metrics.active_session_count},
+            {"Status": "runtime queued", "Sessions": metrics.queued_request_count},
+        ]
+    )
+
+
+def busiest_station_frame(station_activity: pd.DataFrame) -> pd.DataFrame:
+    if station_activity.empty:
+        return pd.DataFrame()
+
+    chart_frame = station_activity[["Station", "Active / Charging count", "Queued count"]].copy()
+    chart_frame["Total"] = chart_frame["Active / Charging count"] + chart_frame["Queued count"]
+    return chart_frame.sort_values("Total", ascending=False).head(8).set_index("Station")[["Active / Charging count", "Queued count"]]
+
+
+def recommendation_station_chart_frame(history_frame: pd.DataFrame) -> pd.DataFrame:
+    if history_frame.empty or "Recommended station" not in history_frame.columns:
+        return pd.DataFrame()
+
+    chart_frame = history_frame[history_frame["Recommended station"] != "Unmatched"]
+    if chart_frame.empty:
+        return pd.DataFrame()
+
+    return chart_frame["Recommended station"].value_counts().head(8).rename_axis("Station").reset_index(name="Recommendations")
+
+
+def candidate_comparison_frame(response) -> pd.DataFrame:
+    if response is None:
+        return pd.DataFrame()
+
+    options = []
+    if response.top_recommendation is not None:
+        options.append(response.top_recommendation)
+    options.extend(response.alternatives)
+
+    return pd.DataFrame(
+        [
+            {
+                "Station": option.station_name,
+                "Score": option.score,
+                "Cost": option.estimated_cost_gbp,
+                "Wait": option.estimated_wait_minutes,
+            }
+            for option in options[:6]
+        ]
+    )
+
+
+def active_mobile_sessions_by_station_frame(mobile_activity: MobileActivitySnapshot) -> pd.DataFrame:
+    records = deduplicated_records(mobile_activity.active_sessions)
+    if not records:
+        return pd.DataFrame()
+
+    rows = []
+    for station_id, station_records in grouped_records_by_station(records).items():
+        first_record = station_records[0]
+        rows.append(
+            {
+                "Station": mobile_station_name(first_record, station_id),
+                "Station ID": station_id,
+                "Active sessions": len(station_records),
+                "Capacity": capacity_text(positive_int_or_none(record_value(first_record, "station_capacity"))),
+                "Session IDs": ", ".join(short_identifier(record_request_id(record)) for record in station_records),
+                "Users": ", ".join(session_user_text(record) for record in station_records),
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values(["Active sessions", "Station"], ascending=[False, True])
+
+
+def grouped_records_by_station(records) -> dict[str, list]:
+    grouped_records: dict[str, list] = {}
+    for record in records:
+        station_id = str(record_value(record, "station_id") or "unknown")
+        grouped_records.setdefault(station_id, []).append(record)
+    return grouped_records
+
+
+def mobile_station_name(record, station_id: str) -> str:
+    station_name = record_value(record, "station_name")
+    if station_name:
+        return str(station_name)
+    return station_id
+
+
+def session_user_text(record) -> str:
+    user_email = first_record_value(record, "email", "user_email")
+    if user_email:
+        return str(user_email)
+
+    user_id = record_value(record, "user_id")
+    if user_id:
+        return short_identifier(str(user_id))
+
+    return "n/a"
+
+
+def raw_active_session_rows_frame(mobile_activity: MobileActivitySnapshot) -> pd.DataFrame:
+    records = deduplicated_records(mobile_activity.active_sessions)
+    if not records:
+        return pd.DataFrame()
+
+    rows = [
+        {
+            "session_id": record_value(record, "session_id"),
+            "email": first_record_value(record, "email", "user_email") or "n/a",
+            "station_id": record_value(record, "station_id") or "n/a",
+            "station_name": mobile_station_name(record, str(record_value(record, "station_id") or "n/a")),
+            "reservation_id": record_value(record, "reservation_id") or "n/a",
+            "started_at": record_value(record, "started_at") or "n/a",
+        }
+        for record in records
+    ]
+    return pd.DataFrame(rows)
+
+
 def station_map_frame(state) -> pd.DataFrame:
     station_rows = model_rows(state.stations)
 
@@ -775,10 +1304,10 @@ def station_map_table_frame(map_frame: pd.DataFrame) -> pd.DataFrame:
     visible_columns = [
         "station_name",
         "zone_id",
-        "active_sessions",
-        "queue_length",
+        "cp_count_total",
+        "lat",
+        "lon",
         "utilization",
-        "estimated_wait_minutes",
         "transformer_headroom_kw",
     ]
     table_frame = map_frame[[column for column in visible_columns if column in map_frame.columns]].copy()
@@ -786,32 +1315,32 @@ def station_map_table_frame(map_frame: pd.DataFrame) -> pd.DataFrame:
         columns={
             "station_name": "Station",
             "zone_id": "Zone",
-            "active_sessions": "Charging",
-            "queue_length": "Queued",
-            "utilization": "Utilization",
-            "estimated_wait_minutes": "Wait min",
-            "transformer_headroom_kw": "Headroom kW",
+            "cp_count_total": "Capacity",
+            "lat": "Latitude",
+            "lon": "Longitude",
+            "utilization": "Runtime utilization",
+            "transformer_headroom_kw": "Runtime headroom kW",
         }
     )
-    return table_frame.sort_values(by=["Queued", "Charging"], ascending=[False, False])
+    return table_frame.sort_values(by=["Station"])
 
 
-def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
+def station_map_frames(state) -> tuple[pd.DataFrame, pd.DataFrame]:
+    map_frame = station_map_frame(state)
+    return map_frame, station_map_table_frame(map_frame)
+
+
+def new_runtime_manager():
+    from services.sim_runtime.runtime_manager import RuntimeManager
+
+    return RuntimeManager(REPO_ROOT)
+
+
+def run_sidebar_controls(status: dict) -> None:
     st.sidebar.header("Demo Controls")
 
     if st.sidebar.button("Refresh Now"):
         st.rerun()
-
-    refresh_option = st.sidebar.selectbox("Auto-refresh", ["Off", 10, 30, 60], index=0)
-
-    if refresh_option != "Off":
-        if st_autorefresh is not None:
-            st_autorefresh(
-                interval=int(refresh_option) * 1000,
-                key="sim_dashboard_autorefresh",
-            )
-        else:
-            st.sidebar.warning("Auto-refresh package is missing. Use Refresh Now.")
 
     preset = st.sidebar.selectbox("Preset", ["Custom", "Busy Afternoon Demo"])
     use_preset = preset == "Busy Afternoon Demo"
@@ -837,6 +1366,7 @@ def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
     loop_interval = st.sidebar.selectbox("Loop interval (s)", [1.0, 1.5, 2.0], index=0)
 
     if st.sidebar.button("Start Runtime"):
+        runtime = new_runtime_manager()
         runtime.start(
             replay_day=replay_day,
             start_hour=int(start_hour),
@@ -850,6 +1380,7 @@ def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
         st.sidebar.success("Runtime started.")
 
     if st.sidebar.button("Start Loop"):
+        runtime = new_runtime_manager()
         if runtime.get_latest_state() is None:
             runtime.start(
                 replay_day=replay_day,
@@ -865,14 +1396,17 @@ def run_sidebar_controls(runtime: RuntimeManager, status: dict) -> None:
         st.sidebar.success("Loop started.")
 
     if st.sidebar.button("Stop Loop"):
+        runtime = new_runtime_manager()
         runtime.stop_loop()
         st.sidebar.info("Loop stop requested.")
 
     if st.sidebar.button("Tick Once"):
+        runtime = new_runtime_manager()
         runtime.tick(steps=1)
         st.sidebar.success("Advanced one 15-minute simulation slot.")
 
     if st.sidebar.button("Busy Afternoon Demo"):
+        runtime = new_runtime_manager()
         runtime.start(preset="busy_afternoon")
         runtime.start_loop(interval_seconds=1.0)
         st.sidebar.success("Busy Afternoon Demo started in loop mode.")
@@ -910,7 +1444,52 @@ def render_dashboard_style() -> None:
     )
 
 
-def render_runtime_overview(state, metrics, status_summary: dict) -> None:
+def render_page_header() -> None:
+    header_cols = st.columns([0.82, 0.18])
+    with header_cols[0]:
+        st.title("ZapRoute Runtime Dashboard")
+        st.caption("Live EV-side request, recommendation, station, and grid visibility for the Dundee demo runtime.")
+    with header_cols[1]:
+        st.write("")
+        if st.button("Refresh", use_container_width=True):
+            st.rerun()
+
+
+def effective_charging_count(metrics, mobile_activity: MobileActivitySnapshot) -> int:
+    if mobile_activity.db_available:
+        return mobile_activity.active_session_count
+
+    return metrics.active_session_count
+
+
+def effective_active_request_count(metrics, mobile_activity: MobileActivitySnapshot) -> int:
+    if not mobile_activity.db_available:
+        return metrics.active_request_count
+
+    return mobile_activity.active_session_count + unlinked_open_reservation_count(mobile_activity)
+
+
+def unlinked_open_reservation_count(mobile_activity: MobileActivitySnapshot) -> int:
+    active_reservation_ids = {
+        str(reservation_id)
+        for reservation_id in (
+            first_record_value(record, "reservation_id")
+            for record in deduplicated_records(mobile_activity.active_sessions)
+        )
+        if reservation_id
+    }
+    open_reservation_ids = {
+        str(reservation_id)
+        for reservation_id in (
+            first_record_value(record, "reservation_id")
+            for record in mobile_activity.open_reservations
+        )
+        if reservation_id and str(reservation_id) not in active_reservation_ids
+    }
+    return len(open_reservation_ids)
+
+
+def render_runtime_overview(state, metrics, status_summary: dict, mobile_activity: MobileActivitySnapshot) -> None:
     st.subheader("Now")
     runtime_cols = st.columns(4)
     runtime_cols[0].metric("Runtime", status_summary["runtime_status"])
@@ -919,9 +1498,9 @@ def render_runtime_overview(state, metrics, status_summary: dict) -> None:
     runtime_cols[3].metric("Mode", state.runtime_mode)
 
     activity_cols = st.columns(5)
-    activity_cols[0].metric("Active requests", metrics.active_request_count)
+    activity_cols[0].metric("Active requests", effective_active_request_count(metrics, mobile_activity))
     activity_cols[1].metric("Queued", metrics.queued_request_count)
-    activity_cols[2].metric("Charging", metrics.active_session_count)
+    activity_cols[2].metric("Charging", effective_charging_count(metrics, mobile_activity))
     activity_cols[3].metric("Completed", metrics.completed_requests_total)
     activity_cols[4].metric(
         "Missed",
@@ -934,28 +1513,61 @@ def render_runtime_overview(state, metrics, status_summary: dict) -> None:
         f"Warm-start: {state.warm_start_minutes} min"
     )
     st.caption(config_text)
+    render_mobile_activity_notice(mobile_activity)
 
 
-def render_attention_summary(metrics) -> None:
+def render_mobile_activity_notice(mobile_activity: MobileActivitySnapshot) -> None:
+    if mobile_activity.db_available:
+        st.caption("Charging count and Station Activity use active API/mobile sessions from PostgreSQL.")
+        return
+
+    st.info(
+        "API/mobile session DB data is unavailable. Now metrics fall back to runtime counters; "
+        f"Station Activity stays separated by the selected source. Detail: {mobile_activity.error_message}"
+    )
+
+
+def render_attention_summary(metrics, mobile_activity: MobileActivitySnapshot) -> None:
     if metrics.overload_event_count > 0:
         st.warning(f"{metrics.overload_event_count} overload events recorded.")
     elif metrics.queued_request_count > 0:
         st.info(f"{metrics.queued_request_count} request(s) are waiting for a charger.")
-    elif metrics.active_request_count > 0 or metrics.active_session_count > 0:
+    elif effective_active_request_count(metrics, mobile_activity) > 0 or effective_charging_count(metrics, mobile_activity) > 0:
         st.success("Runtime is active with no overload events.")
     else:
         st.info("No active requests right now.")
 
 
-def render_current_activity(state, external_requests, recommendations) -> None:
+def render_current_activity(state, external_requests, recommendations, mobile_activity: MobileActivitySnapshot) -> None:
     st.subheader("Station Activity")
-    frame = station_activity_frame(state, external_requests, recommendations)
+    source_mode = st.radio(
+        "Station activity source",
+        SOURCE_MODE_OPTIONS,
+        index=0,
+        horizontal=True,
+    )
+    st.caption(
+        "Mobile/API only reflects actual app reservations and charging sessions from Postgres. "
+        "Runtime simulation only reflects simulated runtime state."
+    )
+    frame = timed_section(
+        "station activity build",
+        lambda: station_activity_frame(
+            state,
+            external_requests,
+            recommendations,
+            mobile_activity,
+            source_mode=source_mode,
+        ),
+        pd.DataFrame(),
+    )
 
     if frame.empty:
         st.info("No station activity snapshot available.")
         return
 
     render_dataframe(frame)
+    render_active_mobile_sessions_guard(mobile_activity)
     if has_unassigned_mobile_activity(state, external_requests):
         st.info(
             "Station Activity uses runtime snapshot station assignments from active sessions, queued requests, "
@@ -964,9 +1576,105 @@ def render_current_activity(state, external_requests, recommendations) -> None:
         )
 
 
-def render_recommendation_history_panel(external_requests, recommendations, state) -> None:
+def render_active_mobile_sessions_guard(mobile_activity: MobileActivitySnapshot) -> None:
+    if not mobile_activity.db_available:
+        return
+
+    session_frame = active_mobile_sessions_by_station_frame(mobile_activity)
+    if session_frame.empty:
+        st.info("No active Postgres charging_sessions rows were found.")
+        return
+
+    st.markdown("**Active Mobile/API Sessions by Station**")
+    st.caption(
+        f"Active Postgres charging_sessions total: {mobile_activity.active_session_count}. "
+        "Use this table to spot stale active sessions by station, user, and session ID."
+    )
+    render_dataframe(session_frame)
+
+    raw_session_frame = raw_active_session_rows_frame(mobile_activity)
+    if not raw_session_frame.empty:
+        with st.expander("Raw Active Mobile/API Session Rows"):
+            render_dataframe(raw_session_frame)
+
+
+def render_activity_charts(
+    station_activity: pd.DataFrame,
+    history_frame: pd.DataFrame,
+    latest_recommendation,
+    mobile_activity: MobileActivitySnapshot,
+    metrics,
+) -> None:
+    st.subheader("Quick Charts")
+    left_col, right_col = st.columns(2)
+
+    with left_col:
+        render_session_status_chart(mobile_activity, metrics)
+        render_recommendation_station_chart(history_frame)
+
+    with right_col:
+        render_busiest_station_chart(station_activity)
+        render_candidate_comparison_chart(latest_recommendation)
+
+
+def render_session_status_chart(mobile_activity: MobileActivitySnapshot, metrics) -> None:
+    status_frame = session_status_frame(mobile_activity, metrics)
+    if status_frame.empty:
+        st.info("No session status data available.")
+        return
+
+    st.markdown("**Sessions by Status**")
+    st.vega_lite_chart(
+        status_frame,
+        {
+            "mark": {"type": "arc", "innerRadius": 35},
+            "encoding": {
+                "theta": {"field": "Sessions", "type": "quantitative"},
+                "color": {"field": "Status", "type": "nominal"},
+                "tooltip": ["Status", "Sessions"],
+            },
+        },
+        use_container_width=True,
+    )
+
+
+def render_busiest_station_chart(station_activity: pd.DataFrame) -> None:
+    chart_frame = busiest_station_frame(station_activity)
+    if chart_frame.empty:
+        st.info("No station activity data available.")
+        return
+
+    st.markdown("**Busiest Stations**")
+    st.bar_chart(chart_frame)
+
+
+def render_recommendation_station_chart(history_frame: pd.DataFrame) -> None:
+    chart_frame = recommendation_station_chart_frame(history_frame)
+    if chart_frame.empty:
+        st.info("No recommendation station history available.")
+        return
+
+    st.markdown("**Recommendations by Station**")
+    st.bar_chart(chart_frame.set_index("Station"))
+
+
+def render_candidate_comparison_chart(latest_recommendation) -> None:
+    chart_frame = candidate_comparison_frame(latest_recommendation)
+    if chart_frame.empty:
+        st.info("No candidate comparison data available.")
+        return
+
+    st.markdown("**Candidate Score / Cost / Wait**")
+    st.bar_chart(chart_frame.set_index("Station"))
+
+
+def render_recommendation_history_panel(external_requests, recommendations, state, mobile_activity: MobileActivitySnapshot) -> None:
     st.subheader("Recent Recommendation Requests")
-    history_frame = recommendation_history_frame(external_requests, recommendations)
+    history_frame = recommendation_history_frame(
+        external_requests,
+        recommendations,
+        mobile_activity.user_emails_by_id,
+    )
 
     if history_frame.empty:
         st.info("No recommendation requests or responses have been recorded yet.")
@@ -1089,10 +1797,19 @@ def render_runtime_configuration(status_summary: dict, status: dict) -> None:
         )
 
 
-def render_optional_details(state, metric_history, events, external_requests) -> None:
+def render_optional_details(state, external_requests) -> None:
     st.subheader("Details")
     show_charts = st.checkbox("Show trend charts", value=False)
     show_events = st.checkbox("Show recent events", value=False)
+
+    if not show_charts and not show_events:
+        return
+
+    metric_history, events = timed_section(
+        "runtime optional artifacts load",
+        lambda: load_cached_optional_runtime_artifacts(str(REPO_ROOT)),
+        ([], []),
+    )
 
     if show_charts:
         render_trend_charts(metric_history, events)
@@ -1123,21 +1840,23 @@ def render_trend_charts(metric_history, events) -> None:
         st.bar_chart(arrivals_frame)
 
 
-def render_station_map(state) -> None:
+def render_station_map(state, map_frame: pd.DataFrame, table_frame: pd.DataFrame, show_map: bool) -> None:
     st.subheader("Station Map")
-    map_frame = station_map_frame(state)
 
     if map_frame.empty:
         st.info("No station coordinates available.")
         return
 
-    st.map(map_frame[["lat", "lon"]], height=460, width="stretch")
+    if show_map:
+        st.map(map_frame[["lat", "lon"]], height=460, width="stretch")
+    else:
+        st.caption("Map rendering is disabled for faster initial load. Enable Show map to draw station coordinates.")
+
     st.markdown("<div class='zaproute-map-spacer'></div>", unsafe_allow_html=True)
     missing_coordinate_count = len(state.stations) - len(map_frame)
     if missing_coordinate_count > 0:
         st.warning(f"{missing_coordinate_count} station(s) are missing coordinates and are not shown on the map.")
 
-    table_frame = station_map_table_frame(map_frame)
     if table_frame.empty:
         st.info("No station status rows available.")
         return
@@ -1166,29 +1885,79 @@ def main() -> None:
     if st is None:
         raise RuntimeError("Streamlit is required to run the dashboard UI.")
 
+    dashboard_started_at = start_timing("dashboard start")
     st.set_page_config(page_title="ZapRoute Runtime Dashboard", layout="wide")
     render_dashboard_style()
-    st.title("ZapRoute Runtime Dashboard")
-    st.caption("Live EV-side request, recommendation, station, and grid visibility for the Dundee demo runtime.")
+    render_page_header()
 
-    runtime = RuntimeManager(REPO_ROOT)
-    _, state, metrics, metric_history, recommendations, external_requests, events, status = load_runtime_data(REPO_ROOT)
-    run_sidebar_controls(runtime, status)
+    state, metrics, status = timed_section(
+        "runtime/state load",
+        lambda: load_cached_runtime_state(str(REPO_ROOT)),
+        (None, None, {}),
+    )
+    external_requests, recommendations = timed_section(
+        "recommendations/request artifacts load",
+        lambda: load_cached_recommendation_artifacts(str(REPO_ROOT)),
+        ([], []),
+    )
+    mobile_activity = timed_section(
+        "DB active sessions load",
+        load_mobile_activity_snapshot,
+        MobileActivitySnapshot([], [], {}, {}, db_available=False, error_message="DB load failed."),
+    )
+    run_sidebar_controls(status)
 
     if state is None or metrics is None:
         st.warning("No runtime snapshot found yet. Use the sidebar to start the Dundee simulator runtime.")
+        finish_timing("render complete", dashboard_started_at)
         return
 
     status_summary = build_status_panel_values(state, metrics, status)
-    render_runtime_overview(state, metrics, status_summary)
-    render_attention_summary(metrics)
-    render_recommendation_history_panel(external_requests, recommendations, state)
-    render_station_map(state)
+    history_frame = recommendation_history_frame(external_requests, recommendations, mobile_activity.user_emails_by_id)
+    latest_recommendation = recommendations[-1] if recommendations else None
+    map_frame, map_table_frame = timed_section(
+        "mapped station details build",
+        lambda: station_map_frames(state),
+        (pd.DataFrame(), pd.DataFrame()),
+    )
+
+    render_runtime_overview(state, metrics, status_summary, mobile_activity)
+    render_attention_summary(metrics, mobile_activity)
+    render_recommendation_history_panel(external_requests, recommendations, state, mobile_activity)
+
+    show_charts = st.checkbox("Show charts", value=False)
+    if show_charts:
+        timed_section(
+            "charts build",
+            lambda: render_activity_charts(
+                station_activity_frame(
+                    state,
+                    external_requests,
+                    recommendations,
+                    mobile_activity,
+                    source_mode=SOURCE_MOBILE_API,
+                ),
+                history_frame,
+                latest_recommendation,
+                mobile_activity,
+                metrics,
+            ),
+            None,
+        )
+    else:
+        skipped_section("charts build")
+
+    show_map = st.checkbox("Show map", value=False)
+    timed_section(
+        "map build",
+        lambda: render_station_map(state, map_frame, map_table_frame, show_map),
+        None,
+    )
 
     left_col, right_col = st.columns([1.05, 0.95])
 
     with left_col:
-        render_current_activity(state, external_requests, recommendations)
+        render_current_activity(state, external_requests, recommendations, mobile_activity)
         render_station_pressure(state)
 
     with right_col:
@@ -1196,7 +1965,8 @@ def main() -> None:
         render_transformer_pressure(state)
 
     render_runtime_configuration(status_summary, status)
-    render_optional_details(state, metric_history, events, external_requests)
+    render_optional_details(state, external_requests)
+    finish_timing("render complete", dashboard_started_at)
 
 
 if __name__ == "__main__":
