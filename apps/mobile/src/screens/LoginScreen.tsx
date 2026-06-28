@@ -16,19 +16,28 @@ import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
 import { signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../stores/authStore';
+import { loginErrorMessage, loginValidationMessage } from '../utils/authErrorMessages';
 
 export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [email, setEmail] = useState('alex.mercer@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const setSession = useAuthStore((state) => state.setSession);
   const authMessage = useAuthStore((state) => state.authMessage);
   const clearAuthMessage = useAuthStore((state) => state.clearAuthMessage);
 
   const handleLogin = async () => {
+    const validationMessage = loginValidationMessage(email, password);
+
+    if (validationMessage) {
+      setError(validationMessage);
+      clearAuthMessage();
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     clearAuthMessage();
@@ -43,9 +52,9 @@ export default function LoginScreen({ navigation }: any) {
       await authStorage.saveRefreshToken(session.refreshToken);
       setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    } catch (e) {
-      console.error(e);
-      setError('Invalid email or password.');
+    } catch (error) {
+      console.error(error);
+      setError(loginErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +75,8 @@ export default function LoginScreen({ navigation }: any) {
       await authStorage.saveRefreshToken(session.refreshToken);
       setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       setError('Google sign-in could not be completed.');
     } finally {
       setIsGoogleLoading(false);

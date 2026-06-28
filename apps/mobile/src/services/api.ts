@@ -76,7 +76,7 @@ type BackendTokenResponse = {
   token_type: string;
 };
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   body: string;
 
