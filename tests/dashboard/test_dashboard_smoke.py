@@ -395,8 +395,34 @@ def test_mapped_station_details_do_not_claim_live_charging_state() -> None:
 
     assert "Charging" not in table_frame.columns
     assert "Queued" not in table_frame.columns
+    assert "Load state" in table_frame.columns
     assert "Runtime utilization" in table_frame.columns
     assert "Runtime headroom kW" in table_frame.columns
+
+
+def test_station_map_marks_normal_busy_congested_station_load_states() -> None:
+    dashboard_app = importlib.import_module("dashboards.sim_dashboard.app")
+    state = _state_snapshot(
+        stations=[
+            _station_snapshot("normal_station", "Normal Station"),
+            _station_snapshot("busy_station", "Busy Station", active_sessions=1, utilization=0.5),
+            _station_snapshot("congested_station", "Congested Station", queue_length=1, utilization=0.9),
+        ],
+    )
+
+    map_frame = dashboard_app.station_map_frame(state)
+    states_by_station = dict(zip(map_frame["station_name"], map_frame["load_state"], strict=False))
+    colors_by_station = dict(zip(map_frame["station_name"], map_frame["map_color"], strict=False))
+
+    assert states_by_station == {
+        "Normal Station": dashboard_app.LOAD_STATE_NORMAL,
+        "Busy Station": dashboard_app.LOAD_STATE_BUSY,
+        "Congested Station": dashboard_app.LOAD_STATE_CONGESTED,
+    }
+    assert colors_by_station["Normal Station"] == dashboard_app.LOAD_STATE_COLORS[dashboard_app.LOAD_STATE_NORMAL]
+    assert colors_by_station["Busy Station"] == dashboard_app.LOAD_STATE_COLORS[dashboard_app.LOAD_STATE_BUSY]
+    assert colors_by_station["Congested Station"] == dashboard_app.LOAD_STATE_COLORS[dashboard_app.LOAD_STATE_CONGESTED]
+    assert {"utilization_label", "wait_label", "headroom_label"}.issubset(map_frame.columns)
 
 
 def test_recommendation_summary_keeps_full_station_and_cost_text() -> None:
@@ -454,7 +480,16 @@ def _state_snapshot(
     )
 
 
-def _station_snapshot(station_id: str, station_name: str) -> StationStateSnapshot:
+def _station_snapshot(
+    station_id: str,
+    station_name: str,
+    *,
+    active_sessions: int = 0,
+    queue_length: int = 0,
+    utilization: float = 0.0,
+    estimated_wait_minutes: int = 0,
+    transformer_headroom_kw: float = 100.0,
+) -> StationStateSnapshot:
     return StationStateSnapshot(
         station_id=station_id,
         station_name=station_name,
@@ -464,11 +499,11 @@ def _station_snapshot(station_id: str, station_name: str) -> StationStateSnapsho
         longitude=-2.97,
         cp_count_total=2,
         station_capacity_kw_assumed=50.0,
-        active_sessions=0,
-        queue_length=0,
-        utilization=0.0,
-        estimated_wait_minutes=0,
-        transformer_headroom_kw=100.0,
+        active_sessions=active_sessions,
+        queue_length=queue_length,
+        utilization=utilization,
+        estimated_wait_minutes=estimated_wait_minutes,
+        transformer_headroom_kw=transformer_headroom_kw,
     )
 
 
