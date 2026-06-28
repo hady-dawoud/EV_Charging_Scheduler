@@ -115,6 +115,7 @@ services:
       - ./models/rl_feeder_final:/app/models/rl_feeder_final:ro
     environment:
       PYTHONPATH: /app:/app/packages/ev_core/src
+      DATABASE_URL: postgresql+psycopg://ev_user:${POSTGRES_PASSWORD:-change_me}@postgres:5432/ev_smart_charging
       RECOMMENDATION_POLICY_NAME: ${RECOMMENDATION_POLICY_NAME:-rl_safety_preference}
       RL_SAFETY_FILTER_ENABLED: ${RL_SAFETY_FILTER_ENABLED:-true}
       RL_SAFETY_FILTER_STRICT: ${RL_SAFETY_FILTER_STRICT:-true}
@@ -122,7 +123,10 @@ services:
       FEEDER_RL_DATA_DIR: /app/data/processed/evside_feeder_rl
       RL_POLICY_FAIL_CLOSED: ${RL_POLICY_FAIL_CLOSED:-true}
     depends_on:
-      - runtime
+      postgres:
+        condition: service_healthy
+      runtime:
+        condition: service_started
     restart: unless-stopped
 
   mobile:

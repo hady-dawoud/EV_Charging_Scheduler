@@ -1,28 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
   Navigation,
-  Zap,
   Clock,
   DollarSign,
   Activity,
 } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { WebView } from 'react-native-webview';
 import { NeonButton } from '../components/NeonButton';
+import { StationMap } from '../components/StationMap';
 import { api } from '../services/api';
 import { useSettingsStore } from '../stores/settingsStore';
 import { formatCurrencyAmount, formatDistanceKm } from '../utils/preferencesFormat';
 import { theme, webStyles } from '../theme';
-import { buildGoogleMapsEmbedUrl, getStationMapLocation } from '../data/demoLocations';
+import { getStationMapLocation } from '../data/demoLocations';
 import { RootStackParamList, UiStationRecommendation } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StationDetails'>;
@@ -48,7 +46,6 @@ const fallbackStation: UiStationRecommendation = {
 };
 
 const formatMinutes = (minutes: number) => `${minutes} min`;
-const formatCurrency = (gbp: number) => `£${gbp.toFixed(2)}`;
 const formatZoneName = (zoneId: string) =>
   zoneId.replace('zone_', '').replaceAll('_', ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 
@@ -100,36 +97,15 @@ export default function StationDetailsScreen({ navigation, route }: Props) {
       latitude: station.latitude,
       longitude: station.longitude,
     });
-  const destinationLabel = `${station.name}, ${stationLocation.address}`;
-  const mapUrl = buildGoogleMapsEmbedUrl(stationLocation);
 
   return (
     <View style={styles.container}>
       <View style={styles.mapBg}>
-        {Platform.OS === 'web' ? (
-          <View style={styles.mapImage}>
-            {React.createElement('iframe', {
-              key: mapUrl,
-              src: mapUrl,
-              title: `${station.name} map`,
-              style: {
-                border: 0,
-                width: '100%',
-                height: '100%',
-              },
-              loading: 'lazy',
-            })}
-          </View>
-        ) : (
-          <WebView
-            key={mapUrl}
-            source={{ uri: mapUrl }}
-            style={styles.mapImage}
-            javaScriptEnabled
-            domStorageEnabled
-          />
-        )}
-
+        <StationMap
+          stationLocation={stationLocation}
+          stationName={station.name}
+          style={styles.mapImage}
+        />
       </View>
 
       <SafeAreaView style={styles.topNav}>
@@ -251,19 +227,6 @@ const styles = StyleSheet.create({
   stationName: { color: theme.colors.text, fontSize: 28, fontWeight: 'bold', marginBottom: 6 },
   providerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: theme.spacing.xl },
   providerText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
-  routeOriginText: {
-    color: theme.colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: -theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-  },
-  coordinateWarningText: {
-    color: '#f59e0b',
-    fontSize: 11,
-    lineHeight: 16,
-    marginBottom: theme.spacing.lg,
-  },
   statsGrid: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl },
   statCard: {
     ...theme.glass,

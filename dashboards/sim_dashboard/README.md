@@ -10,5 +10,36 @@ The dashboard is intentionally independent from the existing API/mobile prototyp
 
 From the repository root, run the dashboard using the existing API virtual environment:
 
+export DATABASE_URL="postgresql+psycopg://ev_user:change_me@localhost:5432/ev_smart_charging"
 ```bash
 ./apps/api/.venv/Scripts/python.exe -m streamlit run dashboards/sim_dashboard/app.py --server.headless true --server.port 8501
+```
+./apps/api/.venv/Scripts/python.exe -m streamlit run dashboards/demo_scenarios/app.py --server.headless true --server.port 8502
+
+Open locally:
+
+```text
+http://127.0.0.1:8501
+```
+
+The VM dashboard test URL is:
+
+```text
+https://smartevcharging.uaenorth.cloudapp.azure.com/dashboard/
+```
+
+## Data loading
+
+The dashboard reads `RuntimeStorage` first:
+
+- `get_recent_external_requests()`
+- `get_recent_recommendations()`
+
+If either SQLite-backed call returns no records, the dashboard falls back to the existing JSON artifacts under `outputs/runtime/` and validates them with the existing Pydantic runtime contracts:
+
+- `ExternalChargingRequest`
+- `RecommendationResponse`
+
+## Deployment compatibility
+
+`Dockerfile.dashboard` and `docker-compose.yml` are intentionally unchanged for dashboard UI/data-display work unless a concrete build or runtime test proves they need a change.

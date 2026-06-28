@@ -17,18 +17,26 @@ import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
 import { signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../stores/authStore';
+import { signupErrorMessage, signupValidationMessage } from '../utils/authErrorMessages';
 
 export default function SignupScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [fullName, setFullName] = useState('Alex Mercer');
-  const [email, setEmail] = useState('alex.mercer@example.com');
-  const [password, setPassword] = useState('password123');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const setSession = useAuthStore((state) => state.setSession);
 
   const handleSignup = async () => {
+    const validationMessage = signupValidationMessage(fullName, email, password);
+
+    if (validationMessage) {
+      setError(validationMessage);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -42,9 +50,9 @@ export default function SignupScreen({ navigation }: any) {
       await authStorage.saveRefreshToken(session.refreshToken);
       setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    } catch (e) {
-      console.error(e);
-      setError('Could not create account. Try another email or check the password.');
+    } catch (error) {
+      console.error(error);
+      setError(signupErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +72,8 @@ export default function SignupScreen({ navigation }: any) {
       await authStorage.saveRefreshToken(session.refreshToken);
       setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       setError('Google sign-up could not be completed.');
     } finally {
       setIsGoogleLoading(false);
