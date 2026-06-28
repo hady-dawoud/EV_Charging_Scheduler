@@ -11,21 +11,32 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
 import { NeonButton } from '../components/NeonButton';
+import { GoogleLogo } from '../components/GoogleLogo';
 import { theme, webStyles } from '../theme';
 import { api } from '../services/api';
 import { authStorage } from '../services/authStorage';
+import { signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../stores/authStore';
+import { signupErrorMessage, signupValidationMessage } from '../utils/authErrorMessages';
 
 export default function SignupScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState('Alex Mercer');
-  const [email, setEmail] = useState('alex.mercer@example.com');
-  const [password, setPassword] = useState('password123');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const setSession = useAuthStore((state) => state.setSession);
 
   const handleSignup = async () => {
+    const validationMessage = signupValidationMessage(fullName, email, password);
+
+    if (validationMessage) {
+      setError(validationMessage);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -39,11 +50,33 @@ export default function SignupScreen({ navigation }: any) {
       await authStorage.saveRefreshToken(session.refreshToken);
       setSession(session.user, session.accessToken);
       navigation.replace('Main');
-    } catch (e) {
-      console.error(e);
-      setError('Could not create account. Try another email or check the password.');
+    } catch (error) {
+      console.error(error);
+      setError(signupErrorMessage(error));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+
+    try {
+      const idToken = await signInWithGoogle();
+      const session = await api.loginWithGoogle({
+        idToken,
+        deviceId: 'mobile-app-google',
+      });
+
+      await authStorage.saveRefreshToken(session.refreshToken);
+      setSession(session.user, session.accessToken);
+      navigation.replace('Main');
+    } catch (error) {
+      console.error(error);
+      setError('Google sign-up could not be completed.');
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -119,6 +152,28 @@ export default function SignupScreen({ navigation }: any) {
             <Text style={styles.primaryBtnText}>Sign Up</Text>
           )}
         </NeonButton>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>Or continue with</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.socialBtn}
+          onPress={handleGoogleSignup}
+          disabled={isGoogleLoading}
+          activeOpacity={0.85}
+        >
+          {isGoogleLoading ? (
+            <ActivityIndicator color={theme.colors.text} />
+          ) : (
+            <View style={styles.socialBtnContent}>
+              <GoogleLogo size={20} />
+              <Text style={styles.socialBtnText}>Google</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.signinRow}>
           <Text style={styles.signinText}>Already have an account?</Text>
@@ -204,6 +259,41 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+  },
+  dividerText: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
+    paddingHorizontal: theme.spacing.md,
+  },
+  socialBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+  },
+  socialBtn: {
+    height: 56,
+    backgroundColor: theme.colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  socialBtnText: {
+    color: theme.colors.text,
+    fontWeight: '600',
   },
   signinRow: {
     flexDirection: 'row',

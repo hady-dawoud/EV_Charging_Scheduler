@@ -4,11 +4,17 @@ import sys
 import types
 from types import SimpleNamespace
 from datetime import datetime, timedelta
+import importlib
+
+import pytest
 
 for module_name in ("numpy", "pandas"):
-    module = types.ModuleType(module_name)
-    module.DataFrame = object
-    sys.modules.setdefault(module_name, module)
+    try:
+        importlib.import_module(module_name)
+    except ImportError:
+        module = types.ModuleType(module_name)
+        module.DataFrame = object
+        sys.modules.setdefault(module_name, module)
 
 from ev_core.contracts.requests import ExternalChargingRequest
 from ev_core.contracts.responses import RecommendationResponse
@@ -22,9 +28,17 @@ from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider
 class CapturingRecommendationService:
     def __init__(self) -> None:
         self.seen_policy_name: str | None = None
+        self.seen_runtime_context = None
+        self.seen_policy_selection_metadata = None
+        self.seen_preference_mode = None
+        self.seen_candidate_contexts = None
 
     def recommend(self, **kwargs):
         self.seen_policy_name = kwargs["policy_name"]
+        self.seen_runtime_context = kwargs.get("runtime_context")
+        self.seen_policy_selection_metadata = kwargs.get("policy_selection_metadata")
+        self.seen_preference_mode = kwargs.get("preference_mode")
+        self.seen_candidate_contexts = kwargs.get("candidate_contexts")
         return RecommendationResponse(
             request_id=kwargs["request_id"],
             client_request_id=kwargs["client_request_id"],
@@ -33,6 +47,7 @@ class CapturingRecommendationService:
             top_recommendation=None,
             alternatives=[],
             source_type=kwargs["source_type"],
+            metadata=kwargs.get("policy_selection_metadata") or {},
         )
 
 
@@ -69,6 +84,34 @@ def candidate() -> CandidateContext:
     )
 
 
+def priced_candidate() -> CandidateContext:
+    base = candidate()
+    return CandidateContext(
+        **{
+            **base.__dict__,
+            "metadata": {
+                "dynamic_pricing_enabled": True,
+                "final_price_per_kwh": 0.42,
+            },
+        }
+    )
+
+
+def feeder_context_result() -> SimpleNamespace:
+    return SimpleNamespace(
+        runtime_context={
+            "feeder_observation": [0.0],
+            "feeder_action_mask": [True],
+            "feeder_station_ids": ["station-a"],
+        },
+        metadata={
+            "feeder_context_available": True,
+            "feeder_action_count": 1,
+            "offline_feeder_rl_adapter": True,
+        },
+    )
+
+
 def test_get_ranked_recommendations_passes_optional_recommendation_policy_name() -> None:
     env = DundeeEnv.__new__(DundeeEnv)
     service = CapturingRecommendationService()
@@ -83,6 +126,199 @@ def test_get_ranked_recommendations_passes_optional_recommendation_policy_name()
     )
 
     assert service.seen_policy_name == "closest"
+
+
+def test_get_ranked_recommendations_builds_feeder_context_for_feeder_policy(monkeypatch) -> None:
+    from ev_core.env import dundee_env
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    service = CapturingRecommendationService()
+    env.recommendation_service = service
+    env.current_time = datetime(2024, 6, 10, 12, 0)
+    env._build_candidate_contexts = lambda request: [candidate()]
+    env._record_event = lambda *args, **kwargs: None
+
+    def fake_build_feeder_runtime_context(request, **kwargs):
+        return SimpleNamespace(
+            runtime_context={
+                "feeder_observation": [0.0],
+                "feeder_action_mask": [True],
+                "feeder_station_ids": ["station-a"],
+            },
+            metadata={
+                "feeder_context_available": True,
+                "feeder_action_count": 1,
+                "offline_feeder_rl_adapter": True,
+            },
+        )
+
+    monkeypatch.setattr(dundee_env, "build_feeder_runtime_context", fake_build_feeder_runtime_context)
+
+    env.get_ranked_recommendations(
+        simulation_request(),
+        recommendation_policy_name="rl_maskable_ppo_feeder",
+        policy_selection_metadata={"effective_policy_name": "rl_maskable_ppo_feeder"},
+    )
+
+    assert service.seen_policy_name == "rl_maskable_ppo_feeder"
+    assert service.seen_runtime_context["feeder_action_mask"] == [True]
+    assert service.seen_policy_selection_metadata["feeder_context_available"] is True
+    assert service.seen_policy_selection_metadata["offline_feeder_rl_adapter"] is True
+
+
+@pytest.mark.parametrize(
+    "policy_name",
+    [
+        "rl_safety_closest",
+        "rl_safety_cheapest",
+        "rl_safety_fastest",
+        "rl_safety_weighted",
+        "rl_safety_preference",
+    ],
+)
+def test_get_ranked_recommendations_builds_feeder_context_for_safety_policies(
+    monkeypatch,
+    policy_name: str,
+) -> None:
+    from ev_core.env import dundee_env
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    service = CapturingRecommendationService()
+    env.recommendation_service = service
+    env.current_time = datetime(2024, 6, 10, 12, 0)
+    env._build_candidate_contexts = lambda request: [priced_candidate()]
+    env._record_event = lambda *args, **kwargs: None
+    build_calls = []
+
+    def fake_build_feeder_runtime_context(request, **kwargs):
+        build_calls.append((request, kwargs))
+        return feeder_context_result()
+
+    monkeypatch.setattr(
+        dundee_env,
+        "build_feeder_runtime_context",
+        fake_build_feeder_runtime_context,
+    )
+    safety_metadata = {
+        "effective_policy_name": policy_name,
+        "rl_safety_filter_enabled": True,
+        "rl_safety_filter_mode": "penalty",
+        "rl_safety_filter_strict": True,
+        "rl_safety_filter_penalty_weight": 0.4,
+        "rl_safety_block_unsafe": False,
+        "rl_safety_mapping_mode": "exact_only",
+    }
+
+    env.get_ranked_recommendations(
+        simulation_request(),
+        recommendation_policy_name=policy_name,
+        policy_selection_metadata=safety_metadata,
+    )
+
+    assert len(build_calls) == 1
+    assert service.seen_policy_name == policy_name
+    assert service.seen_runtime_context["feeder_action_mask"] == [True]
+    for key, value in safety_metadata.items():
+        if key.startswith("rl_safety_"):
+            assert service.seen_runtime_context[key] == value
+    assert service.seen_preference_mode == "closest"
+    assert service.seen_candidate_contexts[0].metadata == {
+        "dynamic_pricing_enabled": True,
+        "final_price_per_kwh": 0.42,
+    }
+
+
+@pytest.mark.parametrize(
+    "policy_name",
+    ["closest", "cheapest", "fastest", "weighted_score"],
+)
+def test_get_ranked_recommendations_skips_feeder_context_for_normal_policies(
+    monkeypatch,
+    policy_name: str,
+) -> None:
+    from ev_core.env import dundee_env
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    service = CapturingRecommendationService()
+    env.recommendation_service = service
+    env.current_time = datetime(2024, 6, 10, 12, 0)
+    env._build_candidate_contexts = lambda request: [candidate()]
+    env._record_event = lambda *args, **kwargs: None
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("normal deterministic policies do not need feeder context")
+
+    monkeypatch.setattr(
+        dundee_env,
+        "build_feeder_runtime_context",
+        fail_if_called,
+    )
+
+    env.get_ranked_recommendations(
+        simulation_request(),
+        recommendation_policy_name=policy_name,
+        policy_selection_metadata={"rl_safety_filter_enabled": False},
+    )
+
+    assert service.seen_policy_name == policy_name
+    assert "feeder_context_available" not in service.seen_runtime_context
+
+
+def test_get_ranked_recommendations_builds_feeder_context_when_safety_is_automatic(
+    monkeypatch,
+) -> None:
+    from ev_core.env import dundee_env
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    service = CapturingRecommendationService()
+    env.recommendation_service = service
+    env.current_time = datetime(2024, 6, 10, 12, 0)
+    env._build_candidate_contexts = lambda request: [candidate()]
+    env._record_event = lambda *args, **kwargs: None
+    build_calls = []
+
+    def fake_build_feeder_runtime_context(request, **kwargs):
+        build_calls.append((request, kwargs))
+        return feeder_context_result()
+
+    monkeypatch.setattr(
+        dundee_env,
+        "build_feeder_runtime_context",
+        fake_build_feeder_runtime_context,
+    )
+
+    env.get_ranked_recommendations(
+        simulation_request(),
+        recommendation_policy_name="closest",
+        policy_selection_metadata={"rl_safety_filter_enabled": True},
+    )
+
+    assert len(build_calls) == 1
+    assert service.seen_runtime_context["feeder_context_available"] is True
+
+
+def test_get_ranked_recommendations_skips_feeder_context_for_deterministic_policy(monkeypatch) -> None:
+    from ev_core.env import dundee_env
+
+    env = DundeeEnv.__new__(DundeeEnv)
+    service = CapturingRecommendationService()
+    env.recommendation_service = service
+    env.current_time = datetime(2024, 6, 10, 12, 0)
+    env._build_candidate_contexts = lambda request: [candidate()]
+    env._record_event = lambda *args, **kwargs: None
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("feeder context should only be built for rl_maskable_ppo_feeder")
+
+    monkeypatch.setattr(dundee_env, "build_feeder_runtime_context", fail_if_called)
+
+    env.get_ranked_recommendations(
+        simulation_request(),
+        recommendation_policy_name="cheapest",
+    )
+
+    assert service.seen_policy_name == "cheapest"
+    assert service.seen_runtime_context == {"simulated_timestamp": env.current_time}
 
 
 class CapturingCandidateBuilder:

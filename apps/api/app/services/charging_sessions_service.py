@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.models.charging_session import ChargingSession as ChargingSessionModel
+from app.models.reservation import Reservation as ReservationModel
 from app.models.user import User
 from app.repositories.charging_sessions_repository import (
     create_charging_session_record,
@@ -14,7 +15,11 @@ from app.repositories.charging_sessions_repository import (
     list_charging_session_records_for_user,
     save_charging_session_record,
 )
-from app.repositories.reservations_repository import get_reservation_record_for_user
+from app.repositories.reservations_repository import (
+    get_reservation_record_by_id,
+    get_reservation_record_for_user,
+    save_reservation_record,
+)
 from app.repositories.stations_repository import get_station_record_by_id
 from app.schemas.charging_sessions import (
     ChargingSessionCompleteRequest,
@@ -36,6 +41,10 @@ class ChargingSessionReservationNotFoundError(ValueError):
 
 
 class ChargingSessionAlreadyCompletedError(ValueError):
+    pass
+
+
+class ChargingSessionStopNotAllowedError(ValueError):
     pass
 
 
@@ -200,6 +209,80 @@ def get_active_charging_session(
     return build_charging_session_read(db, session)
 
 
+
+def _reservation_for_session(
+    db: Session,
+    session: ChargingSessionModel,
+) -> ReservationModel | None:
+    if session.reservation is not None:
+        return session.reservation
+
+    if session.reservation_id is None:
+        return None
+
+    return get_reservation_record_by_id(
+        db,
+        reservation_id=session.reservation_id,
+    )
+
+
+def _runtime_unit_price_gbp_per_kwh(
+    *,
+    session: ChargingSessionModel,
+    reservation: ReservationModel,
+) -> float | None:
+    if reservation.estimated_cost_gbp is None:
+        return None
+
+    if reservation.estimated_cost_gbp < 0:
+        return None
+
+    if (
+        reservation.estimated_duration_minutes is None
+        or reservation.estimated_duration_minutes <= 0
+    ):
+        return None
+
+    if session.charger_power_kw is None or session.charger_power_kw <= 0:
+        return None
+
+    estimated_energy_kwh = (
+        session.charger_power_kw
+        * (reservation.estimated_duration_minutes / 60)
+    )
+
+    if estimated_energy_kwh <= 0:
+        return None
+
+    return float(reservation.estimated_cost_gbp) / estimated_energy_kwh
+
+
+def _runtime_cost_total_gbp(
+    db: Session,
+    *,
+    session: ChargingSessionModel,
+    energy_kwh: float,
+    provided_cost_total: float | None,
+) -> float | None:
+    reservation = _reservation_for_session(db, session)
+
+    if reservation is not None and reservation.estimated_cost_gbp is not None:
+        runtime_unit_price = _runtime_unit_price_gbp_per_kwh(
+            session=session,
+            reservation=reservation,
+        )
+
+        if runtime_unit_price is not None:
+            return round(max(0.0, energy_kwh) * runtime_unit_price, 2)
+
+        return round(float(reservation.estimated_cost_gbp), 2)
+
+    if provided_cost_total is not None:
+        return round(float(provided_cost_total), 2)
+
+    return None
+
+
 def complete_charging_session(
     db: Session,
     *,
@@ -226,8 +309,65 @@ def complete_charging_session(
         else datetime.now(timezone.utc)
     )
     session.energy_kwh = request.energy_kwh
-    session.cost_total = request.cost_total
+    session.cost_total = _runtime_cost_total_gbp(
+        db,
+        session=session,
+        energy_kwh=request.energy_kwh,
+        provided_cost_total=request.cost_total,
+    )
 
     saved = save_charging_session_record(db, session)
 
+    if saved.reservation_id is not None:
+        reservation = get_reservation_record_by_id(
+            db,
+            reservation_id=saved.reservation_id,
+        )
+        if reservation is not None:
+            reservation.status = "completed"
+            save_reservation_record(db, reservation)
+
     return build_charging_session_read(db, saved)
+
+
+
+def mock_complete_charging_session(
+    db: Session,
+    *,
+    current_user: User,
+    session_id: uuid.UUID,
+) -> ChargingSessionRead:
+    session = get_charging_session_record_for_user(
+        db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if session is None:
+        raise ChargingSessionNotFoundError("Charging session not found")
+
+    if session.status == "completed":
+        raise ChargingSessionAlreadyCompletedError("Charging session is already completed")
+
+    if session.status != "active":
+        raise ChargingSessionStopNotAllowedError(
+            f"Session cannot be stopped from status '{session.status}'"
+        )
+
+    ended_at = datetime.now(timezone.utc)
+    started_at = _ensure_timezone(session.started_at)
+    duration_hours = max(0, (ended_at - started_at).total_seconds() / 3600)
+
+    charger_power_kw = session.charger_power_kw or 22.0
+    energy_kwh = round(max(0.1, charger_power_kw * duration_hours), 3)
+
+    return complete_charging_session(
+        db,
+        current_user=current_user,
+        session_id=session_id,
+        request=ChargingSessionCompleteRequest(
+            ended_at=ended_at,
+            energy_kwh=energy_kwh,
+            cost_total=None,
+        ),
+    )

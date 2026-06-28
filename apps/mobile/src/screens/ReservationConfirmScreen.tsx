@@ -6,14 +6,18 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, CheckCircle, MapPin } from 'lucide-react-native';
+import { ChevronLeft, CheckCircle, MapPin, Clock3 } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { NeonButton } from '../components/NeonButton';
 import { api } from '../services/api';
+import { useSettingsStore } from '../stores/settingsStore';
+import { formatCurrencyAmount } from '../utils/preferencesFormat';
 import { theme, webStyles } from '../theme';
+import { buildGoogleMapsDirectionsUrl, getStationMapLocation } from '../data/demoLocations';
 import type { ApiReservation, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReservationConfirm'>;
@@ -33,19 +37,116 @@ const formatReservationTime = (iso: string) => {
 };
 
 export default function ReservationConfirmScreen({ navigation, route }: Props) {
-  const { station } = route.params;
-  const [reservation, setReservation] = useState<ApiReservation | null>(null);
-  const [isCreating, setIsCreating] = useState(true);
+  const preferences = useSettingsStore((state) => state.preferences);
+  const {
+    station,
+    existingReservation,
+    selectedLocationName,
+    selectedLocationLatitude,
+    selectedLocationLongitude,
+  } = route.params;
+
+  const [exactStationLocation, setExactStationLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address: string;
+    isExact: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api
+      .getStation(station.id)
+      .then((apiStation) => {
+        if (!isMounted) return;
+
+        setExactStationLocation({
+          latitude: apiStation.latitude,
+          longitude: apiStation.longitude,
+          address:
+            apiStation.postcode != null && apiStation.postcode.length > 0
+              ? `${apiStation.station_name}, ${apiStation.postcode}`
+              : apiStation.station_name,
+          isExact: true,
+        });
+      })
+      .catch((error) => {
+        console.error('Could not load exact station location', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [station.id, existingReservation]);
+  const stationLocation =
+    exactStationLocation ??
+    getStationMapLocation({
+      stationId: station.id,
+      stationName: station.name,
+      zoneId: station.zoneId,
+      latitude: station.latitude,
+      longitude: station.longitude,
+    });
+
+  const originLocation =
+    typeof selectedLocationLatitude === 'number' &&
+    Number.isFinite(selectedLocationLatitude) &&
+    typeof selectedLocationLongitude === 'number' &&
+    Number.isFinite(selectedLocationLongitude)
+      ? {
+          latitude: selectedLocationLatitude,
+          longitude: selectedLocationLongitude,
+        }
+      : undefined;
+
+  const destinationLabel = `${station.name}, ${stationLocation.address}`;
+  const [reservation, setReservation] = useState<ApiReservation | null>(
+    existingReservation ?? null
+  );
+  const [isCreating, setIsCreating] = useState(!existingReservation);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const createReservation = async () => {
+      if (existingReservation) {
+        setReservation(existingReservation);
+        setIsCreating(false);
+        setError(null);
+        return;
+      }
+
       setIsCreating(true);
       setError(null);
 
       try {
+        const [activeSession, reservations] = await Promise.all([
+          api.getActiveChargingSession(),
+          api.getMyReservations(),
+        ]);
+
+        const openReservation = reservations.find(
+          (item) =>
+            (item.status === 'confirmed' || item.status === 'active') &&
+            !item.cancelled_at
+        );
+
+        if (activeSession) {
+          if (isMounted) {
+            setError('You already have an active charging session. Stop it before reserving another charger.');
+          }
+          return;
+        }
+
+        if (openReservation) {
+          if (isMounted) {
+            setError('You already have a reserved charger. Start or cancel it before reserving another charger.');
+          }
+          return;
+        }
+
         const now = new Date();
         const reservedUntil = new Date(now.getTime() + 15 * 60 * 1000);
 
@@ -85,11 +186,36 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
     };
   }, [station.id]);
 
+  const handleOpenGoogleMaps = () => {
+    const destinationLabel = `${station.name}, ${stationLocation.address}`;
+
+    const selectedOrigin =
+      typeof selectedLocationLatitude === 'number' &&
+      Number.isFinite(selectedLocationLatitude) &&
+      typeof selectedLocationLongitude === 'number' &&
+      Number.isFinite(selectedLocationLongitude)
+        ? {
+            latitude: selectedLocationLatitude,
+            longitude: selectedLocationLongitude,
+          }
+        : undefined;
+
+    const url = buildGoogleMapsDirectionsUrl(
+      stationLocation,
+      selectedOrigin,
+      destinationLabel
+    );
+
+    void Linking.openURL(url);
+  };
+
   const details = useMemo(() => {
     const reservedAtIso = reservation?.reserved_start_at ?? new Date().toISOString();
 
     return [
       { label: 'Station', value: reservation?.station_name ?? station.name },
+      ...(selectedLocationName ? [{ label: 'From', value: selectedLocationName }] : []),
+      { label: 'Location', value: stationLocation.address },
       { label: 'Reserved At', value: formatReservationTime(reservedAtIso) },
       {
         label: 'Est. Duration',
@@ -97,11 +223,11 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
       },
       {
         label: 'Est. Cost',
-        value: formatCurrency(station.estimatedCostGbp),
+        value: formatCurrencyAmount(station.estimatedCostGbp, preferences.currency),
         highlight: true,
       },
     ];
-  }, [reservation, station]);
+  }, [reservation, station, stationLocation.address, selectedLocationName, preferences.currency]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -126,11 +252,18 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
               ? 'Creating Reservation'
               : error
                 ? 'Reservation Failed'
-                : 'Reservation Confirmed'}
+                : existingReservation
+                  ? 'Reservation Details'
+                  : 'Reservation Confirmed'}
           </Text>
           <Text style={styles.successSub}>
             {error ?? `Your spot at ${reservation?.station_name ?? station.name} has been secured.`}
           </Text>
+          {!error && selectedLocationName ? (
+            <Text style={styles.confirmationOriginText}>
+              Recommended from {selectedLocationName}
+            </Text>
+          ) : null}
         </View>
 
         <View style={[styles.detailsCard, webStyles.glass]}>
@@ -149,6 +282,20 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.actions}>
+          <TouchableOpacity
+            style={[
+              styles.mapsBtn,
+              (isCreating || Boolean(error)) && styles.disabledBtn,
+            ]}
+            onPress={handleOpenGoogleMaps}
+            disabled={isCreating || Boolean(error)}
+            activeOpacity={0.85}
+          >
+            <MapPin color={theme.colors.primary} size={20} />
+            <Text style={styles.mapsBtnText}>Navigate with Google Maps</Text>
+          </TouchableOpacity>
+
+
           <NeonButton
             glow="small"
             buttonStyle={[styles.navBtn, isCreating && styles.disabledBtn]}
@@ -157,7 +304,7 @@ export default function ReservationConfirmScreen({ navigation, route }: Props) {
             disabled={isCreating}
             activeOpacity={0.85}
           >
-            <MapPin color="#000" size={20} />
+            <Clock3 color="#000" size={20} />
             <Text style={styles.navBtnText}>View Sessions</Text>
           </NeonButton>
 
@@ -225,7 +372,30 @@ const styles = StyleSheet.create({
   },
   detailLabel: { color: theme.colors.textMuted, fontSize: 14 },
   detailValue: { color: theme.colors.text, fontSize: 14, fontWeight: 'bold', flexShrink: 1, textAlign: 'right' },
+  confirmationOriginText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: theme.spacing.sm,
+    textAlign: 'center',
+  },
   actions: { gap: theme.spacing.md },
+  mapsBtn: {
+    height: 56,
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+  },
+  mapsBtnText: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
   navBtnFrame: {
     marginBottom: theme.spacing.md,
   },

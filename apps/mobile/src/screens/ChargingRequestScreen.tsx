@@ -7,11 +7,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, MapPin, Zap, Minus, Plus } from 'lucide-react-native';
+import { ChevronLeft, MapPin, Zap, Minus, Plus, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NeonButton } from '../components/NeonButton';
+import { api } from '../services/api';
 import { fallbackVehicle, useVehicleStore } from '../stores/vehicleStore';
 import { theme, webStyles } from '../theme';
+import { DEFAULT_DEMO_LOCATION, DUNDEE_DEMO_LOCATIONS } from '../data/demoLocations';
 import {
   RecommendationChargerType,
   RecommendationPreferenceMode,
@@ -28,10 +30,53 @@ export default function ChargingRequestScreen({ navigation }: Props) {
   const activeVehicle = vehicle ?? fallbackVehicle;
   const minTargetSoC = Math.min(100, activeVehicle.currentSoC + TARGET_SOC_STEP);
   const [targetSoC, setTargetSoC] = useState(Math.max(80, minTargetSoC));
+  const [selectedLocation, setSelectedLocation] = useState(DEFAULT_DEMO_LOCATION);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [activeSessionWarning, setActiveSessionWarning] = useState<string | null>(null);
 
   useEffect(() => {
     loadVehicle();
   }, [loadVehicle]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkActiveSession = async () => {
+      try {
+        const [session, reservations] = await Promise.all([
+          api.getActiveChargingSession(),
+          api.getMyReservations(),
+        ]);
+
+        const openReservation = reservations.find(
+          (item) =>
+            (item.status === 'confirmed' || item.status === 'active') &&
+            !item.cancelled_at
+        );
+
+        if (isMounted && session) {
+          setActiveSessionWarning(
+            'You already have an active charging session. Stop it before requesting another charger.'
+          );
+          return;
+        }
+
+        if (isMounted && openReservation) {
+          setActiveSessionWarning(
+            'You already have a reserved charger. Start or cancel it before requesting another charger.'
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void checkActiveSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setTargetSoC((current) => Math.max(current, minTargetSoC));
@@ -42,6 +87,10 @@ export default function ChargingRequestScreen({ navigation }: Props) {
     useState<RecommendationChargerType>('any');
 
   const handleFindRecommendations = () => {
+    if (activeSessionWarning) {
+      return;
+    }
+
     const safeTargetSoC = Math.max(targetSoC, minTargetSoC);
 
     navigation.navigate('LoadingRecommendations', {
@@ -51,6 +100,10 @@ export default function ChargingRequestScreen({ navigation }: Props) {
         chargerType,
         vehicleCurrentSoC: activeVehicle.currentSoC,
         vehicleBatteryCapacity: activeVehicle.batteryCapacity,
+        locationId: selectedLocation.id,
+        locationName: selectedLocation.name,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
       },
     });
   };
@@ -67,10 +120,65 @@ export default function ChargingRequestScreen({ navigation }: Props) {
 
         <View style={[styles.card, webStyles.glass]}>
           <Text style={styles.cardLabel}>CURRENT LOCATION</Text>
-          <View style={styles.locationRow}>
-            <MapPin color={theme.colors.primary} size={20} />
-            <Text style={styles.locationText}>Central Dundee (Demo Runtime)</Text>
-          </View>
+
+          <TouchableOpacity
+            style={styles.locationDropdownButton}
+            onPress={() => setIsLocationDropdownOpen((current) => !current)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.locationDropdownLeft}>
+              <MapPin color={theme.colors.primary} size={18} />
+              <View style={styles.locationDropdownTextGroup}>
+                <Text style={styles.locationDropdownName}>{selectedLocation.name}</Text>
+                <Text style={styles.locationDropdownSubtitle}>{selectedLocation.subtitle}</Text>
+              </View>
+            </View>
+
+            {isLocationDropdownOpen ? (
+              <ChevronUp color={theme.colors.textMuted} size={20} />
+            ) : (
+              <ChevronDown color={theme.colors.textMuted} size={20} />
+            )}
+          </TouchableOpacity>
+
+          {isLocationDropdownOpen ? (
+            <View style={styles.locationDropdownMenu}>
+              {DUNDEE_DEMO_LOCATIONS.map((location) => {
+                const isSelected = selectedLocation.id === location.id;
+
+                return (
+                  <TouchableOpacity
+                    key={location.id}
+                    style={[
+                      styles.locationDropdownOption,
+                      isSelected && styles.locationDropdownOptionActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedLocation(location);
+                      setIsLocationDropdownOpen(false);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.locationOptionHeader}>
+                      <MapPin
+                        color={isSelected ? theme.colors.primary : theme.colors.textMuted}
+                        size={16}
+                      />
+                      <Text
+                        style={[
+                          styles.locationOptionName,
+                          isSelected && styles.locationOptionNameActive,
+                        ]}
+                      >
+                        {location.name}
+                      </Text>
+                    </View>
+                    <Text style={styles.locationOptionSubtitle}>{location.subtitle}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
 
         <View style={[styles.card, webStyles.glass]}>
@@ -137,13 +245,21 @@ export default function ChargingRequestScreen({ navigation }: Props) {
           </View>
         </View>
 
+        {activeSessionWarning ? (
+          <View style={[styles.activeSessionBlock, webStyles.glass]}>
+            <Text style={styles.activeSessionBlockTitle}>Active session in progress</Text>
+            <Text style={styles.activeSessionBlockText}>{activeSessionWarning}</Text>
+          </View>
+        ) : null}
+
         <NeonButton
-          buttonStyle={styles.primaryBtn}
+          buttonStyle={[styles.primaryBtn, activeSessionWarning && styles.primaryBtnDisabled]}
           onPress={handleFindRecommendations}
+          disabled={Boolean(activeSessionWarning)}
           activeOpacity={0.85}
         >
           <Zap color="#000" fill="#000" size={20} />
-          <Text style={styles.primaryBtnText}>Find Best Options</Text>
+          <Text style={styles.primaryBtnText}>{activeSessionWarning ? 'Session Active' : 'Find Best Options'}</Text>
         </NeonButton>
       </ScrollView>
     </SafeAreaView>
@@ -170,12 +286,74 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted, fontSize: 10, fontWeight: 'bold',
     letterSpacing: 2, marginBottom: theme.spacing.md,
   },
-  locationRow: {
-    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.05)', padding: 12,
-    borderRadius: theme.radii.md, borderWidth: 1, borderColor: theme.colors.border,
+  locationDropdownButton: {
+    minHeight: 58,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
   },
-  locationText: { color: theme.colors.text, fontSize: 14, fontWeight: '500' },
+  locationDropdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    flex: 1,
+  },
+  locationDropdownTextGroup: {
+    flex: 1,
+  },
+  locationDropdownName: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  locationDropdownSubtitle: {
+    color: theme.colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  locationDropdownMenu: {
+    marginTop: theme.spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
+  },
+  locationDropdownOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  locationDropdownOptionActive: {
+    backgroundColor: 'rgba(0,255,0,0.10)',
+  },
+  locationOptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: 3,
+  },
+  locationOptionName: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  locationOptionNameActive: {
+    color: theme.colors.primary,
+  },
+  locationOptionSubtitle: {
+    color: theme.colors.textMuted,
+    fontSize: 11,
+    paddingLeft: 24,
+  },
   targetControls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,6 +393,27 @@ const styles = StyleSheet.create({
   },
   typeBtnActive: { backgroundColor: 'rgba(0,255,0,0.1)', borderColor: theme.colors.primary },
   typeBtnText: { color: theme.colors.textMuted, fontSize: 11, fontWeight: 'bold' },
+  activeSessionBlock: {
+    ...theme.glass,
+    borderRadius: theme.radii.xl,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    borderColor: 'rgba(245,158,11,0.32)',
+  },
+  activeSessionBlockTitle: {
+    color: '#f59e0b',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  activeSessionBlockText: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.55,
+  },
   primaryBtn: {
     height: 56, backgroundColor: theme.colors.primary,
     borderRadius: theme.radii.lg, flexDirection: 'row',

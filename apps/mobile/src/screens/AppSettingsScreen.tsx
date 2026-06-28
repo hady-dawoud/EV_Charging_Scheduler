@@ -10,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Settings } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { api } from '../services/api';
 import { useSettingsStore } from '../stores/settingsStore';
 import { theme, webStyles } from '../theme';
 import type { CurrencyCode, DistanceUnit, RootStackParamList } from '../types';
@@ -57,8 +56,10 @@ export default function AppSettingsScreen({ navigation }: Props) {
 
         <View style={[styles.card, webStyles.glass]}>
           <View style={styles.cardHeader}>
-            <Settings color={theme.colors.primary} size={22} />
-            <Text style={styles.cardLabel}>DISPLAY PREFERENCES</Text>
+            <View style={styles.cardIcon}>
+              <Settings color={theme.colors.primary} size={18} />
+            </View>
+            <Text style={styles.cardTitle}>Display Preferences</Text>
           </View>
 
           <Text style={styles.sectionLabel}>Distance unit</Text>
@@ -76,16 +77,14 @@ export default function AppSettingsScreen({ navigation }: Props) {
             {renderOption<CurrencyCode>('GBP', 'GBP', preferences.currency, (currency) =>
               updatePreferences({ currency })
             )}
-            {renderOption<CurrencyCode>('EGP', 'EGP', preferences.currency, (currency) =>
+            {renderOption<CurrencyCode>('EUR', 'EUR', preferences.currency, (currency) =>
               updatePreferences({ currency })
             )}
           </View>
         </View>
 
         <View style={[styles.card, webStyles.glass]}>
-          <Text style={styles.cardLabel}>ENVIRONMENT</Text>
-          <Text style={styles.infoLabel}>API base URL</Text>
-          <Text style={styles.infoValue}>{api.getBaseUrl()}</Text>
+          <Text style={styles.cardLabel}>ABOUT</Text>
           <Text style={styles.infoLabel}>App version</Text>
           <Text style={styles.infoValue}>1.0.0</Text>
         </View>
@@ -130,7 +129,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+  },
+  cardIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,255,0,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,0,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    color: theme.colors.text,
+    fontSize: 17,
+    fontWeight: '800',
   },
   cardLabel: {
     color: theme.colors.textMuted,

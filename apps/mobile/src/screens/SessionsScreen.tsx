@@ -6,22 +6,20 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Shadow } from 'react-native-shadow-2';
-import { History, Zap, Clock, PoundSterling, CheckCircle, AlertTriangle } from 'lucide-react-native';
-
-import { api } from '../services/api';
-import { theme, webStyles } from '../theme';
-import type { ApiChargingSession, ApiReservation } from '../types';
+import type {NativeStackNavigationProp } from '@react-navigation/native-stack'; import { History, Zap, Clock, PoundSterling, Euro, CheckCircle, AlertTriangle } from 'lucide-react-native';  import { api } from '../services/api'; import { useSettingsStore } from '../stores/settingsStore'; import { formatCurrencyAmount } from '../utils/preferencesFormat'; import { theme, webStyles } from '../theme'; import type {ApiChargingSession, ApiReservation, RootStackParamList, UiStationRecommendation, CurrencyCode} from '../types';
 
 const isWeb = Platform.OS === 'web';
 
-const formatCurrency = (gbp: number | null | undefined) => {
-  if (gbp == null) return 'Cost pending';
-  return `£${gbp.toFixed(2)}`;
-};
+const formatCurrency = (
+  gbp: number | null | undefined,
+  currency: CurrencyCode
+) => formatCurrencyAmount(gbp, currency, 'Cost pending');
 
 const formatMinutes = (minutes: number | null | undefined) => {
   if (minutes == null) return 'Duration pending';
@@ -48,6 +46,27 @@ const estimateFromReservation = (reservation: ApiReservation) => ({
   estimatedCostGbp: reservation.estimated_cost_gbp,
   estimatedDurationMinutes: reservation.estimated_duration_minutes,
   chargerLabel: reservation.charger_label ?? 'Reserved',
+});
+
+type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
+
+const mapReservationToUiStation = (
+  reservation: ApiReservation
+): UiStationRecommendation => ({
+  id: reservation.station_id,
+  name: reservation.station_name,
+  zoneId: 'reserved_station',
+  transformerId: 'reserved_transformer',
+  distanceKm: reservation.distance_km ?? 0,
+  estimatedWaitMinutes: 0,
+  estimatedDurationMinutes: reservation.estimated_duration_minutes ?? 0,
+  estimatedCostGbp: reservation.estimated_cost_gbp ?? 0,
+  headroomKw: 0,
+  queueLength: 0,
+  utilization: 0,
+  score: reservation.score ?? 0,
+  chargerLabel: reservation.charger_label ?? 'Reserved',
+  reasonTags: ['reserved'],
 });
 
 const durationFromSession = (session: ApiChargingSession) => {
@@ -78,11 +97,15 @@ function CardCornerGlow() {
 }
 
 export default function SessionsScreen() {
+  const navigation = useNavigation<RootNavigation>();
   const [reservations, setReservations] = useState<ApiReservation[]>([]);
   const [sessions, setSessions] = useState<ApiChargingSession[]>([]);
   const [activeSession, setActiveSession] = useState<ApiChargingSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingReservationId, setStartingReservationId] = useState<string | null>(null);
+  const [cancelingReservationId, setCancelingReservationId] = useState<string | null>(null);
+  const [stoppingSessionId, setStoppingSessionId] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -110,6 +133,146 @@ export default function SessionsScreen() {
     useCallback(() => {
       void loadDashboard();
     }, [loadDashboard])
+  );
+
+  const handleConfirmStart = useCallback(
+    (reservation: ApiReservation) => {
+      const startReservation = async () => {
+        setStartingReservationId(reservation.reservation_id);
+        setError(null);
+
+        try {
+          await api.confirmReservationStart(reservation.reservation_id);
+          await loadDashboard();
+        } catch (e) {
+          console.error(e);
+          setError('Could not start charging session.');
+        } finally {
+          setStartingReservationId(null);
+        }
+      };
+
+      if (isWeb && typeof window !== 'undefined') {
+        const confirmed = window.confirm(
+          `Start charging at ${reservation.station_name}?`
+        );
+
+        if (confirmed) {
+          void startReservation();
+        }
+
+        return;
+      }
+
+      Alert.alert(
+        'Start charging?',
+        `Confirm that you are plugged in at ${reservation.station_name}.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Confirm Start',
+            onPress: () => {
+              void startReservation();
+            },
+          },
+        ]
+      );
+    },
+    [loadDashboard]
+  );
+
+  const handleStopCharging = useCallback(
+    (session: ApiChargingSession) => {
+      const stopSession = async () => {
+        setStoppingSessionId(session.session_id);
+        setError(null);
+
+        try {
+          await api.mockCompleteChargingSession(session.session_id);
+          await loadDashboard();
+        } catch (e) {
+          console.error(e);
+          setError('Could not stop charging session.');
+        } finally {
+          setStoppingSessionId(null);
+        }
+      };
+
+      if (isWeb && typeof window !== 'undefined') {
+        const confirmed = window.confirm(
+          `Stop charging at ${session.station_name}?`
+        );
+
+        if (confirmed) {
+          void stopSession();
+        }
+
+        return;
+      }
+
+      Alert.alert(
+        'Stop charging?',
+        `Confirm that charging has finished at ${session.station_name}.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Stop Charging',
+            style: 'destructive',
+            onPress: () => {
+              void stopSession();
+            },
+          },
+        ]
+      );
+    },
+    [loadDashboard]
+  );
+
+  const handleCancelReservation = useCallback(
+    (reservation: ApiReservation) => {
+      const cancelReservation = async () => {
+        setCancelingReservationId(reservation.reservation_id);
+        setError(null);
+
+        try {
+          await api.cancelReservation(reservation.reservation_id);
+          await loadDashboard();
+        } catch (e) {
+          console.error(e);
+          setError('Could not cancel reservation.');
+        } finally {
+          setCancelingReservationId(null);
+        }
+      };
+
+      if (isWeb && typeof window !== 'undefined') {
+        const confirmed = window.confirm(
+          `Cancel reservation at ${reservation.station_name}?`
+        );
+
+        if (confirmed) {
+          void cancelReservation();
+        }
+
+        return;
+      }
+
+      Alert.alert(
+        'Cancel reservation?',
+        `Cancel your reserved charger at ${reservation.station_name}?`,
+        [
+          { text: 'Keep Reservation', style: 'cancel' },
+          {
+            text: 'Cancel Reservation',
+            style: 'destructive',
+            onPress: () => {
+              void cancelReservation();
+            },
+          },
+        ]
+      );
+    },
+    [loadDashboard]
   );
 
   const sessionsByReservationId = useMemo(() => {
@@ -188,7 +351,20 @@ export default function SessionsScreen() {
 
               {waitingReservations.length > 0 ? (
                 waitingReservations.map((reservation) => (
-                  <ReservationCard key={reservation.reservation_id} reservation={reservation} />
+                  <ReservationCard
+                    key={reservation.reservation_id}
+                    reservation={reservation}
+                    onViewDetails={() =>
+                      navigation.navigate('ReservationConfirm', {
+                        station: mapReservationToUiStation(reservation),
+                        existingReservation: reservation,
+                      })
+                    }
+                    onConfirmStart={handleConfirmStart}
+                    onCancelReservation={handleCancelReservation}
+                    isStarting={startingReservationId === reservation.reservation_id}
+                    isCanceling={cancelingReservationId === reservation.reservation_id}
+                  />
                 ))
               ) : (
                 <View style={styles.emptyCard}>
@@ -206,6 +382,8 @@ export default function SessionsScreen() {
                     key={session.session_id}
                     session={session}
                     reservation={session.reservation_id ? reservationsById.get(session.reservation_id) : null}
+                    onStopCharging={handleStopCharging}
+                    isStopping={stoppingSessionId === session.session_id}
                   />
                 ))
               ) : (
@@ -267,9 +445,21 @@ export default function SessionsScreen() {
 
 type ReservationCardProps = {
   reservation: ApiReservation;
+  onConfirmStart?: (reservation: ApiReservation) => void;
+  onCancelReservation?: (reservation: ApiReservation) => void;
+  onViewDetails?: () => void;
+  isStarting?: boolean;
+  isCanceling?: boolean;
 };
 
-function ReservationCard({ reservation }: ReservationCardProps) {
+function ReservationCard({
+  reservation,
+  onConfirmStart,
+  onCancelReservation,
+  onViewDetails,
+  isStarting = false,
+  isCanceling = false,
+}: ReservationCardProps) {
   const estimate = estimateFromReservation(reservation);
 
   return (
@@ -288,10 +478,60 @@ function ReservationCard({ reservation }: ReservationCardProps) {
       </View>
 
       <Text style={styles.statusHint}>
-        Waiting for charger-side start confirmation. The session will appear automatically when charging begins.
+        Confirm start when you are plugged in and ready to begin charging.
       </Text>
 
+      <View style={styles.reservationTopActionRow}>
+        {onConfirmStart ? (
+          <TouchableOpacity
+            style={[
+              styles.confirmStartBtn,
+              (isStarting || isCanceling) && styles.confirmStartBtnDisabled,
+            ]}
+            onPress={() => onConfirmStart(reservation)}
+            disabled={isStarting || isCanceling}
+            activeOpacity={0.85}
+          >
+            <Zap color="#000" fill="#000" size={16} />
+            <Text style={styles.confirmStartBtnText}>
+              {isStarting ? 'Starting...' : 'Start Charging'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {onViewDetails ? (
+          <TouchableOpacity
+            style={[
+              styles.moreDetailsBtn,
+              (isStarting || isCanceling) && styles.reservationActionDisabled,
+            ]}
+            onPress={onViewDetails}
+            disabled={isStarting || isCanceling}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.moreDetailsBtnText}>More Details</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {onCancelReservation ? (
+        <TouchableOpacity
+          style={[
+            styles.cancelReservationBtn,
+            (isCanceling || isStarting) && styles.reservationActionDisabled,
+          ]}
+          onPress={() => onCancelReservation(reservation)}
+          disabled={isCanceling || isStarting}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.cancelReservationBtnText}>
+            {isCanceling ? 'Canceling...' : 'Cancel Reservation'}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
       <ReservationMeta reservation={reservation} />
+
     </View>
   );
 }
@@ -325,6 +565,7 @@ function ReservationMeta({
   reservation: ApiReservation;
   small?: boolean;
 }) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const estimate = estimateFromReservation(reservation);
   const textStyle = small ? styles.pastMetaText : styles.metaText;
   const iconSize = small ? 12 : 15;
@@ -332,8 +573,14 @@ function ReservationMeta({
   return (
     <View style={styles.metaRow}>
       <View style={styles.metaItem}>
-        <PoundSterling color={theme.colors.textMuted} size={iconSize} />
-        <Text style={textStyle}>{formatCurrency(estimate.estimatedCostGbp)}</Text>
+        {preferences.currency === 'EUR' ? (
+          <Euro color={theme.colors.textMuted} size={iconSize} />
+        ) : (
+          <PoundSterling color={theme.colors.textMuted} size={iconSize} />
+        )}
+        <Text style={textStyle}>
+          {formatCurrency(estimate.estimatedCostGbp, preferences.currency)}
+        </Text>
       </View>
 
       <View style={styles.metaItem}>
@@ -352,9 +599,12 @@ function ReservationMeta({
 type ChargingSessionCardProps = {
   session: ApiChargingSession;
   reservation?: ApiReservation | null;
+  onStopCharging?: (session: ApiChargingSession) => void;
+  isStopping?: boolean;
 };
 
-function ChargingSessionCard({ session, reservation }: ChargingSessionCardProps) {
+function ChargingSessionCard({ session, reservation, onStopCharging, isStopping = false }: ChargingSessionCardProps) {
+  const preferences = useSettingsStore((state) => state.preferences);
   const isActive = session.status === 'active';
   const isStale = session.status === 'stale_active';
 
@@ -362,13 +612,31 @@ function ChargingSessionCard({ session, reservation }: ChargingSessionCardProps)
     <View style={isActive ? [styles.upcomingCard, webStyles.glass] : styles.pastCard}>
       <View style={styles.pastHeader}>
         <Text style={isActive ? styles.upcomingName : styles.pastName}>{session.station_name}</Text>
-        <Text style={styles.pastCost}>{formatCurrency(session.cost_total ?? reservation?.estimated_cost_gbp)}</Text>
+        <Text style={styles.pastCost}>{formatCurrency(session.cost_total ?? reservation?.estimated_cost_gbp, preferences.currency)}</Text>
       </View>
 
       {isActive ? (
-        <Text style={styles.statusHint}>
-          Charging is active. Completion will be recorded automatically when charger-side stop confirmation is received.
-        </Text>
+        <>
+          <Text style={styles.statusHint}>
+            Charging is active. Stop the session when charging is finished.
+          </Text>
+
+          {onStopCharging ? (
+            <TouchableOpacity
+              style={[
+                styles.stopChargingBtn,
+                isStopping && styles.stopChargingBtnDisabled,
+              ]}
+              onPress={() => onStopCharging(session)}
+              disabled={isStopping}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.stopChargingBtnText}>
+                {isStopping ? 'Stopping...' : 'Stop Charging'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </>
       ) : null}
 
       {isStale ? (
@@ -462,11 +730,93 @@ const styles = StyleSheet.create({
   },
   upcomingName: { color: theme.colors.text, fontSize: 17, fontWeight: 'bold', marginBottom: 2, flex: 1 },
   upcomingDate: { color: theme.colors.primary, fontSize: 12, fontWeight: '500' },
+  stopChargingBtn: {
+    height: 42,
+    borderRadius: theme.radii.md,
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  stopChargingBtnDisabled: {
+    opacity: 0.65,
+  },
+  stopChargingBtnText: {
+    color: '#f87171',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  reservationActionRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  reservationTopActionRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  moreDetailsBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: theme.radii.lg,
+    backgroundColor: 'rgba(0,255,0,0.06)',
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+  },
+  moreDetailsBtnText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  cancelReservationBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: theme.radii.lg,
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.50)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  cancelReservationBtnText: {
+    color: '#f87171',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  reservationActionDisabled: {
+    opacity: 0.65,
+  },
+  confirmStartBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  confirmStartBtnDisabled: {
+    opacity: 0.65,
+  },
+  confirmStartBtnText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '800',
+  },
   statusHint: {
     color: theme.colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   reservedBadge: {
     backgroundColor: 'rgba(0,255,0,0.15)',
@@ -485,9 +835,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   warningText: { color: '#f59e0b', fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
-  metaRow: { flexDirection: 'row', gap: theme.spacing.lg, flexWrap: 'wrap' },
+  metaRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+    flexWrap: 'wrap',
+    paddingTop: theme.spacing.xs,
+  },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { color: '#d1d5db', fontSize: 13 },
+
   pastCard: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: theme.radii.xl,

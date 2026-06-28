@@ -38,8 +38,10 @@ export default function NotificationSettingsScreen({ navigation }: Props) {
 
         <View style={[styles.card, webStyles.glass]}>
           <View style={styles.cardHeader}>
-            <Bell color={theme.colors.primary} size={22} />
-            <Text style={styles.cardLabel}>NOTIFICATION PREFERENCES</Text>
+            <View style={styles.cardIcon}>
+              <Bell color={theme.colors.primary} size={18} />
+            </View>
+            <Text style={styles.cardTitle}>Notification Preferences</Text>
           </View>
 
           <View style={styles.settingRow}>
@@ -116,7 +118,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+  },
+  cardIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,255,0,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,0,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    color: theme.colors.text,
+    fontSize: 17,
+    fontWeight: '800',
   },
   cardLabel: {
     color: theme.colors.textMuted,

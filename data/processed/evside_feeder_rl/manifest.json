@@ -1,0 +1,40 @@
+{
+  "artifact": "evside_feeder_rl",
+  "version": 2,
+  "created_at": "2026-06-04T23:09:47.061581+00:00",
+  "truth_status": "feeder_aligned",
+  "export_mode": "all_feeders_full",
+  "max_actions": null,
+  "source_snapshots": {
+    "digitaltwin_public_ev_assets": "DigitalTwin.2.0/data/digital_twin_outputs/v3/topology/phase3_9/snapshot=phase39_pylovo_v3_topology_ready_020/corrected_public_ev_assignment.parquet",
+    "digitaltwin_nodes": "DigitalTwin.2.0/data/digital_twin_outputs/v3/topology/phase3_9/snapshot=phase39_pylovo_v3_topology_ready_020/electrical_nodes.parquet",
+    "digitaltwin_engine_labels": "DigitalTwin.2.0/external/pf_opf_label_tables",
+    "dundee": "request-prior-only",
+    "acn": "request-prior-only",
+    "digitaltwin": "action-catalog-and-grid-truth"
+  },
+  "rows": {
+    "feeder_ev_action_catalog": 73,
+    "feeder_request_priors": 30,
+    "feeder_grid_advisory_replay": 73
+  },
+  "area_count": 10,
+  "action_space_source": "DigitalTwin public_ev low-voltage feeder nodes",
+  "forbidden_action_sources": [
+    "Dundee station_master.csv",
+    "ACN station/session identifiers"
+  ],
+  "quality_summary": {
+    "export_mode": "all_feeders_full",
+    "max_actions": null,
+    "public_ev_source_count": 919,
+    "action_count": 73,
+    "dropped_public_ev_source_count": 846,
+    "area_count": 10,
+    "request_prior_rows": 30,
+    "grid_replay_rows": 73,
+    "duplicate_station_id_count": 0,
+    "missing_node_id_count": 0,
+    "missing_capacity_count": 0
+  }
+}

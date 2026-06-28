@@ -1,10 +1,27 @@
 # Recommender Flow
 
-Last verified against repo state: 2026-05-08.
+Last verified against repo state: 2026-06-13.
 
 ## Classification
 
-The current recommendation output is deterministic weighted heuristic ranking. It is not MARL, not RL checkpoint inference, and not random. It is also not merely mock data for `/recommendations`; it ranks live candidate contexts generated from the Dundee runtime state.
+The default recommendation output is deterministic weighted heuristic ranking. It is not random and it is not merely mock data for `/recommendations`; it ranks live candidate contexts generated from the Dundee runtime state.
+
+Optional checkpoint-backed policy classes now exist:
+
+- `packages/ev_core/src/ev_core/recommender/rl_policy.py`
+  - Policy name: `rl_maskable_ppo`.
+  - Loads a MaskablePPO checkpoint from `RL_POLICY_CHECKPOINT_PATH`.
+  - Builds a Dundee station-selection observation through `ev_core.rl.observations.ObservationBuilder`.
+  - Uses grid advisory responses when available.
+  - Falls back to `WeightedScorePolicy` if the checkpoint, dependency, simulation request context, station IDs, grid advisory path, or model prediction is unavailable. If `RL_POLICY_FAIL_CLOSED=true`, it returns no options instead of falling back.
+- `packages/ev_core/src/ev_core/recommender/feeder_rl_policy.py`
+  - Policy name: `rl_maskable_ppo_feeder`.
+  - Loads a feeder MaskablePPO checkpoint from `RL_FEEDER_CHECKPOINT_PATH`.
+  - Requires runtime context keys `feeder_observation`, `feeder_action_mask`, and `feeder_station_ids`.
+  - Applies hard grid rejection when `grid_advisories` are present.
+  - Falls back to `WeightedScorePolicy` when the checkpoint or feeder runtime context is missing.
+
+`PolicyRegistry` registers both optional RL policy names, but the app/API default remains `weighted_score`. The current live mobile flow does not build feeder observations/action masks/station IDs, so the feeder policy is a scaffolded fallback-capable hook rather than a complete app-flow integration.
 
 Runtime allocation baselines can include stable pseudo-random choice during simulation, but that is separate from the recommender ranker used to score candidate stations.
 
@@ -15,6 +32,8 @@ For app/API live recommendation calls, `apps/api/app/services/recommendations_se
 - `Closest` / `closest` -> `closest`
 
 The original `preference_mode` remains on the runtime request for compatibility and debugging; the policy name is selected at the API/service boundary rather than inside rankers.
+
+API/mobile response shape remains unchanged. RL and feeder-RL policy decisions still return the existing `RecommendationOption` and `RecommendationResponse` contracts; policy-specific details live in option metadata.
 
 ## Candidate Construction
 
@@ -273,20 +292,20 @@ Congestion notes:
 
 ## Future RL/MARL Policy Plug-In Path
 
-RL/MARL inference should plug into the existing recommender as another policy, not replace the API/mobile contracts or the candidate-building path.
+RL/MARL inference plugs into the existing recommender as another policy, not as a replacement for API/mobile contracts or the candidate-building path. The first policy classes are already present, but the default app/API behavior remains deterministic and the feeder policy still needs feeder observation-context assembly.
 
-Intended sequence:
+Current/remaining sequence:
 
 ```text
 offline training
--> checkpoint saved outside git
--> RL/MARL policy class loads checkpoint
+-> checkpoint available under models/ or explicit env path
+-> RL policy class loads checkpoint
 -> policy registered in PolicyRegistry
 -> RecommendationService can select it like other policies
--> fallback to deterministic policy if checkpoint missing
+-> fallback to deterministic policy if checkpoint/context/dependencies are missing
 ```
 
-The first learned policy should be single-agent MaskablePPO using the PR3 masked station-selection environment. MARL comes later, after single-agent evaluation is stable. Colab/Kaggle training is acceptable if the notebook installs and imports this repo code directly, trains against the repo environment/scenario sampler, and saves only checkpoints or evaluation artifacts outside git.
+The first learned-policy path is single-agent MaskablePPO using the masked station-selection environment. MARL comes later, after single-agent and feeder checkpoint paths have stable evaluation, artifact loading, and fallback behavior. Colab/Kaggle training is acceptable if the notebook installs and imports this repo code directly, trains against the repo environment/scenario sampler, and saves artifacts in the agreed repo or external artifact location.
 
-The policy registry should keep deterministic policies (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`) available as fallbacks and baselines. A future checkpoint-backed policy should rank the same candidate contexts and return the same `RecommendationResponse` shape used by the mobile app and dashboard today.
+The policy registry keeps deterministic policies (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`) available as fallbacks and baselines. Checkpoint-backed policies must keep ranking the same candidate contexts and returning the same `RecommendationResponse` shape used by the mobile app and dashboard today.
 

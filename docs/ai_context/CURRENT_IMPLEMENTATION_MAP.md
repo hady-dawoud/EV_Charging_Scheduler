@@ -1,6 +1,45 @@
 # Current Implementation Map
 
-Last verified against repo state: 2026-05-08.
+Last verified against repo state: 2026-06-13.
+
+## 2026-06-13 Feeder RL/Grid Advisory Audit Update
+
+Current feeder/grid/RL paths now present in source:
+
+- `packages/ev_core/src/ev_core/grid_advisory/`
+  - Contract models for EV-side grid schedule proposals and advisory responses.
+  - Advisory clients for disabled, recorded replay, local HTTP, and 48-step runtime HTTP modes.
+  - Replay lookup from `feeder_grid_advisory_replay.csv` or `.parquet`.
+  - Feature mapping from recommendation candidates into grid schedule proposals.
+- `packages/ev_core/src/ev_core/rl/`
+  - The older/single-agent Dundee station-selection skeleton.
+  - Uses the current Dundee station list as a masked discrete action space.
+  - `ObservationBuilder` builds station-ordered vectors from `DundeeEnv` candidates.
+  - `MaskablePPORuntimePolicy` can load a MaskablePPO checkpoint from `RL_POLICY_CHECKPOINT_PATH`, request grid advisories, choose a station, then fall back to `WeightedScorePolicy` if the checkpoint, dependencies, context, or prediction is unavailable.
+- `packages/ev_core/src/ev_core/rl_feeder/`
+  - The newer DigitalTwin feeder public-EV scaffold.
+  - `DigitalTwinFeederRLRepository` expects a feeder RL export package containing `manifest.json`, `feature_stats.json`, `feeder_ev_action_catalog`, `feeder_request_priors`, and `feeder_grid_advisory_replay`.
+  - `FeederObservationBuilder` builds the feeder-trained observation shape as `10 + action_count * 30` float32 features. The documented 73-action checkpoint therefore expects 2200 features.
+  - `FeederMaskablePPORuntimePolicy` can load `RL_FEEDER_CHECKPOINT_PATH` and rank with a prebuilt `feeder_observation`, `feeder_action_mask`, and `feeder_station_ids` runtime context. If that context or model is unavailable, it falls back to `WeightedScorePolicy`.
+- `packages/ev_core/src/ev_core/recommender/rl_policy.py`
+  - Runtime hook for the older Dundee station-selection checkpoint path.
+- `packages/ev_core/src/ev_core/recommender/feeder_rl_policy.py`
+  - Runtime hook for the feeder-trained checkpoint path.
+- `scripts/rl_training/`
+  - Contains dry-run/train/evaluate entrypoints for both the older Dundee station-selection policy and the feeder public-EV policy.
+- `docs/ai_context/FEEDER_RL_AGENT_GUIDE.md`
+  - Documents the feeder checkpoint evaluation and its required DigitalTwin export package.
+
+Current runtime wiring truth:
+
+- `PolicyRegistry` now exposes deterministic policies plus `rl_maskable_ppo` and `rl_maskable_ppo_feeder`.
+- The default app/API policy remains deterministic `weighted_score` unless `RECOMMENDATION_POLICY_NAME` selects another registered policy.
+- The current mobile/API `RecommendationResponse` shape is unchanged.
+- The older Dundee checkpoint policy can be selected by name, but it still requires compatible runtime context, `sb3_contrib`, and a valid checkpoint path. If those are missing, it falls back unless `RL_POLICY_FAIL_CLOSED=true`.
+- The feeder checkpoint policy is scaffolded but not fully app-flow wired because the normal recommendation path does not yet build feeder observations/action masks/station IDs. It falls back without that context.
+- RL model zips and the forecasting model artifacts are present under `models/` in this checkout and are tracked by Git. They are not configured for Git LFS in `.gitattributes`.
+- The feeder RL runtime data package is not present under `data/processed/evside_feeder_rl/` or `outputs/evside_feeder_rl/`.
+- Forecasting code still exposes provider interfaces and table-backed placeholder forecasts. The Keras `load_kw_30min` artifacts are present under `models/forecasting/load_kw_30min/`, but no model-backed `ForecastProvider` currently loads them into runtime recommendations.
 
 ## Root
 
@@ -93,7 +132,7 @@ Last verified against repo state: 2026-05-08.
 - `packages/ev_core/src/ev_core/recommender/ranker.py`
   - `CandidateContext`, `RecommendationInput`, `CandidateRanker`, `WeightedHeuristicRanker`.
 - `packages/ev_core/src/ev_core/recommender/policy_registry.py`
-  - `PolicyRegistry` resolves deterministic recommendation policy names (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`). Future offline-trained RL/MARL inference should register here as a policy and fall back to a deterministic policy if a checkpoint is unavailable.
+  - `PolicyRegistry` resolves deterministic recommendation policy names (`weighted_score`, `closest`, `cheapest`, `fastest`, `overload_aware`) and optional checkpoint-backed names (`rl_maskable_ppo`, `rl_maskable_ppo_feeder`). The deterministic policy remains the default; checkpoint-backed policies use deterministic fallback behavior when required artifacts/dependencies/context are unavailable.
 - `packages/ev_core/src/ev_core/recommender/candidates.py`
   - `CandidateBuilder`: builds recommendation `CandidateContext` objects from runtime station state while receiving Dundee-specific distance, wait, price, headroom, and charger-compatibility callables from `DundeeEnv`. Distance still enters as a callback, so candidate construction is decoupled from the concrete routing implementation. It can also consume optional station-aware pricing/metadata hooks plus CP-aware compatible-port-count and effective-power callables. It filters station access eligibility before compatibility/window checks. Duration estimation uses vehicle-aware helpers while preserving old station-average behavior when CP-aware hooks are absent. Candidate pricing and metadata are now request-aware, using the same selected connector/power path as duration.
 - `packages/ev_core/src/ev_core/pricing/dynamic_pricing.py`
@@ -138,7 +177,7 @@ Last verified against repo state: 2026-05-08.
   - `observations.py`: `ObservationBuilder` and `ObservationSpec` for the first fixed-size flat observation vector. Global request/time features are followed by per-station distance/wait/duration/cost/headroom/queue/utilization/compatibility/mask features in deterministic station order.
   - `action_mask.py`: station-level boolean action mask builder driven by feasible Dundee candidate contexts.
   - `rewards.py`: `StationSelectionReward` and RL-side `RewardBreakdown` for the first stable served/invalid/missed plus cost-distance-wait-duration-headroom reward contract.
-  - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; no forecasting model is implemented yet.
+  - `forecast_features.py`: `ForecastFeatureSnapshot` placeholder contract for future observation features; it does not load the repo-local forecasting model artifacts into RL observations yet.
   - `metrics.py`: helper functions for aggregating deterministic evaluation outputs.
 - `packages/ev_core/src/ev_core/rl_training/*`
   - `offline_station_selection_env.py`: training-facing headless wrapper around `ev_core.rl.env.DundeeStationSelectionEnv`, keeping the existing env as the single source of truth for the first offline-training pass.
@@ -147,7 +186,7 @@ Last verified against repo state: 2026-05-08.
   - `rollout.py`: `RolloutResult` plus random-valid, fixed-action, and deterministic recommendation-policy rollouts that operate directly on the wrapped offline env without SB3.
   - `metrics.py`: `summarize_rollouts(...)` for average reward, served count, invalid action count, missed count, and step count aggregation.
 
-Future learned-policy integration remains out of this implementation: first train single-agent MaskablePPO offline, save checkpoints outside git, load them through a checkpoint-backed policy class, register that policy in `PolicyRegistry`, and let `RecommendationService` select it through the same policy-name path. MARL should come later and should not replace API/mobile/dashboard response contracts.
+Learned-policy integration is partially scaffolded: checkpoint-backed policy classes exist and are registered, but the default live app/API flow still uses deterministic ranking. The single-agent Dundee checkpoint path can be selected by policy name when artifacts/dependencies are present. The feeder checkpoint path still needs feeder runtime data and observation-context assembly before it can operate as more than a fallback wrapper. MARL should come later and should not replace API/mobile/dashboard response contracts.
 - `scripts/generate_synthetic_live_requests.py`
   - CLI for writing synthetic-live request JSONL to `outputs/runtime/synthetic_live_requests.jsonl`.
 - `scripts/verify_synthetic_live_requests.py`

@@ -36,11 +36,23 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     try {
       const parsed = JSON.parse(saved) as Partial<AppPreferences>;
+      const currency =
+        parsed.currency === 'EUR' || parsed.currency === 'GBP'
+          ? parsed.currency
+          : parsed.currency === 'EGP'
+            ? 'EUR'
+            : defaultAppPreferences.currency;
+      const distanceUnit =
+        parsed.distanceUnit === 'mi' || parsed.distanceUnit === 'km'
+          ? parsed.distanceUnit
+          : defaultAppPreferences.distanceUnit;
 
       set({
         preferences: {
           ...defaultAppPreferences,
           ...parsed,
+          currency,
+          distanceUnit,
           notifications: {
             ...defaultAppPreferences.notifications,
             ...(parsed.notifications ?? {}),

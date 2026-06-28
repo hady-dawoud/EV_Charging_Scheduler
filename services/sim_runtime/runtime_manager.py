@@ -16,6 +16,8 @@ from ev_core.contracts.requests import ExternalChargingRequest
 from ev_core.contracts.responses import MetricsSnapshot, RecommendationResponse, StateSnapshot
 from ev_core.data.repositories import DundeeSimulationRepository
 from ev_core.env.environment import DundeeEnv
+from ev_core.config.forecasting import ForecastingConfig
+from ev_core.forecasting.load_kw30min_provider import build_forecast_diagnostics_provider
 from ev_core.forecasting.provider import PlaceholderForecastProvider
 from ev_core.routing.osmnx_provider import OSMnxRoutingProvider
 from ev_core.routing.simple_distance import SimpleDistanceRoutingProvider
@@ -32,6 +34,17 @@ class RuntimeConfig:
     replay_year: int = 2024
     default_policy: str = "overload_aware"
     recommendation_policy_name: str = "weighted_score"
+    requested_recommendation_policy_name: str | None = None
+    force_recommendation_policy: str | None = None
+    rl_policy_fail_closed: bool = False
+    rl_feeder_checkpoint_path: str | None = None
+    feeder_data_dir: str | None = None
+    rl_safety_filter_enabled: bool = False
+    rl_safety_filter_mode: str = "penalty"
+    rl_safety_filter_strict: bool = False
+    rl_safety_filter_penalty_weight: float = 0.25
+    rl_safety_block_unsafe: bool = False
+    rl_safety_mapping_mode: str = "exact_only"
     default_runtime_mode: str = "replay"
     default_loop_interval_seconds: float = 1.0
     default_demand_multiplier: float = 1.0
@@ -39,6 +52,10 @@ class RuntimeConfig:
     dynamic_pricing_enabled: bool = True
     routing_provider_name: str = "simple_distance"
     osmnx_graph_path: str = "data/processed/routing/dundee_drive.graphml"
+    forecast_provider_name: str = "disabled"
+    forecast_model_dir: str = "models/forecasting/load_kw_30min"
+    forecast_ranking_mode: str = "metadata_only"
+    forecast_fail_closed: bool = False
 
 
 class RuntimeManager:
@@ -55,6 +72,14 @@ class RuntimeManager:
             background_load=self.bundle.background_load,
             price_table=self.bundle.price_table,
             pv_profile=self.bundle.pv_profile,
+        )
+        self.forecast_diagnostics_provider = build_forecast_diagnostics_provider(
+            ForecastingConfig(
+                provider_name=self.config.forecast_provider_name,
+                model_dir=Path(self.config.forecast_model_dir),
+                ranking_mode=self.config.forecast_ranking_mode,
+                fail_closed=self.config.forecast_fail_closed,
+            )
         )
         self.storage = RuntimeStorage(self.repo_root)
         self.event_bus = EventBus()
@@ -251,6 +276,7 @@ class RuntimeManager:
         payload: ExternalChargingRequest | dict[str, Any],
         *,
         recommendation_policy_name: str | None = None,
+        policy_selection_metadata: dict[str, Any] | None = None,
     ) -> RecommendationResponse:
         """Inject an external-style request into the current Dundee runtime."""
 
@@ -259,7 +285,12 @@ class RuntimeManager:
         sim_request = env.inject_external_request(request)
         response = env.get_ranked_recommendations(
             sim_request,
-            recommendation_policy_name=recommendation_policy_name or self.config.recommendation_policy_name,
+            recommendation_policy_name=self._resolve_recommendation_policy_name(recommendation_policy_name),
+            policy_selection_metadata=policy_selection_metadata
+            or self._policy_selection_metadata(
+                recommendation_policy_name,
+                simulated_timestamp=getattr(env, "current_time", request.request_timestamp),
+            ),
         )
         self.storage.save_external_request(request, status="injected")
         self.storage.save_recommendation(response)
@@ -271,6 +302,7 @@ class RuntimeManager:
         payload: ExternalChargingRequest | dict[str, Any],
         *,
         recommendation_policy_name: str | None = None,
+        policy_selection_metadata: dict[str, Any] | None = None,
     ) -> RecommendationResponse:
         """Produce a recommendation against the current runtime state without queuing the request."""
 
@@ -278,7 +310,12 @@ class RuntimeManager:
         request = payload if isinstance(payload, ExternalChargingRequest) else ExternalChargingRequest.model_validate(payload)
         response = env.get_ranked_recommendations(
             request,
-            recommendation_policy_name=recommendation_policy_name or self.config.recommendation_policy_name,
+            recommendation_policy_name=self._resolve_recommendation_policy_name(recommendation_policy_name),
+            policy_selection_metadata=policy_selection_metadata
+            or self._policy_selection_metadata(
+                recommendation_policy_name,
+                simulated_timestamp=getattr(env, "current_time", request.request_timestamp),
+            ),
         )
         self.storage.save_recommendation(response)
         self._persist_env(env, include_events=True)
@@ -414,6 +451,22 @@ class RuntimeManager:
             "runtime_mode": env.runtime_mode,
             "active_policy": env.policy_mode,
             "recommendation_policy_name": self.config.recommendation_policy_name,
+            "requested_recommendation_policy_name": self.config.requested_recommendation_policy_name,
+            "force_recommendation_policy": self.config.force_recommendation_policy,
+            "policy_override_used": bool(self.config.force_recommendation_policy or self.config.requested_recommendation_policy_name),
+            "rl_policy_fail_closed": self.config.rl_policy_fail_closed,
+            "rl_feeder_checkpoint_path": self.config.rl_feeder_checkpoint_path,
+            "feeder_data_dir": self.config.feeder_data_dir,
+            "rl_safety_filter_enabled": self.config.rl_safety_filter_enabled,
+            "rl_safety_filter_mode": self.config.rl_safety_filter_mode,
+            "rl_safety_filter_strict": self.config.rl_safety_filter_strict,
+            "rl_safety_filter_penalty_weight": self.config.rl_safety_filter_penalty_weight,
+            "rl_safety_block_unsafe": self.config.rl_safety_block_unsafe,
+            "rl_safety_mapping_mode": self.config.rl_safety_mapping_mode,
+            "forecast_provider": self.config.forecast_provider_name,
+            "forecast_model_dir": self.config.forecast_model_dir,
+            "forecast_ranking_mode": self.config.forecast_ranking_mode,
+            "forecast_fail_closed": self.config.forecast_fail_closed,
             "replay_exhausted": runtime_phase["replay_exhausted"],
             "terminal_reason": runtime_phase["terminal_reason"],
             "pricing_model": "dundee_tariff_plus_dynamic_overlay",
@@ -436,6 +489,60 @@ class RuntimeManager:
             "completed_requests_total": env.completed_requests_total,
             "missed_requests_total": env.missed_requests_total,
         }
+
+    def _resolve_recommendation_policy_name(self, recommendation_policy_name: str | None) -> str:
+        if self.config.force_recommendation_policy:
+            return self.config.force_recommendation_policy
+        if self.config.requested_recommendation_policy_name:
+            return self.config.recommendation_policy_name
+        return recommendation_policy_name or self.config.recommendation_policy_name
+
+    def _policy_selection_metadata(
+        self,
+        recommendation_policy_name: str | None,
+        *,
+        simulated_timestamp: datetime | None = None,
+    ) -> dict[str, Any]:
+        effective = self._resolve_recommendation_policy_name(recommendation_policy_name)
+        if self.config.force_recommendation_policy:
+            source = "force_recommendation_policy"
+            requested = self.config.force_recommendation_policy
+        elif self.config.requested_recommendation_policy_name:
+            source = "recommendation_policy_name"
+            requested = self.config.requested_recommendation_policy_name
+        elif recommendation_policy_name:
+            source = "explicit_policy_parameter"
+            requested = recommendation_policy_name
+        else:
+            source = "default"
+            requested = self.config.recommendation_policy_name
+        metadata = {
+            "requested_policy_name": requested,
+            "effective_policy_name": effective,
+            "policy_source": source,
+            "policy_override_used": bool(self.config.force_recommendation_policy or self.config.requested_recommendation_policy_name),
+            "rl_policy_fail_closed": self.config.rl_policy_fail_closed,
+            "rl_feeder_checkpoint_path": self.config.rl_feeder_checkpoint_path,
+            "feeder_data_dir": self.config.feeder_data_dir,
+            "rl_safety_filter_enabled": self.config.rl_safety_filter_enabled,
+            "rl_safety_filter_mode": self.config.rl_safety_filter_mode,
+            "rl_safety_filter_strict": self.config.rl_safety_filter_strict,
+            "rl_safety_filter_penalty_weight": self.config.rl_safety_filter_penalty_weight,
+            "rl_safety_block_unsafe": self.config.rl_safety_block_unsafe,
+            "rl_safety_mapping_mode": self.config.rl_safety_mapping_mode,
+        }
+        metadata.update(self._forecast_selection_metadata(simulated_timestamp))
+        return metadata
+
+    def _forecast_selection_metadata(self, simulated_timestamp: datetime | None) -> dict[str, Any]:
+        provider = getattr(self, "forecast_diagnostics_provider", None)
+        if provider is None:
+            return {}
+        result = provider.smoke_forecast(simulated_timestamp, allow_smoke_template=True)
+        metadata = result.metadata()
+        if metadata.get("forecast_status") == "disabled":
+            return {}
+        return metadata
 
     def _runtime_phase(self, env: DundeeEnv) -> dict[str, Any]:
         replay_total = len(getattr(env, "replay_day_frame", []))

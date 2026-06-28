@@ -31,17 +31,15 @@ export default function PrivacySecurityScreen({ navigation }: Props) {
 
         <View style={[styles.card, webStyles.glass]}>
           <View style={styles.cardHeader}>
-            <Shield color={theme.colors.primary} size={22} />
-            <Text style={styles.cardLabel}>ACCOUNT</Text>
+            <View style={styles.cardIcon}>
+              <Shield color={theme.colors.primary} size={18} />
+            </View>
+            <Text style={styles.cardTitle}>Account</Text>
           </View>
 
           <Text style={styles.infoLabel}>Signed in as</Text>
           <Text style={styles.infoValue}>{user?.email ?? 'Not signed in'}</Text>
 
-          <Text style={styles.infoLabel}>Session security</Text>
-          <Text style={styles.infoValue}>
-            Access tokens are short-lived and refresh tokens are stored securely on supported devices.
-          </Text>
         </View>
 
         <View style={[styles.card, webStyles.glass]}>
@@ -99,7 +97,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+  },
+  cardIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,255,0,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,0,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    color: theme.colors.text,
+    fontSize: 17,
+    fontWeight: '800',
   },
   cardLabel: {
     color: theme.colors.textMuted,
