@@ -14,6 +14,11 @@ import pandas as pd
 from pydantic import BaseModel, ValidationError
 
 try:
+    import pydeck as pdk
+except ImportError:  # pragma: no cover - exercised when dashboard deps are absent
+    pdk = None
+
+try:
     import streamlit as st
 except ImportError:  # pragma: no cover - exercised by smoke tests without dashboard deps
     st = None
@@ -37,6 +42,26 @@ SOURCE_MOBILE_API = "Mobile/API only"
 SOURCE_RUNTIME = "Runtime simulation only"
 SOURCE_COMBINED = "Combined"
 SOURCE_MODE_OPTIONS = [SOURCE_MOBILE_API, SOURCE_RUNTIME, SOURCE_COMBINED]
+LOAD_STATE_NORMAL = "Normal"
+LOAD_STATE_BUSY = "Busy"
+LOAD_STATE_CONGESTED = "Congested"
+LOAD_STATE_COLORS = {
+    LOAD_STATE_NORMAL: [34, 197, 94, 220],
+    LOAD_STATE_BUSY: [234, 179, 8, 230],
+    LOAD_STATE_CONGESTED: [239, 68, 68, 235],
+}
+STATION_MAP_TOOLTIP = {
+    "html": (
+        "<b>{station_name}</b><br/>"
+        "State: {load_state}<br/>"
+        "Active: {active_sessions}/{cp_count_total}<br/>"
+        "Queued: {queue_length}<br/>"
+        "Utilization: {utilization_label}<br/>"
+        "Wait: {wait_label}<br/>"
+        "Headroom: {headroom_label}"
+    ),
+    "style": {"backgroundColor": "#111827", "color": "white"},
+}
 
 
 @dataclass(frozen=True)
@@ -260,16 +285,6 @@ def render_dataframe(frame: pd.DataFrame) -> None:
             st.dataframe(frame, use_container_width=True)
         except TypeError:
             st.dataframe(frame)
-
-
-def metric_delta(completed_count: int, missed_count: int) -> str:
-    total_outcomes = completed_count + missed_count
-
-    if total_outcomes == 0:
-        return "No finished requests yet"
-
-    completion_rate = completed_count / total_outcomes
-    return f"{completion_rate:.0%} completed"
 
 
 def kw_text(kw_amount: float | None) -> str:
@@ -1287,7 +1302,7 @@ def raw_active_session_rows_frame(mobile_activity: MobileActivitySnapshot) -> pd
 
 
 def station_map_frame(state) -> pd.DataFrame:
-    station_rows = model_rows(state.stations)
+    station_rows = [station_map_row(station) for station in state.stations]
 
     if not station_rows:
         return pd.DataFrame()
@@ -1297,12 +1312,39 @@ def station_map_frame(state) -> pd.DataFrame:
     return map_frame.dropna(subset=["lat", "lon"])
 
 
+def station_map_row(station) -> dict:
+    station_row = station.model_dump(mode="json")
+    load_state = station_load_state(station)
+    station_row["load_state"] = load_state
+    station_row["map_color"] = LOAD_STATE_COLORS[load_state]
+    station_row["utilization_label"] = percentage_text(station.utilization)
+    station_row["wait_label"] = minutes_text(station.estimated_wait_minutes)
+    station_row["headroom_label"] = kw_text(station.transformer_headroom_kw)
+    return station_row
+
+
+def station_load_state(station) -> str:
+    if station.queue_length > 0 or station.utilization >= 0.8 or station.transformer_headroom_kw <= 0:
+        return LOAD_STATE_CONGESTED
+
+    if (
+        station.active_sessions > 0
+        or station.utilization >= 0.4
+        or station.estimated_wait_minutes > 0
+        or station.transformer_headroom_kw < station.station_capacity_kw_assumed
+    ):
+        return LOAD_STATE_BUSY
+
+    return LOAD_STATE_NORMAL
+
+
 def station_map_table_frame(map_frame: pd.DataFrame) -> pd.DataFrame:
     if map_frame.empty:
         return pd.DataFrame()
 
     visible_columns = [
         "station_name",
+        "load_state",
         "zone_id",
         "cp_count_total",
         "lat",
@@ -1314,6 +1356,7 @@ def station_map_table_frame(map_frame: pd.DataFrame) -> pd.DataFrame:
     table_frame = table_frame.rename(
         columns={
             "station_name": "Station",
+            "load_state": "Load state",
             "zone_id": "Zone",
             "cp_count_total": "Capacity",
             "lat": "Latitude",
@@ -1328,6 +1371,36 @@ def station_map_table_frame(map_frame: pd.DataFrame) -> pd.DataFrame:
 def station_map_frames(state) -> tuple[pd.DataFrame, pd.DataFrame]:
     map_frame = station_map_frame(state)
     return map_frame, station_map_table_frame(map_frame)
+
+
+def station_map_deck(map_frame: pd.DataFrame):
+    scatter_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=map_frame,
+        get_position="[lon, lat]",
+        get_fill_color="map_color",
+        get_radius=90,
+        radius_min_pixels=8,
+        radius_max_pixels=18,
+        pickable=True,
+        auto_highlight=True,
+    )
+    return pdk.Deck(
+        map_style="light",
+        initial_view_state=station_map_view_state(map_frame),
+        layers=[scatter_layer],
+        tooltip=STATION_MAP_TOOLTIP,
+    )
+
+
+def station_map_view_state(map_frame: pd.DataFrame):
+    return pdk.ViewState(
+        latitude=float(map_frame["lat"].mean()),
+        longitude=float(map_frame["lon"].mean()),
+        zoom=11,
+        min_zoom=9,
+        max_zoom=16,
+    )
 
 
 def new_runtime_manager():
@@ -1502,11 +1575,7 @@ def render_runtime_overview(state, metrics, status_summary: dict, mobile_activit
     activity_cols[1].metric("Queued", metrics.queued_request_count)
     activity_cols[2].metric("Charging", effective_charging_count(metrics, mobile_activity))
     activity_cols[3].metric("Completed", metrics.completed_requests_total)
-    activity_cols[4].metric(
-        "Missed",
-        metrics.missed_requests_total,
-        delta=metric_delta(metrics.completed_requests_total, metrics.missed_requests_total),
-    )
+    activity_cols[4].metric("Missed", metrics.missed_requests_total)
 
     config_text = (
         f"Policy: {state.active_policy} | Demand x{state.demand_multiplier:.2f} | "
@@ -1848,7 +1917,10 @@ def render_station_map(state, map_frame: pd.DataFrame, table_frame: pd.DataFrame
         return
 
     if show_map:
-        st.map(map_frame[["lat", "lon"]], height=460, width="stretch")
+        if pdk is None:
+            st.map(map_frame[["lat", "lon"]], height=460, width="stretch")
+        else:
+            st.pydeck_chart(station_map_deck(map_frame), height=460, width="stretch")
     else:
         st.caption("Map rendering is disabled for faster initial load. Enable Show map to draw station coordinates.")
 
