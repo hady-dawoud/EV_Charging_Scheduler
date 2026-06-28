@@ -10,9 +10,11 @@ The dashboard is intentionally independent from the existing API/mobile prototyp
 
 From the repository root, run the dashboard using the existing API virtual environment:
 
+export DATABASE_URL="postgresql+psycopg://ev_user:change_me@localhost:5432/ev_smart_charging"
 ```bash
 ./apps/api/.venv/Scripts/python.exe -m streamlit run dashboards/sim_dashboard/app.py --server.headless true --server.port 8501
 ```
+./apps/api/.venv/Scripts/python.exe -m streamlit run dashboards/demo_scenarios/app.py --server.headless true --server.port 8502
 
 Open locally:
 
