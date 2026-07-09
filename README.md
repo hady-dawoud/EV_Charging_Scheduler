@@ -33,8 +33,8 @@ Current truth:
 
 - `POST /recommendations` exists and injects a live external charging request into the simulator runtime.
 - The mobile app calls the backend through the deployed `/api` reverse-proxy path.
-- The recommended Android tester build is GitHub Release `v0.1.2`, asset `ev-smart-charging-v0.1.2.apk`.
-- The `v0.1.2` APK is release-signed, verified with `apksigner`, and uses Android `versionCode 3` / `versionName "0.1.2"`.
+- The recommended Android tester build is GitHub Release `v0.1.8`, asset `ZapRoute-v0.1.2.apk`.
+- The `v0.1.8` APK is release-signed, verified with `apksigner`, and uses Android `versionCode 3` / `versionName "0.1.2"`.
 - `v0.1.0` and `v0.1.1` are older APK releases and should not be recommended to testers.
 - The default recommendation policy remains deterministic `weighted_score`.
 - PR 6.2 adds opt-in feeder-checkpoint safety wrappers around the existing
